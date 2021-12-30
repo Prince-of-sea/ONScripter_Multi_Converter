@@ -123,12 +123,11 @@
  画像の横解像度を偶数にすることによって、<br>
  "立ち絵の横に謎の縦線が表示される"不具合を回避します<br>
 
- - **smjpeg_encode.exeで動画を変換する**<br>
- シナリオ内の"avi"または"mpegplay"命令で再生する動画を<br>
- "smjpeg_encode.exe"を使ってPSP向けの形式に変換します<br>
- さっきと同じくシナリオ側のパス指定ミスを避けるため<br>
- 変換後の拡張子はそのままで保存されます<br>
- 動作にはsmjpegだけでなく**FFprobe/FFmpegも必要です**<br>
+ - **カーソルを標準の画像へ強制上書き**<br>
+ 元のカーソル画像を縮小して利用せずに、<br>
+ NScripter/ONScripter標準の画像を利用します<br>
+ 画面が崩れる場合があるため推奨しません<br>
+ (デフォルトではチェックを外してあります)<br>
 
 #### 音源
  - **音源をOGGへ圧縮する**<br>
@@ -138,11 +137,12 @@
  (BGMとSEの区別は「ディレクトリ名に"bgm"と入っているか」です)<br>
 
 #### その他
- - **常にメモリ内にフォントを読み込んでおく**<br>
- PSPで動作させる際、常にフォントをRAMに読み込ませ、<br>
- 文字表示を高速化させるかどうかの設定です<br>
- RAMの消費量が増えるためPSP-1000での利用は非推奨<br>
- (処理としてはons.iniの"FONTMEMORY"を書き換えてるだけ)<br>
+ - **smjpeg_encode.exeで動画を変換する**<br>
+ シナリオ内の"avi"または"mpegplay"命令で再生する動画を<br>
+ "smjpeg_encode.exe"を使ってPSP向けの形式に変換します<br>
+ さっきと同じくシナリオ側のパス指定ミスを避けるため<br>
+ 変換後の拡張子はそのままで保存されます<br>
+ 動作にはsmjpegだけでなく**FFprobe/FFmpegも必要です**<br>
 
  - **nsaed.exeで出力ファイルを圧縮する**<br>
  全ての画像/音源ファイルの変換処理が終了した後に、<br>
@@ -169,7 +169,7 @@
  圧縮や変換などの一部機能が利用できなくなります<br>
 
  - 本ツールを使用した際に出力されるons.iniは、<br>
- [新verのONScripter向けの記述](https://web.archive.org/web/20100709172750/http://blog.livedoor.jp/tormtorm/archives/51520243.html)となっています<br>
+ [新verのONScripter向けの記述](https://web.archive.org/web/20100709172750fw_/http://blog.livedoor.jp/tormtorm/archives/51520243.html)となっています<br>
 
  - 対応しているゲームの解像度は4種類のみです<br>
  以下の解像度以外は変換が行えません<br>

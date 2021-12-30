@@ -1,4 +1,3 @@
-from chardet import detect
 from io import BytesIO
 from PIL import Image
 import PySimpleGUI as sg
@@ -14,7 +13,7 @@ import os
 import re
 
 ####################################################################################################
-window_title = 'ONScripter Multi Converter for PSP ver.1.00'
+window_title = 'ONScripter Multi Converter for PSP ver.1.01'
 ####################################################################################################
 
 # -memo-
@@ -23,6 +22,15 @@ window_title = 'ONScripter Multi Converter for PSP ver.1.00'
 # jsonでの作品個別処理何も実装してねぇ...
 # もうopencv使うのは諦めよう
 
+
+# -最新の更新履歴(v1.0.1)- 
+# txt読み込み時の文字コード指定を削除
+# cursor.xxxが.bmp以外の場合に対応
+# フォントのON/OFFを削除
+# 動画変換を"その他"欄へ移動
+# "カーソルを標準の画像へ強制上書き"実装
+# デフォルトでチェック入っている項目をいくつか変更
+# 初回のエラー表示にテーマが反映されてなかったのを修正
 
 # これを読んだあなた。
 # どうかこんな可読性の欠片もないクソコードを書かないでください。
@@ -76,30 +84,32 @@ def subprocess_args(include_stdout=True):
 
 ######################################## GUI表示前の変数設定 ########################################
 
+sg.theme('DarkBlue12')#テーマ設定
+
 #-----ffmpeg存在チェック-----
 try:
 	subprocess.run('ffmpeg', **subprocess_args(True))
 	subprocess.run('ffprobe', **subprocess_args(True))
 except:
-	ffmpeg_notexist = True
+	ffmpeg_exist = False
 	sg.popup('ffmpegが利用できません', title='!')
 else:
-	ffmpeg_notexist = False
+	ffmpeg_exist = True
 
 #-----nsaed存在チェック-----
 nsaed_path = ((os.path.dirname(sys.argv[0])) + r'/tools/nsaed.exe')
 if os.path.exists(nsaed_path):
-	nsaed_notexist = False
+	nsaed_exist = True
 else:
-	nsaed_notexist = True
+	nsaed_exist = False
 	sg.popup('./tools/nsaed.exeが利用できません', title='!')
 
 #-----smjpeg存在チェック(ffmpeg非導入時は強制NG)-----
 smjpeg_path = ((os.path.dirname(sys.argv[0])) + r'/tools/smjpeg_encode.exe')
-if ffmpeg_notexist == False and os.path.exists(smjpeg_path):
-	smjpeg_notexist = False
+if ffmpeg_exist == True and os.path.exists(smjpeg_path):
+	smjpeg_exist = True
 else:
-	smjpeg_notexist = True
+	smjpeg_exist = False
 	sg.popup('./tools/smjpeg_encode.exeが利用できません', title='!')
 
 
@@ -157,8 +167,6 @@ all_convsound = (ext_dict['sound'][0] + ext_dict['sound'][2])#全変換用音源
 kbps_list = ['128', '112', '96', '64', '56', '48', '32']
 Hz_list = ['44100', '22050', '11025']
 
-sg.theme('DarkBlue12')#テーマ設定
-
 col = [
 	[sg.Text('入力先：'), sg.InputText(k='input_dir', size=(67, 15), readonly=True), sg.FolderBrowse()],
 	[sg.Text('出力先：'), sg.InputText(k='output_dir', size=(67, 15), readonly=True), sg.FolderBrowse()],
@@ -172,20 +180,20 @@ frame_1 = sg.Frame('画像', [
 	[sg.Text('JPG品質：'), sg.Slider(range=(100,1), default_value=95, k='jpg_quality', pad=((0,0),(0,0)), orientation='h')],
 	[sg.Checkbox('無透過のPNGをJPGに変換&拡張子偽装', k='jpg_mode', default=True)],
 	[sg.Checkbox('透過用BMPの横解像度を偶数に指定', k='img_even', default=True)],
-	[sg.Checkbox('smjpeg_encode.exeで動画を変換する', k='vid_flag', disabled=smjpeg_notexist)],
+	[sg.Checkbox('カーソルを標準の画像へ強制上書き', k='cur_overwrite', default=False)],
 ], size=(300, 205))
 
 frame_2 = sg.Frame('音源', [
-	[sg.Checkbox('音源をOGGへ圧縮する', k='ogg_mode', disabled=ffmpeg_notexist)],
-	[sg.Text('BGM：'), sg.Combo(values=(kbps_list), default_value='112', readonly=True, k='BGM_kbps', disabled=ffmpeg_notexist), sg.Text('kbps'), 
-	 sg.Combo(values=(Hz_list), default_value='44100', readonly=True, k='BGM_Hz', disabled=ffmpeg_notexist), sg.Text('Hz'),],
-	[sg.Text('SE：'), sg.Combo(values=(kbps_list), default_value='56', readonly=True, k='SE_kbps', disabled=ffmpeg_notexist), sg.Text('kbps'), 
-	 sg.Combo(values=(Hz_list), default_value='22050', readonly=True, k='SE_Hz', disabled=ffmpeg_notexist), sg.Text('Hz'),],
+	[sg.Checkbox('音源をOGGへ圧縮する', k='ogg_mode', default=ffmpeg_exist, disabled=(not ffmpeg_exist))],
+	[sg.Text('BGM：'), sg.Combo(values=(kbps_list), default_value='112', readonly=True, k='BGM_kbps', disabled=(not ffmpeg_exist)), sg.Text('kbps'), 
+	 sg.Combo(values=(Hz_list), default_value='44100', readonly=True, k='BGM_Hz', disabled=(not ffmpeg_exist)), sg.Text('Hz'),],
+	[sg.Text('SE：'), sg.Combo(values=(kbps_list), default_value='56', readonly=True, k='SE_kbps', disabled=(not ffmpeg_exist)), sg.Text('kbps'), 
+	 sg.Combo(values=(Hz_list), default_value='22050', readonly=True, k='SE_Hz', disabled=(not ffmpeg_exist)), sg.Text('Hz'),],
 ], size=(300, 125), pad=(0,0))
 
 frame_3 = sg.Frame('その他', [
-	[sg.Checkbox('常にメモリ内にフォントを読み込んでおく', k='ram_font', default=True)],
-	[sg.Checkbox('nsaed.exeで出力ファイルを圧縮する', k='nsa_mode', disabled=nsaed_notexist)],
+	[sg.Checkbox('smjpeg_encode.exeで動画を変換する', k='vid_flag', default=smjpeg_exist, disabled=(not smjpeg_exist))],
+	[sg.Checkbox('nsaed.exeで出力ファイルを圧縮する', k='nsa_mode', default=nsaed_exist, disabled=(not nsaed_exist))],
 ], size=(300, 80), pad=(0,0))
 
 flame_4 = sg.Frame('', [
@@ -199,9 +207,9 @@ flame_5 = sg.Frame('', [
 	[sg.Button('convert', pad=(9,6))]
 ], size=(70, 40))
 
-progressbar = [
-	[sg.ProgressBar(10000, orientation='h', size=(55.4, 15), key='progressbar')]
-]
+progressbar = sg.Frame('', [
+	[sg.ProgressBar(10000, orientation='h', size=(60, 15), key='progressbar')]
+], size=(610, 25))
 
 frame_in_2and3 = sg.Column([[frame_2],[frame_3]])
 
@@ -329,7 +337,7 @@ def func_txt_zero(text):
 		print('不正なtxtが存在します')
 		err_flag = True#シナリオじゃなさそうなのでエラー
 
-	if re.search(r'\nnsa', text) == None :#nsa読み込み命令が無い時
+	if re.search(r'\n[ |\t]*nsa[ |\t]*\n', text) == None :#nsa読み込み命令が無い時
 		text = re.sub(r'\*define', r'*define\nnsa', text, 1)#*define直下に命令追記(保険)
 
 
@@ -340,9 +348,9 @@ def func_txt_all(text):
 	global alpha_img_list_tup
 
 	#-PSPで使用できない命令を無効化する-
-	text = re.sub(r'avi "(.+?)",([0|1])', r'mpegplay "\1",\2', text)#aviをmpegplayで再生(後に拡張子偽装)
-	text = re.sub(r'okcancelbox %(.+?),', r'mov %\1,1 ;', text)#okcancelboxをmovで強制ok
-	text = re.sub(r'yesnobox %(.+?),', r'mov %\1,1 ;', text)#yesnoboxをmovで強制yes
+	text = re.sub(r'([\n|\t|:| ])avi "(.+?)",([0|1])', r'\1mpegplay "\2",\3', text)#aviをmpegplayで再生(後に拡張子偽装)
+	text = re.sub(r'([\n|\t|:| ])okcancelbox %(.+?),', r'\1mov %\2,1 ;', text)#okcancelboxをmovで強制ok
+	text = re.sub(r'([\n|\t|:| ])yesnobox %(.+?),', r'\1mov %\2,1 ;', text)#yesnoboxをmovで強制yes
 
 	#-拡張子置換-
 	#変数作成
@@ -363,9 +371,10 @@ def func_txt_all(text):
 	if values['vid_flag']:#動画変換処理を行う場合
 		vid_list_rel += re.findall(r'mpegplay "(.+?)",[0|1]', text)#txt内の動画の相対パスを格納
 	else:#動画変換処理を行わない場合
+		text = re.sub(r'mpegplay "(.+?)",[0|1]:', r'', text)#if使用時 - 再生部分を抹消
 		text = text.replace('mpegplay ', ';mpegplay ')#再生部分をコメントアウト
 
-	open(textpath, mode='w', encoding=text_char).write(text)#全置換処理終了後書き込み
+	open(textpath, mode='w').write(text)#全置換処理終了後書き込み
 
 
 
@@ -469,20 +478,30 @@ def func_image_conv(file, file_ext):
 	#---変換後サイズを指定---
 	result_width = round(img.width*per)
 	result_height = round(img.height*per)
-
+	
+	#---拡張子偽装済みカーソル(!?)対策のため名前だけ取り出し変数に代入---
+	file_nameonly = os.path.splitext(os.path.basename(file))[0]#実際あるんですよ行儀悪い同人ゲーとかで
 
 	#---通常画像とカーソル画像がココで分岐---
-	if os.path.basename(file) in cur_dictlist[0].keys():#画像がカーソル
-		
-		#---読み込んだものと同名のカーソルを辞書から持ってくる&デコード&代入---
-		img_default = Image.open(BytesIO(base64.b64decode(cur_dictlist[2][os.path.basename(file)])))
+	if file_nameonly + r'.bmp' in cur_dictlist[0].keys():#画像がカーソル
 
-		#---画素比較のためnumpyへ変換---
-		np_img_default = np.array(img_default)
-		np_img = np.array(img)
+		#---カーソル強制上書きモード判断---
+		if values['cur_overwrite'] == True:
+			cur_conv = True
+
+		else:
+			#---読み込んだものと同名のカーソルを辞書から持ってくる&デコード&代入---
+			img_default = Image.open(BytesIO(base64.b64decode(cur_dictlist[2][file_nameonly + r'.bmp'])))
+
+			#---画素比較のためnumpyへ変換---
+			np_img_default = np.array(img_default)
+			np_img = np.array(img)
+
+			#---結果を変数へ代入---
+			cur_conv = np.array_equal(np_img, np_img_default)
 
 		#---画素比較---
-		if np.array_equal(np_img, np_img_default):#カーソルが公式の画像と同一の時
+		if cur_conv:#カーソルが公式の画像と同一の時
 			if values['res_NoChange']:#解像度無変更時
 				#-変更の必要なし→そのまま代入-
 				img_resize = img_default
@@ -492,7 +511,7 @@ def func_image_conv(file, file_ext):
 				cur_dictnum = int(per < 0.5)#bool(T/F)の結果をint(1/0)にしているがもしかしたら型変換不要かも？
 
 				#-読み込んだものと同じカーソルの縮小版を辞書から持ってくる&デコード&代入-
-				img_resize = Image.open(BytesIO(base64.b64decode(cur_dictlist[cur_dictnum][os.path.basename(file)])))
+				img_resize = Image.open(BytesIO(base64.b64decode(cur_dictlist[cur_dictnum][file_nameonly + r'.bmp'])))
 
 		else:#カーソルが独自の画像の時
 			if (img.mode != 'RGB'):#RGBじゃない画像をRGB形式に
@@ -634,11 +653,6 @@ def func_arc_nsa(arc_num):
 
 #-----ons.ini作成-----
 def func_ons_ini():
-	#-メモリにフォントを読み込んでおくか-
-	if values['ram_font']:
-		ini_fm = 'ON'
-	else:
-		ini_fm = 'OFF'
 
 	#-解像度拡大-
 	if values['size_normal']:#拡大しない
@@ -665,7 +679,7 @@ def func_ons_ini():
 		'ASPECT=' + ini_asp + '\n',
 		'SCREENBPP=32\n',
 		'CPUCLOCK=333\n',
-		'FONTMEMORY=' + ini_fm + '\n',
+		'FONTMEMORY=ON\n',
 		'ANALOGKEY=ON1\n',
 		'CURSORSPEED=10\n',
 		'SAMPLINGRATE=' + ini_rate +'\n',
@@ -702,7 +716,6 @@ while True:
 		search_dir = (values['input_dir'])
 		result_dir = (values['output_dir'] + r'/result')
 
-
 		#-----入出力先のパスが競合しそうなら勝手に消す-----
 		if os.path.exists(result_dir):
 			shutil.rmtree(result_dir)
@@ -722,9 +735,7 @@ while True:
 			alpha_img_list_tup = []#txt内の画像(透明指定だけど透過画像じゃないやつ)の相対パスを格納するための配列
 
 			for i,textpath in enumerate(text_list):
-				text = open(textpath, 'rb').read()#一旦バイナリで読む
-				text_char = str(detect(text)['encoding'])#文字コード判定
-				text = open(textpath, 'r', encoding=text_char).read()#再度テキストを読み込み
+				text = open(textpath, 'r', errors="ignore").read()#テキストを読み込み
 
 				if textpath == (result_dir + r'/0.txt'):#[関数]0.txt読み込み時(初回限定)処理
 					game_mode = 0
