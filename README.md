@@ -1,14 +1,14 @@
 # ONScripter_Multi_Converter
  本ソフトは、ONScripter for PSP向けに制作された<br>
  **シナリオファイル/動画/画像/音源** 総合変換ツールです。<br>
- 一応[C&D; Tools Win GUI](https://web.archive.org/web/20170419120050/http://www.geocities.jp/stm_torm/ons/tool.html)の後継を目指し作りましたが、<br>
+ 一応[C&D; Tools Win GUI](https://web.archive.org/web/20170419120050fw_/http://www.geocities.jp/stm_torm/ons/tool.html)の後継を目指し作りましたが、<br>
  まだまだ不完全な状態です...(展開作業が手動な所など)<br>
 
 ## 動作に必要なもの
  - ["ONScripter_Multi_Converter" exe本体](https://github.com/Prince-of-sea/ONScripter_Multi_Converter/releases/download/v1/NSC2ONS4PSP.exe)
  - [smjpeg_encode.exe(すとーむ様作成)](http://web.archive.org/web/20130203074100/http://www.geocities.jp/stm_torm/ons/smjpeg4.zip)
  - [nsaed.exe(すとーむ様作成)](https://web.archive.org/web/20130328141650/http://www.geocities.jp/stm_torm/nsaed2.zip)
- - [GARBro](https://github.com/morkt/GARbro/releases/tag/v1.5.44)
+ - [GARBro.Console(게지네様作成)](https://drive.google.com/file/d/1gH9nNRxaz8GexN0B1hWyUc3o692bkWXX/view)
  - [FFmpeg](https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-full.7z)
  - [NScripterで制作されたゲーム](https://erogamescape.dyndns.org/~ap2/ero/toukei_kaiseki/attlist.php?att[66]=on)(当然ですが...)
 
@@ -28,27 +28,6 @@
  [こちら](./TITLELIST.md)へまとめておきました
 
 ## 使い方
-### 展開作業
- 1. 適当な名前のゲーム用[ディレクトリ](https://www.google.com/search?q=%E3%83%87%E3%82%A3%E3%83%AC%E3%82%AF%E3%83%88%E3%83%AA)を作成し、そこに<u>exe、dll、</u><br>
- <u>nsaやsar、readme、セーブ(gloval.sav/save●.dat/envdata)</u>を**除く**<br>
- **[隠しフォルダを含めた](https://www.google.com/search?q=windows+%E9%9A%A0%E3%81%97%E3%83%95%E3%82%A9%E3%83%AB%E3%83%80+%E8%A1%A8%E7%A4%BA)全てのファイル**をコピーします<br>
- 
- 1. GARBroをDL後、展開(またはインストール)し起動します<br>
-
- 1. GARBro側で変換するゲームの"arc●.nsa"または"arc.sar"を選択<br>
- (複数ある場合は**最も末尾の数字が大きいもの**を選択)<br>
- 右クリックメニューから"アーカイブからファイルの抽出"<br>
-
- 1. 抽出先に先ほど作ったゲーム用ディレクトリを指定し、<br>
- (なければ展開時に自動で作ってくれます)<br>
- 以下のような設定で抽出を行います<br>
- ![抽出設定](./tools/md_arc.png)
-
- 1. nsaやsarの**最も末尾の数字が大きいもの**から順番に、<br>
- 「3.～4.」で行った処理を繰り返します<br>
- (例:arc3.nsa → arc2.nsa → arc1.nsa → arc.nsa)<br>
- 同一のファイル名が存在した場合は**上書き**してください<br>
-
 ### 変換前準備
  1. 上記"動作に必要なもの"をDLし、.zipや.7zは展開します<br>
  (→7zが展開できない方は[こちら](https://forest.watch.impress.co.jp/library/software/7zip/))<br>
@@ -59,6 +38,8 @@
  1. DLした"NSC2ONS4PSP.exe"と同一の階層(同じ場所)に<br>
  "tools"という名前をつけたディレクトリを作成し、そこへ<br>
  先ほど展開した"nsaed.exe"と"smjpeg_encode.exe"を移動します<br>
+ GARBro.consoleに関しては、展開後、<br>
+ "展開したディレクトリごと"toolsへ置いてください<br>
 
  1. 最終的にファイルを以下のような配置にして準備完了です<br>
  (それぞれのディレクトリの場所は問いません)
@@ -68,19 +49,22 @@
    ffprobe.exe
 
 
-[適当な名前のゲーム用ディレクトリ]
-   nscript.datまたは0.txt、00.txt
-   (存在する場合は1~9.txt/01~09.txt)
-   {コピーしてきたファイル/ディレクトリ}
-   {arc.nsaの展開物}
+[ゲーム用ディレクトリ]
+   {nscripter製のゲームデータ}
 
 
 [適当な名前のツール用ディレクトリ]
 │  NSC2ONS4PSP.exe
 │  
 └─tools
-        nsaed.exe
-        smjpeg_encode.exe
+    │  nsaed.exe
+    │  smjpeg_encode.exe
+    │
+    └─Garbro_console
+        │  GARbro.Console.exe
+        │  {その他大量のファイル}
+        │
+        └─  {その他いくつかのディレクトリ}
 ```
 
 ### ツールの設定

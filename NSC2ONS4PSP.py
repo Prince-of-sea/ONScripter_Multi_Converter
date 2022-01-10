@@ -8,29 +8,25 @@ import base64
 import json
 import math
 import stat
+import glob
 import sys
 import os
 import re
 
 ####################################################################################################
-window_title = 'ONScripter Multi Converter for PSP ver.1.01'
+window_title = 'ONScripter Multi Converter for PSP ver.1.10'
 ####################################################################################################
 
 # -memo-
 # __file__だとexe化時subprocessの相対パス読み込みﾀﾋぬのでsys.argv[0]使う
 # BGMとSEの区別もうちょいマシな方法ないか模索中
 # jsonでの作品個別処理何も実装してねぇ...
-# もうopencv使うのは諦めよう
+# os.path.joinを使わないパスの結合をやめないとマズイ気がする
 
-
-# -最新の更新履歴(v1.0.1)- 
-# txt読み込み時の文字コード指定を削除
-# cursor.xxxが.bmp以外の場合に対応
-# フォントのON/OFFを削除
-# 動画変換を"その他"欄へ移動
-# "カーソルを標準の画像へ強制上書き"実装
-# デフォルトでチェック入っている項目をいくつか変更
-# 初回のエラー表示にテーマが反映されてなかったのを修正
+# -最新の更新履歴(v1.1.0)- 
+# GARBroでのアーカイブ自動展開に対応
+# ↑に関する大幅な修正(_tempを作るようになったことなど)
+# その他多少変数の名前を分かりやすくしたつもり
 
 # これを読んだあなた。
 # どうかこんな可読性の欠片もないクソコードを書かないでください。
@@ -103,6 +99,14 @@ if os.path.exists(nsaed_path):
 else:
 	nsaed_exist = False
 	sg.popup('./tools/nsaed.exeが利用できません', title='!')
+
+#-----Garbro存在チェック-----
+GARbro_path = ((os.path.dirname(sys.argv[0])) + r'/tools/Garbro_console/GARbro.Console.exe')
+if os.path.exists(GARbro_path):
+	GARbro_exist = True
+else:
+	GARbro_exist = False
+	sg.popup('./tools/Garbro_console/GARbro.Console.exeが利用できません', title='!')
 
 #-----smjpeg存在チェック(ffmpeg非導入時は強制NG)-----
 smjpeg_path = ((os.path.dirname(sys.argv[0])) + r'/tools/smjpeg_encode.exe')
@@ -240,7 +244,7 @@ def func_progbar_update(mode, num, nummax):#イマイチ自分でも何書いて
 def func_dir_err():
 	global err_flag
 
-	if not (values['input_dir']):#output_dirと表記を合わせるためあえてsearch_dir未使用
+	if not (values['input_dir']):#output_dirと表記を合わせるためあえてtemp_dir未使用
 		sg.popup('入力先が指定されていません', title='!')
 		err_flag = True
 	elif os.path.exists(values['input_dir']) == False:
@@ -377,6 +381,39 @@ def func_txt_all(text):
 	open(textpath, mode='w').write(text)#全置換処理終了後書き込み
 
 
+#-----tempフォルダを作り展開&コピー-----
+def func_arc_ext():
+
+	#---存在するarcをここで全てリスト化(もちろん上書き順は考慮)---
+	shutil.copytree(search_dir, temp_dir, ignore=shutil.ignore_patterns('*.sar', '*.nsa', '*.ns2', '*.exe', '*.dat', '*.sav', 'envdata'))
+	temp_arc = []
+	temp_arc += sorted(glob.glob(search_dir + r'/*.ns2'))
+	temp_arc += reversed(sorted(glob.glob(search_dir + r'/*.nsa')))
+	temp_arc += reversed(sorted(glob.glob(search_dir + r'/*.sar')))
+
+	#---↑のリスト順にarcを処理---
+	for path in temp_arc:
+
+		#---展開時競合するファイルを先に削除(GARBroに上書きオプションがないため)---
+		#はじめは"input=a"とかで上書き確認へ応答処理しようと思ってたけど
+		#どうもinputとpyinstraller -noconsoleって両立できないんだよね...
+
+		#-展開予定のファイル一覧を取得-
+		txtline = subprocess.check_output([GARbro_path, 'l',path,]
+					,shell=True, **subprocess_args(False))#check_output時はFalse 忘れずに
+
+		#-一行ずつ処理-
+		for txt in txtline.decode('cp932', 'ignore').splitlines():#なぜかtxtlineがbyteなのでデコード(エラー無視)
+			arc_path_rel = re.findall('\[.+?\] +[0-9]+? +(.+)',txt)#不要部分の切り出し
+			if arc_path_rel:#切り出しに成功した場合
+				arc_path = os.path.join(temp_dir, arc_path_rel[0])#絶対パスに変換
+				if os.path.exists(arc_path):#ファイルが存在する場合
+					os.remove(arc_path)#削除
+
+		#-展開-
+		subprocess.run([GARbro_path, 'x','-o', temp_dir, path,]
+			,shell=True, **subprocess_args(True))
+
 
 #-----格納されたtxt内の動画の相対パスを処理-----
 def func_vid_conv(vid, vid_result):
@@ -463,17 +500,18 @@ def func_image_conv(file, file_ext):
 	#---arc.nsa向けフォルダ分け用処理---
 	if values['nsa_mode'] == True:
 		#---先にファイル保存用ディレクトリを作成---
-		os.makedirs((search_dir_result.replace(search_dir,(result_dir + r'/arc' ))), exist_ok=True)
+		os.makedirs((result_dir_ff.replace(temp_dir,(result_dir + r'/arc' ))), exist_ok=True)
 		#---ファイル保存先パス用変数を代入---
-		result_dir_forfile = (result_dir + r'/arc')
+		result_dir2 = (result_dir + r'/arc')
 
 	else:#通常時フォルダ分け用処理
-		os.makedirs((search_dir_result.replace(search_dir,result_dir)), exist_ok=True)#保存先作成
-		result_dir_forfile = result_dir#保存先パス用変数を代入
+		os.makedirs((result_dir_ff.replace(temp_dir,result_dir)), exist_ok=True)#保存先作成
+		result_dir2 = result_dir#保存先パス用変数を代入
 
 
 	#---出力先パス用変数の代入---
-	file_result = (file.replace(search_dir,result_dir_forfile))
+	file_result = file.replace(temp_dir,result_dir2)
+
 
 	#---変換後サイズを指定---
 	result_width = round(img.width*per)
@@ -594,24 +632,24 @@ def func_music_conv(file):
 	#---arc.nsa向けフォルダ分け用処理---
 	if values['nsa_mode']:
 		#---ディレクトリ名に"bgm"とあるかで判定---
-		if 'bgm' in str(search_dir_result):
+		if 'bgm' in str(result_dir_ff):
 			arc_num_sound = r'2'
 		else:
 			arc_num_sound = r'1'
 
 		#---先にファイル保存用ディレクトリを作成---
-		os.makedirs((search_dir_result.replace(search_dir, (result_dir + r'/arc' + arc_num_sound))), exist_ok=True)
+		os.makedirs((result_dir_ff.replace(temp_dir, (result_dir + r'/arc' + arc_num_sound))), exist_ok=True)
 		#---ファイル保存先パス用変数を代入---
-		result_dir_forfile = (result_dir + r'/arc' + arc_num_sound)
+		result_dir2 = (result_dir + r'/arc' + arc_num_sound)
 		
 	else:#通常時フォルダ分け用処理
-		os.makedirs((search_dir_result.replace(search_dir,result_dir)), exist_ok=True)#保存先作成
-		result_dir_forfile = result_dir#保存先パス用変数を代入
+		os.makedirs((result_dir_ff.replace(temp_dir,result_dir)), exist_ok=True)#保存先作成
+		result_dir2 = result_dir#保存先パス用変数を代入
 
 	#---ogg変換用処理---
 	if values['ogg_mode']:
 		#---ディレクトリ名に"bgm"とあるかで判定---
-		if 'bgm' in str(search_dir_result):	
+		if 'bgm' in str(result_dir_ff):	
 			result_kbps = str(values['BGM_kbps']) + 'k'
 			result_Hz = str(values['BGM_Hz'])
 		else:
@@ -619,7 +657,7 @@ def func_music_conv(file):
 			result_Hz = str(values['SE_Hz'])
 
 	#---出力先パスの代入---
-	file_result = (file.replace(search_dir,result_dir_forfile))
+	file_result = (file.replace(temp_dir,result_dir2))
 	
 	if values['ogg_mode']:
 		subprocess.run(['ffmpeg', '-y',
@@ -713,18 +751,21 @@ while True:
 			progbar_per[4] = 0
 
 		#-----ディレクトリのパスを先に代入-----
+		temp_dir = (os.path.dirname(sys.argv[0]).replace('\\','/') + r'/_temp')
 		search_dir = (values['input_dir'])
 		result_dir = (values['output_dir'] + r'/result')
 
 		#-----入出力先のパスが競合しそうなら勝手に消す-----
 		if os.path.exists(result_dir):
 			shutil.rmtree(result_dir)
+		if os.path.exists(temp_dir):
+			shutil.rmtree(temp_dir)
 
 		#-----[関数]入出力先未指定/競合時エラー-----
 		func_dir_err()
 
 		#-----[関数]シナリオ復号&コピー周り-----
-		if err_flag == False:	
+		if err_flag == False:
 			text_list = []
 			func_ext_dec()
 			func_progbar_update(0, 1, 1)#左から順に{種類, 現在の順番, 最大数}
@@ -749,6 +790,9 @@ while True:
 		#-----ココから本処理(エラーメッセージなし)-----
 		if err_flag == False:
 
+			#---[関数]tempフォルダを作り展開&コピー---
+			func_arc_ext()
+
 			#---解像度指定---
 			if values['res_320']:#ラジオボタンから代入
 				resolution = 320
@@ -764,8 +808,8 @@ while True:
 				#---[関数]格納されたtxt内の動画の相対パスを処理---
 				for i,vid_rel in enumerate(set(vid_list_rel)):#set型で重複削除
 					vid_rel = vid_rel.replace('\\','/')#文字列として扱いづらいのでとりあえず\置換
-					vid = search_dir + '/' + vid_rel#格納された相対パスを絶対パスへ - os.path.join使うべきかもなぁ
-					vid_result = result_dir + '/' + vid_rel#処理後の保存先 - ここもos.path.join使うべきかもなぁ			
+					vid = temp_dir + '/' + vid_rel#格納された相対パスを絶対パスへ - os.path.join使うべきかもなぁ
+					vid_result = result_dir + '/' + vid_rel#処理後の保存先 - ここもos.path.join使うべきかもなぁ
 				
 					func_vid_conv(vid, vid_result)
 					func_progbar_update(2, i, len(set(vid_list_rel)))#左から順に{種類, 現在の順番, 最大数}
@@ -777,20 +821,20 @@ while True:
 			#---txtから透過処理のあるスプライト表示命令を検知し画像のパスを配列へ格納---
 			alpha_img_list = []
 			for alpha_img_tup in set(alpha_img_list_tup) :#set型で重複削除
-				alpha_img_list.append( ( search_dir + '/' + (alpha_img_tup[2].replace('\\','/')) ).lower() )#格納された相対パスを小文字に&絶対パスへ
+				alpha_img_list.append( ( temp_dir + '/' + (alpha_img_tup[2].replace('\\','/')) ).lower() )#格納された相対パスを小文字に&絶対パスへ
 
 			#---全ファイルのフルパスを配列に代入---
-			search_dir_result = ""
+			result_dir_ff = ""
 			files_list = []
-			for search_dir_result, sub_dirs, files_list_rel in os.walk(search_dir): #サブフォルダ含めファイル検索
+			for result_dir_ff, sub_dirs, files_list_rel in os.walk(temp_dir): #サブフォルダ含めファイル検索
 				for file_name in files_list_rel:
-					files_list.append(os.path.join(search_dir_result,file_name))#パスを代入
+					files_list.append(os.path.join(result_dir_ff,file_name))#パスを代入
 
 
 			for i,file in enumerate(files_list):
 
 				#フルパスからまたディレクトリ部分切り出し
-				search_dir_result = os.path.dirname(file)#さっきせっかく結合したのに無駄だなぁ
+				result_dir_ff = os.path.dirname(file)#さっきせっかく結合したのに無駄だなぁ
 				
 				file = file.replace('\\','/')#文字列として扱いづらいのでとりあえず\置換
 				file_ext = (os.path.splitext(file)[1]).lower()#パスから拡張子を取り出し&強制小文字
@@ -815,6 +859,9 @@ while True:
 
 			#-----[関数]ons.ini作成------
 			func_ons_ini()
+
+			#-----tempを削除-----
+			shutil.rmtree(temp_dir)
 			
 			#-----終了メッセージ-----
 			sg.popup('処理が終了しました', title='!')
