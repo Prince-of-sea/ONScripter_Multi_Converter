@@ -1,8 +1,43 @@
 # ONScripter_Multi_Converter
- 本ソフトは、ONScripter for PSP向けに制作された<br>
- **シナリオファイル/動画/画像/音源** 総合変換ツールです。<br>
- 一応[C&D; Tools Win GUI](https://web.archive.org/web/20170419120050fw_/http://www.geocities.jp/stm_torm/ons/tool.html)の後継を目指し作りましたが、<br>
- まだまだ不完全な状態です...(展開作業が手動な所など)<br>
+## ツールについて
+ ONScripter for PSP向けに制作された総合変換ツールです。<br>
+ シナリオのデコードや命令の置換に文字サイズの拡大、<br>
+ 画像の縮小や音楽の圧縮、専用形式への動画の変換<br>
+ さらにはそれらの分割/アーカイブ化まで<br>
+ ONScripter for PSPに必要な処理を一括で行ないます<br>
+ 一応[C&D; Tools Win GUI](https://web.archive.org/web/20170419120050fw_/http://www.geocities.jp/stm_torm/ons/tool.html)の後継を目指し作りました<br>
+ <br>
+ 元々Python完全初心者が見切り発車で始めたものなので<br>
+ ソースの可読性の低さについてはご了承ください...<br>
+
+## 特徴
+ 本ツールは必要なソフト含めすべてインストール不要で、<br>
+ ファイルを準備しゲームを指定するだけで変換できます<br>
+ 画像や音楽、テキストごとに専用のソフトをDLし、<br>
+ インストールして一つ一つ手動で処理する必要はありません<br>
+ <br>
+ また、一般的に利用されてきた汎用画像縮小ツールと違い<br>
+ 0.txtから画像の状態を読み取って個別処理しているため<br>
+ 文字ウインドウのカーソルや分割されたスプライトの縮小を<br>
+ ほぼ座標ズレや透過ミスを起こさずに行えます<br>
+ (命令文に独自の変数を使って表示している場合や<br>
+  連番jpgなどでパス内に変数がある場合除く)<br>
+
+## 変換可能な作品
+ [こちら](./TITLELIST.md)へまとめておきました
+
+## 動作環境
+ 対応OS等の細かい検証は特に行っていません<br>
+ 多分今どきの環境なら普通に動くと思います<br>
+ 展開や変換にそこそこの容量を必要とするため<br>
+ 最低でも変換するゲームの3倍程度の空き容量は用意してください<br>
+ <br>
+ [制作/検証に使用した作者のPC環境]<br>
+ CPU:AMD Ryzen 5 1600AF<br>
+ RAM:DDR4 3200MHz 16GB x2 (計32GB)<br>
+ OS:Windows10 20H2 64bit<br>
+ FFmpeg-version:2021-05-05-git-7c451b609c<br>
+ Python-version:Python 3.7.7
 
 ## 動作に必要なもの
  - ["ONScripter_Multi_Converter" exe本体](https://github.com/Prince-of-sea/ONScripter_Multi_Converter/releases/latest)
@@ -11,21 +46,6 @@
  - [GARBro.Console(게지네様作成)](https://drive.google.com/file/d/1gH9nNRxaz8GexN0B1hWyUc3o692bkWXX/view)
  - [FFmpeg](https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-full.7z)
  - [NScripterで制作されたゲーム](https://erogamescape.dyndns.org/~ap2/ero/toukei_kaiseki/attlist.php?att[66]=on)(当然ですが...)
-
-## 動作環境
- 対応OS等の細かい検証は特に行っていません<br>
- 多分今どきの環境なら普通に動くと思います<br>
- 展開や変換にそこそこの容量を必要とするため<br>
- 最低でも<u>変換するゲームの3倍程度</u>の空き容量は用意してください<br>
- <br>
- [制作/検証に使用した作者のPC環境]<br>
- CPU:AMD Ryzen 5 1600AF<br>
- RAM:DDR4 3200MHz 16GB x2 (計32GB)<br>
- OS:Windows10 20H2 64bit<br>
- FFmpeg-version:2021-05-05-git-7c451b609c<br>
-
-## 変換可能な作品
- [こちら](./TITLELIST.md)へまとめておきました
 
 ## 使い方
 ### 変換前準備
@@ -76,7 +96,7 @@
  - **出力先**<br>
 [Browse]から出力先の任意のディレクトリを指定します<br>
 実際は「(選択したディレクトリ)\result」へ保存されます<br>
-また、ディレクトリが競合した場合<u>勝手に消す</u>ので注意！<br>
+また、ディレクトリが競合した場合**勝手に消す**ので注意！<br>
 
 #### 画像
  - **変換する解像度を指定**<br>
@@ -107,11 +127,11 @@
  画像の横解像度を偶数にすることによって、<br>
  "立ち絵の横に謎の縦線が表示される"不具合を回避します<br>
 
- - **カーソルを標準の画像へ強制上書き**<br>
- 元のカーソル画像を縮小して利用せずに、<br>
- NScripter/ONScripter標準の画像を利用します<br>
- 画面が崩れる場合があるため推奨しません<br>
- (デフォルトではチェックを外してあります)<br>
+ - **表示が小さすぎる文字を強制拡大**<br>
+ PSPで表示する際に小さすぎて読めないと思われる文字を<br>
+ 強制的にある程度のサイズまで拡大します<br>
+ 文字表示場所の座標修正などは行わないため、<br>
+ 作品によっては表示がおかしくなるかもしれません<br>
 
 #### 音源
  - **音源をOGGへ圧縮する**<br>
@@ -169,7 +189,7 @@
  - 本ツールの使用において生じた問題や不利益などについて、<br>
  製作者は一切その責任を負わないものとします<br>
  また、それらの問題を他のツールの製作者様や<br>
- ゲームメーカー様に問い合わせるのは<u>**絶対にやめてください**</u><br>
+ メーカー/サークル様に問い合わせるのは**絶対にやめてください**<br>
 
 ### 最後に
 ~~...今更PSPでノベルゲームやるやついる？~~<br>
