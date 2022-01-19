@@ -14,7 +14,7 @@ import os
 import re
 
 ####################################################################################################
-window_title = 'ONScripter Multi Converter for PSP ver.1.20'
+window_title = 'ONScripter Multi Converter for PSP ver.1.21'
 ####################################################################################################
 
 # -memo-
@@ -24,17 +24,9 @@ window_title = 'ONScripter Multi Converter for PSP ver.1.20'
 # os.path.joinを使わないパスの結合をやめないとマズイ気がする
 
 
-# -最新の更新履歴(v1.2.0)- 
-# 前verで.nbzの音源が読めなくなっていたのを修正
-#   GARBroに引数つけただけ
-# 新機能"表示が小さすぎる文字を強制拡大"追加
-#   表示崩れを防ぐためsetwindow(3含む)のみの処理です
-#   menusetwindowはそのままなのであしからず
-# 画像処理周りの大幅修正
-#   ゲーム側の命令文を読み込み、それに応じて分割後に縮小することで
-#   表示の座標ズレをほぼ無くすことに成功
-#   また、カーソル端の透過処理も大幅に改善
-#   ついでに偽装JPG化できる画像も増えてるから前verに比べて軽くなるはず
+# -最新の更新履歴(v1.2.1)- 
+# setcursor命令が見つからない場合、
+# cursor0.bmpを処理できなかったのを修正
 
 
 # これを読んだあなた。
@@ -126,7 +118,7 @@ else:
 	sg.popup('./tools/Garbro_console/GARbro.Console.exeが利用できません', title='!')
 
 if not GARbro_exist:#GARBroがない場合強制終了(仮)
-	exit()
+	sys.exit()
 
 #-----カーソル画像(容量削減のためpng変換済)をbase64にしたものを入れた辞書作成-----
 cur_dictlist = [
@@ -744,7 +736,7 @@ def func_image_conv(file, file_ext):
 				img_mask_crop = img_mask_crop.resize((crop_result_width-1, result_height-1), Image.NEAREST)#マスク画像はNEARESTで縮小
 				img_crop = Image.composite(img_crop, img_bg, img_mask_crop)#上記2枚を利用しimg_cropへマスク
 
-			img_resize.paste(img_crop, ((crop_result_width*i) + immode_cursor, immode_cursor))#結合用画像へ貼り付け - カーソルは左+上1px空ける
+			img_resize.paste(img_crop, (crop_result_width*i, immode_cursor))#結合用画像へ貼り付け - カーソルは上1px空ける
 
 	elif immode_nearest:
 		img_resize = img.resize((result_width, result_height), Image.NEAREST)#背景がボケると困る画像(NEAREST)
@@ -947,8 +939,8 @@ while True:
 				#---[関数]格納されたtxt内の動画の相対パスを処理---
 				for i,vid_rel in enumerate(set(vid_list_rel)):#set型で重複削除
 					vid_rel = vid_rel.replace('\\','/')#文字列として扱いづらいのでとりあえず\置換
-					vid = temp_dir + '/' + vid_rel#格納された相対パスを絶対パスへ - os.path.join使うべきかもなぁ
-					vid_result = result_dir + '/' + vid_rel#処理後の保存先 - ここもos.path.join使うべきかもなぁ
+					vid = os.path.join(temp_dir, vid_rel)#格納された相対パスを絶対パスへ
+					vid_result = os.path.join(result_dir, vid_rel)#処理後の保存先
 				
 					func_vid_conv(vid, vid_result)
 					func_progbar_update(2, i, len(set(vid_list_rel)))#左から順に{種類, 現在の順番, 最大数}
@@ -956,9 +948,17 @@ while True:
 
 			#-----画像/音源処理-----
 
+			#---画像分割用配列を作成&初期設定済みのものを代入---
+			tmode_img_list = [
+				[True, (temp_dir + r'/cursor0.bmp').lower(), 'l', '3'],
+				[True, (temp_dir + r'/cursor1.bmp').lower(), 'l', '3'],
+				[True, (temp_dir + r'/doncur.bmp').lower(), 'l', '1'],
+				[True, (temp_dir + r'/doffcur.bmp').lower(), 'l', '1'],
+				[True, (temp_dir + r'/uoncur.bmp').lower(), 'l', '1'],
+				[True, (temp_dir + r'/uoffcur.bmp').lower(), 'l', '1'],
+			]
 
 			#---txtから透過処理のあるスプライト表示命令を検知し分割/透明画像のパスを配列へ格納---
-			tmode_img_list = []
 			for t in set(immode_alpha_list_tup) :#set型で重複削除
 				if not re.match(':s', t[6]):#変数内にパスが入っている場合のみ処理
 					func_txt_lsp(t)
