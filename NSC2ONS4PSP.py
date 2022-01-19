@@ -25,8 +25,10 @@ window_title = 'ONScripter Multi Converter for PSP ver.1.21'
 
 
 # -最新の更新履歴(v1.2.1)- 
+# GARBroがなくて終了する際エラーが出ていたのを修正
 # setcursor命令が見つからない場合、
-# cursor0.bmpを処理できなかったのを修正
+#   cursor0.bmpを処理できなかったのを修正
+#   ついでにカーソル縮小時の挙動を変更
 
 
 # これを読んだあなた。
