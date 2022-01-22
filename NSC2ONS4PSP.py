@@ -14,21 +14,26 @@ import os
 import re
 
 ####################################################################################################
-window_title = 'ONScripter Multi Converter for PSP ver.1.21'
+window_title = 'ONScripter Multi Converter for PSP ver.1.2.2'
 ####################################################################################################
 
 # -memo-
 # __file__だとexe化時subprocessの相対パス読み込みﾀﾋぬのでsys.argv[0]使う
+# 同じような理由でexit()もsys.exit()にする
 # BGMとSEの区別もうちょいマシな方法ないか模索中
 # jsonでの作品個別処理何も実装してねぇ...
 # os.path.joinを使わないパスの結合をやめないとマズイ気がする
 
 
-# -最新の更新履歴(v1.2.1)- 
-# GARBroがなくて終了する際エラーが出ていたのを修正
-# setcursor命令が見つからない場合、
-#   cursor0.bmpを処理できなかったのを修正
-#   ついでにカーソル縮小時の挙動を変更
+# -最新の更新履歴(v1.2.2)- 
+# 今までタイトルが"ver.1.x.x"、ウィンドウが"ver.1.xx"となっていたのを、
+#   どちらも"ver.1.x.x"に統一
+# 0.txt専用置換処理が動いてなかったのを修正
+#   (nsa追記とか解像度の新nsc表記→旧nsc表記とか...)
+# 一部lspで呼び出されていたアルファ付き画像の処理で
+#   背景透過がうまくいってなかったのを修正
+# 一部lspで呼び出されていたカーソルの処理で
+#   縮小がうまくいってなかったのを修正
 
 
 # これを読んだあなた。
@@ -80,7 +85,6 @@ def subprocess_args(include_stdout=True):
 	return ret
 
 
-
 ######################################## GUI表示前の変数設定 ########################################
 
 sg.theme('DarkBlue12')#テーマ設定
@@ -119,7 +123,7 @@ else:
 	GARbro_exist = False
 	sg.popup('./tools/Garbro_console/GARbro.Console.exeが利用できません', title='!')
 
-if not GARbro_exist:#GARBroがない場合強制終了(仮)
+if not GARbro_exist:#GARBroがない場合強制終了
 	sys.exit()
 
 #-----カーソル画像(容量削減のためpng変換済)をbase64にしたものを入れた辞書作成-----
@@ -185,7 +189,7 @@ frame_1 = sg.Frame('画像', [
 	[sg.Text('変換する解像度を指定：')],
 	[sg.Radio(text='320x240', group_id='A', k='res_320'),
 	 sg.Radio(text='360x270', group_id='A', k='res_360', default=True),
-	 sg.Radio(text='そのまま', group_id='A', k='res_NoChange')],
+	 sg.Radio(text='640x480', group_id='A', k='res_640')],
 	[sg.Text('JPG品質：'), sg.Slider(range=(100,1), default_value=95, k='jpg_quality', pad=((0,0),(0,0)), orientation='h')],
 	[sg.Checkbox('無透過のPNGをJPGに変換&拡張子偽装', k='jpg_mode', default=True)],
 	[sg.Checkbox('透過用BMPの横解像度を偶数に指定', k='img_even', default=True)],
@@ -345,25 +349,27 @@ def func_txt_zero(text):
 	else:#ONS解像度無表記時
 		game_mode = 640#作品解像度を代入
 
-	if re.search(r'\*define', text) == None :#*defineがない時
+	if not re.search(r'\*define', text):#*defineがない時
 		sg.popup('不正なtxtが存在します', title='!')
 		err_flag = True#シナリオじゃなさそうなのでエラー
 
 	#画像が初期設定でどのような透過指定で扱われるかを代入
 	default_tmode= re.findall(r'\n[\t| ]*transmode ([leftup|rightup|copy|alpha])[\t| ]*', text)
 
-	if re.search(r'\n[\t| ]*nsa[\t| ]*', text) == None :#nsa読み込み命令が無い時
-		text = re.sub(r'\*define', r'*define\nnsa', text, 1)#*define直下に命令追記(保険)
-
 	#-解像度指定-
 	if values['res_320']:#ラジオボタンから代入
 		resolution = 320
 	elif values['res_360']:
 		resolution = 360
-	elif values['res_NoChange']:
-		resolution = game_mode
+	elif values['res_640']:
+		resolution = 640
+
+	if not re.search(r'\n[\t| ]*nsa[\t| ]*', text):#nsa読み込み命令が無い時
+		text = text.replace('*define', '*define\nnsa')#*define直下に命令追記(保険)
 
 	per = resolution / game_mode#画像縮小率=指定解像度/作品解像度
+
+	return text
 
 
 
@@ -426,14 +432,17 @@ def func_txt_all(text):
 		text = re.sub(r'mpegplay "(.+?)",[0|1]:', r'', text)#if使用時 - 再生部分を抹消
 		text = text.replace('mpegplay ', ';mpegplay ')#再生部分をコメントアウト
 
-	open(textpath, mode='w').write(text)#全置換処理終了後書き込み
+	return text
+
 
 
 #-----tempフォルダを作り展開&コピー-----
 def func_arc_ext():
 
-	#---存在するarcをここで全てリスト化(もちろん上書き順は考慮)---
+	#---その他ファイルをコピー---
 	shutil.copytree(search_dir, temp_dir, ignore=shutil.ignore_patterns('*.sar', '*.nsa', '*.ns2', '*.exe', '*.dll', '*.txt', '*.dat', '*.sav', 'envdata'))
+
+	#---存在するarcをここで全てリスト化(もちろん上書き順は考慮)---
 	temp_arc = []
 	temp_arc += sorted(glob.glob(search_dir + r'/*.ns2'))
 	temp_arc += reversed(sorted(glob.glob(search_dir + r'/*.nsa')))
@@ -445,21 +454,18 @@ def func_arc_ext():
 		#---展開時競合するファイルを先に削除(GARBroに上書きオプションがないため)---
 		#はじめは"input=a text=True"とかで上書き確認へ応答処理しようと思ってたけど
 		#どうもinputとpyinstraller -noconsoleって両立できないんだよね...
-
-		#-展開予定のファイル一覧を取得-
-		txtline = subprocess.check_output([GARbro_path, 'l',path,]
+		
+		txtline = subprocess.check_output([GARbro_path, 'l',path,]#展開予定のファイル一覧を取得
 					,shell=True, **subprocess_args(False))#check_output時はFalse 忘れずに
 
-		#-一行ずつ処理-
-		for txt in txtline.decode('cp932', 'ignore').splitlines():#なぜかtxtlineがbyteなのでデコード(エラー無視)
+		for txt in txtline.decode('cp932', 'ignore').splitlines():#一行ずつ処理 - なぜかtxtlineがbyteなのでデコード(エラー無視)
 			arc_path_rel = re.findall(r'\[.+?\] +[0-9]+? +(.+)',txt)#切り出し
 			if arc_path_rel:#切り出しに成功した場合
 				arc_path = os.path.join(temp_dir, arc_path_rel[0]).replace('.nbz', '.wav')#絶対パスに変換(&nbzをwavに)
 				if os.path.exists(arc_path):#ファイルが存在する場合
 					os.remove(arc_path)#削除
 
-		#-展開-
-		subprocess.run([GARbro_path, 'x', '-ca', '-o', temp_dir, path,]
+		subprocess.run([GARbro_path, 'x', '-ca', '-o', temp_dir, path,]#展開
 			,shell=True, **subprocess_args(True))
 		
 		func_progbar_update(1, i, len(temp_arc))#左から順に{種類, 現在の順番, 最大数}
@@ -468,7 +474,7 @@ def func_arc_ext():
 #-----格納されたtxt内の動画の相対パスを処理-----
 def func_vid_conv(vid, vid_result):
 
-	if os.path.isfile(vid) == False:#パスのファイルが実際に存在するかチェック
+	if not os.path.isfile(vid):#パスのファイルが実際に存在するかチェック
 		return#なければ終了
 
 	vidtmpdir = (os.path.splitext(vid_result)[0] + '_tmp')
@@ -487,7 +493,6 @@ def func_vid_conv(vid, vid_result):
 
 	#(横幅/2の切り上げ)*2でfpsを偶数へ
 	vid_frame = math.ceil(int(vid_frame)/2)*2#だって奇数fpsの動画なんてまず無いし...
-
 	vid_codec = (vid_info['streams'][0]['codec_name'])#コーデック取得
 
 	#-展開前にPSPの再生可能形式(MPEG-1か2)へ-
@@ -501,7 +506,6 @@ def func_vid_conv(vid, vid_result):
 			'-qscale', '0',
 			vid_result,
 		], shell=True, **subprocess_args(True))
-
 
 	#-連番画像展開-
 	subprocess.run(['ffmpeg', '-y',
@@ -539,25 +543,25 @@ def func_vid_conv(vid, vid_result):
 	shutil.rmtree(vidtmpdir)#作業用フォルダの削除
 
 
-#-----シナリオから画像の状態を抽出-----
-def func_txt_lsp(t):
-
+#-----シナリオから抽出した画像の状態を整形-----
+def func_tmode_img(t):
 	global tmode_img_list
+	inst = 'lsp'#とりあえず何もなければlsp
 
 	file = ( (temp_dir + '/' + t[6].replace('\\','/')).lower() )#相対パスを小文字に&絶対パスへ
 
-
 	#-"カーソル呼び出しで呼ばれた画像かどうか(≒カーソルか)"を代入-
-	cur_TF = (t[0] == ('setcursor' or 'abssetcursor'))
+	if (t[0] == ('setcursor' or 'abssetcursor')):
+		inst = 'cur'
 
-	#-カーソルではない場合もそれっぽい名前の場合カーソル扱い(笑)-
-	if (not cur_TF):#たまに「カーソルをsetcursorで呼ばない」作品とかあるんだよね...(例:サナララ)
+	#-カーソルではない場合もそれっぽい名前の場合カーソル扱い-
+	else:#たまに「カーソルをsetcursorで呼ばない」作品とかあるのでそれ対策
 		for n in ['cursor', 'offcur', 'oncur']:
 			if n in os.path.splitext(os.path.basename(file))[0]:
-				cur_TF = True
+				inst = 'cur'
 
 	#-画像タグ-
-	if (not cur_TF) and (os.path.splitext(file)[1]).lower() == '.png':#カーソルではない&画像がpngなら
+	if (not inst == 'cur') and (os.path.splitext(file)[1]).lower() == '.png':#カーソルではない&画像がpngなら
 		tmode = 'c'#基本無条件でcopy
 	elif t[3]:#画像タグ指定時
 		tmode = t[3]
@@ -577,9 +581,9 @@ def func_txt_lsp(t):
 	part_num = (ani_num * ((tmode == 'a') + 1) )
 
 	#-[カーソルかどうか, 絶対パス, 透過モード, 分割数]を代入
-	tmode_img_list.append([cur_TF, file, tmode, part_num])
+	tmode_img_list.append([inst, file, tmode, part_num])
 
-	#print([t[0], file, tmode, part_num])#Debug
+	#print([inst, file, tmode, part_num])#Debug
 
 
 #-----全画像変換処理部分-----
@@ -600,6 +604,22 @@ def func_image_conv(file, file_ext):
 		os.makedirs((result_dir_ff.replace(temp_dir,result_dir)), exist_ok=True)#保存先作成
 		result_dir2 = result_dir#保存先パス用変数を代入
 
+	file_result = file.replace(temp_dir,result_dir2)#出力先パス用変数の代入
+
+	if ('transparency' in img.info):#αチャンネル付き&非RGBAな画像をRGBAへ変換
+		img = img.convert('RGBA')
+	
+	elif (not img.mode == 'RGB') and (not img.mode == 'RGBA'):#その他RGBじゃない画像をRGB形式に(但しRGBAはそのまま)
+		img = img.convert('RGB')	
+
+	result_width = round(img.width*per)#変換後サイズを指定 - 横
+	result_height = round(img.height*per)#変換後サイズを指定 - 縦
+
+	#---縦/横幅指定が0以下の時1に---
+	if result_width < 1:#流石に1切ると変換できないので
+		result_width = 1
+	if result_height < 1:
+		result_height = 1
 
 	#---画像処理分岐用変数---
 	immode_nearest = False#NEARESTで圧縮する(≒LANCZOSで圧縮してはいけない)か
@@ -611,25 +631,9 @@ def func_image_conv(file, file_ext):
 
 	a_px = (0, 0, 0)#背景画素用仮変数
 
-	#---出力先パス用変数の代入---
-	file_result = file.replace(temp_dir,result_dir2)
-
-	#---変換後サイズを指定---
-	result_width = round(img.width*per)
-	result_height = round(img.height*per)
-
-	#---縦/横幅指定が0以下の時1に---
-	if result_width < 1:#流石に1切ると変換できないので
-		result_width = 1
-	if result_height < 1:
-		result_height = 1
-
-
 	#---"tmode_img_list"内にある場合---
 	if file.lower() in TIL_path:
 		tmode_img = tmode_img_list[TIL_path.index(file.lower())]#リスト逆引き
-
-		immode_alpha = (tmode_img[2] == ('l' or 'r') or (img.mode == 'RGBA' in img.info) )#immode_alphaにはT/Fが入る - Tなら無理
 
 		sp_val = int(tmode_img[3])
 		immode_crop = True
@@ -639,8 +643,7 @@ def func_image_conv(file, file_ext):
 			immode_copypng = True
 
 		#---カーソル専用処理---
-		if tmode_img[0]:
-			immode_cursor = True
+		if tmode_img[0] == 'cur':
 
 			#---画素比較のためnumpyへ変換---
 			np_img = np.array(img.convert('RGB'))
@@ -653,42 +656,43 @@ def func_image_conv(file, file_ext):
 				
 				#カーソルが公式の画像と同一の時
 				if np.array_equal(np_img, np_img_default):
+					immode_cursor = True
 					immode_defcur = k
 
 			#---(leftup/rightupのみ)背景色を抽出しそこからマスク画像を作成---
-			if (tmode_img[2] == ('l' or 'r')):
-				immode_nearest = True#輪郭がぼける(≒ゴミが入る)のを極力防ぐためNEAREST
-
-				if (not immode_defcur) and (img.mode != 'RGBA'):
+			if (tmode_img[2] == ('l' or 'r')) and (not immode_defcur) and (not immode_alpha) and (not img.mode == 'RGBA'):
+				immode_cursor = True
 				
-					img = img.convert('RGB')#編集のためまず強制RGB化
-					img_datas = img.getdata()#画像データを取得
+				img = img.convert('RGB')#編集のためまず強制RGB化
+				img_datas = img.getdata()#画像データを取得
 
-					if tmode_img[2] == 'l':
-						a_px = img.getpixel((0, 0))#左上の1pxを背景色に指定
-					elif tmode_img[2] == 'r':
-						a_px = img.getpixel((img.width-1, 0))#右上の1pxを背景色に指定
+				if tmode_img[2] == 'l':
+					a_px = img.getpixel((0, 0))#左上の1pxを背景色に指定
+				elif tmode_img[2] == 'r':
+					a_px = img.getpixel((img.width-1, 0))#右上の1pxを背景色に指定
 
-					img_mask = Image.new("L", img.size, 0)
+				img_mask = Image.new("L", img.size, 0)
 
-					#-ピクセル代入用配列作成-
-					px_list = []
-					mask_px_list = []
-					for px in img_datas:
-						if px == a_px:#背景色と一致したら
-							px_list.append((128, 128, 128))#灰色に
-							mask_px_list.append((0))#マスクは白
-						else:#それ以外は
-							px_list.append(px)#そのまま
-							mask_px_list.append((255))#マスクは黒
+				#-ピクセル代入用配列作成-
+				px_list = []
+				mask_px_list = []
+				for px in img_datas:
+					if px == a_px:#背景色と一致したら
+						px_list.append((128, 128, 128))#灰色に
+						mask_px_list.append((0))#マスクは白
+					else:#それ以外は
+						px_list.append(px)#そのまま
+						mask_px_list.append((255))#マスクは黒
 					
-						img.putdata(px_list)#完了
-						img_mask.putdata(mask_px_list)
-			
-
-
+					img.putdata(px_list)#完了
+					img_mask.putdata(mask_px_list)
+		
+		#---マスク画像処理を行わなかったものも含めleftup/rightupをimmode_alpha---
+		if not immode_alpha:
+			immode_alpha = ( tmode_img[2] == ('l' or 'r') )#immode_alphaにはT/Fが入る - Tなら無理
+	
 	#---立ち絵用横幅偶数指定(ホントはld命令抽出できたらいいんだけどね...)---
-	elif int(img.width) >= 4 and int(img.height) >= 4 and (not immode_alpha) and values['img_even']:#横4px以上&透明部分なし&偶数指定ON
+	elif int(img.width) >= 4 and (not immode_alpha) and values['img_even']:#縦横4px以上&透明部分なし&偶数指定ON
 
 		#---ピクセルの色数を変数に代入---
 		chara_mainL = img.getpixel((1, 1))#本画像部分左上1px - 1
@@ -700,14 +704,9 @@ def func_image_conv(file, file_ext):
 			sp_val = 2
 			immode_crop = True
 
-
-	#---RGBじゃない画像をRGB形式に(但しRGBAはそのまま)---
-	if (not immode_defcur) and (img.mode != 'RGB') and (img.mode != 'RGBA'):
-		img = img.convert('RGB')
-
 	#-----処理分岐-----
 	if immode_defcur:#デフォルトの画像そのままのカーソル
-		if values['res_NoChange']:#解像度無変更時
+		if values['res_640']:#解像度無変更時
 			#-変更の必要なし→そのまま代入-
 			img_resize = img_default
 
@@ -726,14 +725,14 @@ def func_image_conv(file, file_ext):
 
 		#---切り出し→縮小→再結合---
 		#  一部カーソル周りの処理は上記同様bool(T/F)をint(1/0)としてそのまま計算に使ってます
-		img_resize = Image.new('RGB', (crop_result_width*sp_val, result_height), a_px)#結合用画像
+		img_resize = Image.new(img.mode, (crop_result_width*sp_val, result_height), a_px)#結合用画像
 		for i in range(sp_val):#枚数分繰り返す
 			img_crop = img.crop((crop_width*i, 0, crop_width*(i+1), img.height))#画像切り出し
 			img_crop = img_crop.resize((crop_result_width - immode_cursor, result_height - immode_cursor), Image.LANCZOS)
 
 			#画像本体をLANCZOS、透過部分をNEARESTで処理することによってカーソルをキレイに縮小
 			if immode_cursor:#カーソル時
-				img_bg = Image.new('RGB', (crop_result_width-1, result_height-1), a_px)#ベタ塗りの背景画像を作成
+				img_bg = Image.new(img.mode, (crop_result_width-1, result_height-1), a_px)#ベタ塗りの背景画像を作成
 				img_mask_crop = img_mask.crop((crop_width*i, 0, crop_width*(i+1), img.height))#画像切り出し
 				img_mask_crop = img_mask_crop.resize((crop_result_width-1, result_height-1), Image.NEAREST)#マスク画像はNEARESTで縮小
 				img_crop = Image.composite(img_crop, img_bg, img_mask_crop)#上記2枚を利用しimg_cropへマスク
@@ -746,18 +745,17 @@ def func_image_conv(file, file_ext):
 	else:
 		img_resize = img.resize((result_width, result_height), Image.LANCZOS)#それ以外の画像(LANCZOS)
 
-
 	#-----画像保存-----
 	if immode_cursor:#カーソル
 		img_resize.save(file_result, 'PNG')#容量削減のためPNG
 
-	elif values['jpg_mode'] and (not immode_alpha) and (not immode_copypng):#jpg圧縮モード&透明部分なし
+	elif values['jpg_mode'] and (not immode_alpha) and (not img.mode == 'RGBA') and (not immode_copypng):#jpg圧縮モード&透明部分なし
 		img_resize.save((file_result), 'JPEG', quality=int(values['jpg_quality']))#jpgmode ON時の不透明png/bmp 拡張子偽装
 
 	elif file_ext in (ext_dict['image'][0]):#元々jpg
 		img_resize.save(file_result, quality=int(values['jpg_quality']))
 
-	else:#それ以外(pngかbmp)
+	else:#それ以外(元々pngかbmp?)
 		img_resize.save(file_result)
 
 
@@ -921,10 +919,12 @@ while True:
 					game_mode = 0
 					per = 1
 
-					func_txt_zero(text)
+					text = func_txt_zero(text)
 
 				if err_flag == False:#[関数]全txtへ行う処理
-					func_txt_all(text)
+					text = func_txt_all(text)
+					open(textpath, mode='w').write(text)#全置換処理終了後書き込み
+
 				func_progbar_update(0, i, len(text_list))#左から順に{種類, 現在の順番, 最大数}
 
 
@@ -963,7 +963,7 @@ while True:
 			#---txtから透過処理のあるスプライト表示命令を検知し分割/透明画像のパスを配列へ格納---
 			for t in set(immode_alpha_list_tup) :#set型で重複削除
 				if not re.match(':s', t[6]):#変数内にパスが入っている場合のみ処理
-					func_txt_lsp(t)
+					func_tmode_img(t)
 
 			#---"tmode_img_list"内のパスのみを抽出したリストを作成---
 			TIL_path = [r[1] for r in tmode_img_list]#set型にするとindex使えないので
