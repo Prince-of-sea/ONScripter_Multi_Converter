@@ -14,7 +14,7 @@ import os
 import re
 
 ####################################################################################################
-window_title = 'ONScripter Multi Converter for PSP ver.1.2.2'
+window_title = 'ONScripter Multi Converter for PSP ver.1.2.3'
 ####################################################################################################
 
 # -memo-
@@ -25,20 +25,20 @@ window_title = 'ONScripter Multi Converter for PSP ver.1.2.2'
 # os.path.joinを使わないパスの結合をやめないとマズイ気がする
 
 
-# -最新の更新履歴(v1.2.2)- 
-# 今までタイトルが"ver.1.x.x"、ウィンドウが"ver.1.xx"となっていたのを、
-#   どちらも"ver.1.x.x"に統一
-# 0.txt専用置換処理が動いてなかったのを修正
-#   (nsa追記とか解像度の新nsc表記→旧nsc表記とか...)
-# 一部lspで呼び出されていたアルファ付き画像の処理で
-#   背景透過がうまくいってなかったのを修正
-# 一部lspで呼び出されていたカーソルの処理で
-#   縮小がうまくいってなかったのを修正
+# -最新の更新履歴(v1.2.3)- 
+# 画像表示命令文抽出を大幅強化 対応命令文を増加&表記揺れ耐性UP&パスがstraliasやmovで定義された変数だった場合にも対応
+# _tempフォルダを環境変数側のTEMPの方へ出力するよう変更&resultをすべて処理が終わった後に出すように
+# シナリオファイルのデコード及びコピーを、入力先のフォルダを指定した直後のタイミングに変更
+# 透過形式がleftup/rightupになっていた画像の縮小がうまく行われていなかったのを修正
+# 処理に必要なファイルが足りなかった際のエラー表示をまとめて出すよう変更
+# (自分用だが)デバッグモード追加
 
 
 # これを読んだあなた。
 # どうかこんな可読性の欠片もないクソコードを書かないでください。
 # それだけが私の望みです。
+
+debug_mode = 0
 
 ######################################## subprocessがexe化時正常に動かんときの対策 ########################################
 
@@ -89,42 +89,48 @@ def subprocess_args(include_stdout=True):
 
 sg.theme('DarkBlue12')#テーマ設定
 
-#-----ffmpeg存在チェック-----
-try:
+if debug_mode:
+	#---デバッグモード---
+	window_title += ' - !DEBUG MODE!'
+	# 注意:これは作者側での開発用です 他人が使うことを想定していません
+	os.environ['temp'] = 'D:'#TEMPをDドライブへ(現状C:がSATAでD:がNVMeのため)
+	same_hierarchy = 'C:/_software/_zisaku/ONScripter_Multi_Converter'#本来同一階層に置く予定のexeをここから読む
+	default_input = ''
+	default_output = (os.environ['USERPROFILE'].replace('\\','/') + r'/Desktop')#出力先を自動でデスクトップに
+	
+else:
+	#---通常時処理---
+	same_hierarchy = (os.path.dirname(sys.argv[0]))#同一階層のパスを変数へ代入
+	default_input = ''
+	default_output = ''
+
+try:#ffmpeg存在チェック
 	subprocess.run('ffmpeg', **subprocess_args(True))
 	subprocess.run('ffprobe', **subprocess_args(True))
 except:
 	ffmpeg_exist = False
-	sg.popup('ffmpegが利用できません', title='!')
 else:
 	ffmpeg_exist = True
 
-#-----nsaed存在チェック-----
-nsaed_path = ((os.path.dirname(sys.argv[0])) + r'/tools/nsaed.exe')
-if os.path.exists(nsaed_path):
-	nsaed_exist = True
-else:
-	nsaed_exist = False
-	sg.popup('./tools/nsaed.exeが利用できません', title='!')
+nsaed_path = os.path.join(same_hierarchy, 'tools', 'nsaed.exe')#nsaed存在チェック
+nsaed_exist = os.path.exists(nsaed_path)
 
-#-----smjpeg存在チェック(ffmpeg非導入時は強制NG)-----
-smjpeg_path = ((os.path.dirname(sys.argv[0])) + r'/tools/smjpeg_encode.exe')
-if ffmpeg_exist == True and os.path.exists(smjpeg_path):
-	smjpeg_exist = True
-else:
-	smjpeg_exist = False
-	sg.popup('./tools/smjpeg_encode.exeが利用できません', title='!')
+smjpeg_path = os.path.join(same_hierarchy, 'tools', 'smjpeg_encode.exe')#smjpeg存在チェック
+smjpeg_exist = os.path.exists(smjpeg_path)#ffmpeg非導入時は強制NG
 
-#-----Garbro存在チェック-----
-GARbro_path = ((os.path.dirname(sys.argv[0])) + r'/tools/Garbro_console/GARbro.Console.exe')
-if os.path.exists(GARbro_path):
-	GARbro_exist = True
-else:
-	GARbro_exist = False
-	sg.popup('./tools/Garbro_console/GARbro.Console.exeが利用できません', title='!')
+GARbro_path = os.path.join(same_hierarchy, 'tools', 'Garbro_console', 'GARbro.Console.exe')#Garbro存在チェック
+GARbro_exist = os.path.exists(GARbro_path)
 
-if not GARbro_exist:#GARBroがない場合強制終了
-	sys.exit()
+if not (ffmpeg_exist and nsaed_exist and smjpeg_exist and GARbro_exist):
+	errmsg = '以下のものが利用できません'
+	errmsg += '' if ffmpeg_exist else '\nffmpeg.exe及びffprobe.exe'
+	errmsg += '' if nsaed_exist else '\n./tools/nsaed.exe'
+	errmsg += '' if smjpeg_exist else '\n./tools/smjpeg_encode.exe'
+	errmsg += '' if GARbro_exist else '\n./tools/Garbro_console/GARbro.Console.exe\n\nGARbroは本ツールの動作に必須です\n終了します...'
+	sg.popup(errmsg, title='!')
+
+	if not GARbro_exist:#GARBroがない場合強制終了
+		sys.exit()
 
 #-----カーソル画像(容量削減のためpng変換済)をbase64にしたものを入れた辞書作成-----
 cur_dictlist = [
@@ -175,14 +181,17 @@ for i in ext_dict['image']:
 all_repsound = (ext_dict['sound'][0] + ext_dict['sound'][1])#全置換用音源配列
 all_convsound = (ext_dict['sound'][0] + ext_dict['sound'][2])#全変換用音源配列
 
+#-----ディレクトリのパスを先に代入-----
+result_dir = (os.environ['temp'].replace('\\','/') + r'/_NSC2ONS4PSP/result')
+temp_dir = (os.environ['temp'].replace('\\','/') + r'/_NSC2ONS4PSP/tmp')
 
 ######################################## GUI表示部分 ########################################
 kbps_list = ['128', '112', '96', '64', '56', '48', '32']
 Hz_list = ['44100', '22050', '11025']
 
 col = [
-	[sg.Text('入力先：'), sg.InputText(k='input_dir', size=(67, 15), readonly=True), sg.FolderBrowse()],
-	[sg.Text('出力先：'), sg.InputText(k='output_dir', size=(67, 15), readonly=True), sg.FolderBrowse()],
+	[sg.Text('入力先：'), sg.InputText(k='input_dir', size=(67, 15), default_text=default_input, readonly=True, enable_events=True), sg.FolderBrowse()],
+	[sg.Text('出力先：'), sg.InputText(k='output_dir', size=(67, 15), default_text=default_output, readonly=True), sg.FolderBrowse()],
 ]
 
 frame_1 = sg.Frame('画像', [
@@ -205,7 +214,7 @@ frame_2 = sg.Frame('音源', [
 ], size=(300, 125), pad=(0,0))
 
 frame_3 = sg.Frame('その他', [
-	[sg.Checkbox('smjpeg_encode.exeで動画を変換する', k='vid_flag', default=smjpeg_exist, disabled=(not smjpeg_exist))],
+	[sg.Checkbox('smjpeg_encode.exeで動画を変換する', k='vid_flag', default=(smjpeg_exist and ffmpeg_exist), disabled=(not (smjpeg_exist and ffmpeg_exist)))],
 	[sg.Checkbox('nsaed.exeで出力ファイルを圧縮する', k='nsa_mode', default=nsaed_exist, disabled=(not nsaed_exist))],
 ], size=(300, 80), pad=(0,0))
 
@@ -217,7 +226,7 @@ flame_4 = sg.Frame('', [
 ], size=(530, 40))
 
 flame_5 = sg.Frame('', [
-	[sg.Button('convert', pad=(9,6))]
+	[sg.Button('convert', pad=(9,6), disabled=True)]
 ], size=(70, 40))
 
 progressbar = sg.Frame('', [
@@ -239,7 +248,7 @@ window = sg.Window(window_title, layout, size=(640, 360), element_justification=
 ######################################## 関数へ逃しておく処理 ########################################
 
 #-----プログレスバー更新-----
-progbar_per = [5,5,10,75,5]#全体の処理のざっくりとした割合([txt置換, arc展開, 動画, 画像音楽, nsa化])
+progbar_per = [2,5,3,85,5]#全体の処理のざっくりとした割合([txt置換, arc展開, 動画, 画像音楽, nsa化])
 def func_progbar_update(mode, num, nummax):#イマイチ自分でも何書いてんのか分かんないの笑う
 
 	barstart = ( sum(progbar_per[0:mode]) / sum(progbar_per) * 10000 )
@@ -276,25 +285,28 @@ def func_ext_dec():
 	global err_flag
 	global text_list
 
-	os.makedirs(result_dir)#出力用のディレクトリを作成
+	search_nscript_dat = os.path.join(search_dir, 'nscript.dat')
+	search_00_txt = os.path.join(search_dir, '00.txt')
+	search_0_txt = os.path.join(search_dir, '0.txt')
+	result_0_txt = os.path.join(result_dir, '0.txt')
 
-	if os.path.isfile(search_dir + r'/0.txt') or os.path.isfile(search_dir + r'/00.txt'):#0.txtか00.txt
+	if os.path.isfile(search_0_txt) or os.path.isfile(search_00_txt):#0.txtか00.txt
 		for num in range(0, 10):#0~9(00~09).txtまでを調べる
-			if os.path.isfile(search_dir + r'/00.txt'):#二桁連番で配列格納を繰り返す00.txtのばあい
-				oldtext = (search_dir + r'/' + str(num).zfill(2) + r'.txt')#zfillで先頭を0埋め
+			if os.path.isfile(search_00_txt):#二桁連番で配列格納を繰り返す00.txtのばあい
+				oldtext = (os.path.join(search_dir, str(num).zfill(2) + '.txt'))#zfillで先頭を0埋め
 			else:#一桁連番で配列格納を繰り返す0.txtのばあい
-				oldtext = (search_dir + r'/' + str(num) + r'.txt')
+				oldtext = (os.path.join(search_dir, str(num) + '.txt'))
 					
-			newtext = (result_dir + r'/' + str(num) + r'.txt')
+			newtext = (os.path.join(result_dir, str(num) + '.txt'))
 
 			if os.path.isfile(oldtext):#txtがあれば
 				shutil.copy(oldtext,newtext)#コピー
 				os.chmod(path=newtext, mode=stat.S_IWRITE)#念の為読み取り専用を外す
 				text_list.append(newtext)#シナリオのパスを配列へ格納
 
-	elif os.path.isfile(search_dir + r'/nscript.dat'):#復号化処理を行うnscript.datのばあい
-		oldtext = (search_dir + r'/nscript.dat')
-		newtext = (result_dir + r'/0.txt')
+	elif os.path.isfile(search_nscript_dat):#復号化処理を行うnscript.datのばあい
+		oldtext = search_nscript_dat
+		newtext = result_0_txt
 			
 		open(newtext, 'w')#復号化後の新規txt作成
 
@@ -376,8 +388,8 @@ def func_txt_zero(text):
 #-----全txtへ行う処理-----
 def func_txt_all(text):
 	global vid_list_rel
-	global setwindow_re_tup
-	global immode_alpha_list_tup
+	global immode_var_tup
+	global immode_list_tup
 
 	#-PSPで使用できない命令を無効化する-
 	text = re.sub(r'([\n|\t| |:])avi "(.+?)",([0|1])', r'\1mpegplay "\2",\3', text)#aviをmpegplayで再生(後に拡張子偽装)
@@ -398,7 +410,7 @@ def func_txt_all(text):
 
 		#-txt内のsetwindow命令を格納-
 		#[0]命令文前部分/[2]横文字数/[3]縦文字数/[4]横文字サイズ/[5]縦文字サイズ/[6]横文字間隔/[7]縦文字間隔/[8]命令文後部分
-		setwindow_re_tup += re.findall(r'(setwindow3? ([0-9]{1,},){2})([0-9]{1,}),([0-9]{1,}),([0-9]{1,}),([0-9]{1,}),([0-9]{1,}),([0-9]{1,}),(([0-9]{1,},){3}(.+?)(,[0-9]{1,}){2,4})', text)
+		setwindow_re_tup = re.findall(r'(setwindow3? ([0-9]{1,},){2})([0-9]{1,}),([0-9]{1,}),([0-9]{1,}),([0-9]{1,}),([0-9]{1,}),([0-9]{1,}),(([0-9]{1,},){3}(.+?)(,[0-9]{1,}){2,4})', text)
 
 		for v in set(setwindow_re_tup):
 			txtmin = math.ceil(10 / per)
@@ -406,25 +418,30 @@ def func_txt_all(text):
 			if txtmin > nummin:#表示時10pxを下回りそうな場合 - ちなみに10pxはMSゴシックで漢字が潰れない最低サイズ
 
 				#文字の縦横サイズが違う可能性を考え別に処理 - もちろん縦横比維持
-				v4rp = int( txtmin * ( int(v[4]) / nummin ) )#横文字サイズ(拡大)
-				v5rp = int( txtmin * ( int(v[5]) / nummin ) )#縦文字サイズ(拡大)
-				v6rp = int( int(v[6]) * ( nummin / v4rp ) )#横文字間隔(縮小)
-				v7rp = int( int(v[7]) * ( nummin / v5rp ) )#縦文字間隔(縮小)
+				v4rp = str( int( txtmin * ( int(v[4]) / nummin ) ) )#横文字サイズ(拡大)
+				v5rp = str( int( txtmin * ( int(v[5]) / nummin ) ) )#縦文字サイズ(拡大)
+				v6rp = str( int( int(v[6]) * ( nummin / int(v4rp) ) ) )#横文字間隔(縮小)
+				v7rp = str( int( int(v[7]) * ( nummin / int(v5rp) ) ) )#縦文字間隔(縮小)
 
 				#横に表示できる最大文字数を(文字を大きくした分)減らす - 見切れるのを防ぐため縦はそのまま
-				v2rp = int( int(v[2]) * ( int(v[4]) + int(v[6]) ) / ( v4rp + v6rp ) )
+				v2rp = str( int( int(v[2]) * ( int(v[4]) + int(v[6]) ) / ( int(v4rp) + int(v6rp) ) ) )
 
-				sw = (v[0]+v[2]+','+v[3]+','+v[4]+','+v[5]+','+v[6]+','+v[7]+','+v[8])
-				sw_re = (v[0]+str(v2rp)+','+v[3]+','+str(v4rp)+','+str(v5rp)+','+str(v6rp)+','+str(v7rp)+','+v[8])
-
+				sw = (v[0] + v[2] +','+ v[3] +','+ v[4] +','+ v[5] +','+ v[6] +','+ v[7] +','+ v[8])
+				sw_re = (v[0] + v2rp +','+ v[3] +','+ v4rp +','+ v5rp +','+ v6rp +','+ v7rp +','+ v[8])
+				
 				text = text.replace(sw, sw_re)
 
 
 	#-txt内の画像の相対パスを格納-
-	#[0]が命令文/[3]が透過形式/[4]が分割数/[6]が相対パス
-	immode_alpha_list_tup += re.findall(r'((abs)?setcursor) %?.+?,"(:(.)/?([0-9]+)?(,[0-9]{1,},[0-9]{1,})?;)?(.+?)"(,(([0-9]{1,3})|(%.+?))){1,3}', text)#setcursor系
-	immode_alpha_list_tup += re.findall(r'(lsph?) (%?.+?),"(:(.)/?([0-9]+)?(,.+?)?;)?(.+?)"(,(([0-9]{1,3})|(%.+?))){1,3}', text)#lsp系
-	immode_alpha_list_tup += re.findall(r'(lsph?2(add|sub)?) %?.+?,"(:(.)/?([0-9]+)?(,.+?)?;)?(.+?)"(,((-?[0-9]{1,3})|(%.+?))){1,6}', text)#lsp2系
+
+	#[0]が命令文/[3]が(パスの入っている)変数名/[5]が透過形式/[6]が分割数/[8]が相対パス - [3]か[8]はどちらかのみ代入される
+	immode_list_tup += re.findall(r'(ld)[ |\t]+([lcr])[ |\t]*,[ |\t]*((\$?[A-Za-z0-9_]+?)|"(:(.)/?([0-9]+)?(,.+?)?;)?(.+?)")[ |\t]*,[ |\t]*[0-9]+', text)#ld
+	immode_list_tup += re.findall(r'((abs)?setcursor)[ |\t]+%?.+?[ |\t]*,[ |\t]*((\$?[A-Za-z0-9_]+?)|"(:(.)/?([0-9]+)?(,.+?)?;)?(.+?)")([ |\t]*,[ |\t]*(([0-9]{1,3})|(%.+?))){1,3}', text)#setcursor系
+	immode_list_tup += re.findall(r'(lsp(h)?)[ |\t]+%?.+?[ |\t]*,[ |\t]*((\$?[A-Za-z0-9_]+?)|"(:(.)/?([0-9]+)?(,.+?)?;)?(.+?)")([ |\t]*,[ |\t]*(([0-9]{1,3})|(%.+?))){1,3}', text)#lsp系
+	immode_list_tup += re.findall(r'(lsph?2(add|sub)?)[ |\t]+%?.+?[ |\t]*,[ |\t]*((\$?[A-Za-z0-9_]+?)|"(:(.)/?([0-9]+)?(,.+?)?;)?(.+?)")(([ |\t]*,[ |\t]*((-?[0-9]{1,3})|(%.+?))){1,6})?', text)#lsp2系
+
+	#[0]が命令文/[1]が変数名/[3]が透過形式/[4]が分割数/[6]が相対パス
+	immode_var_tup += re.findall(r'(stralias|mov)[ |\t]*(\$?[A-Za-z0-9_]+?)[ |\t]*,[ |\t]*"(:(.)/?([0-9]+)?(,.+?)?;)?(.+?)"', text)#パスの入ったmov及びstralias
 
 	if values['vid_flag']:#動画変換処理を行う場合
 		vid_list_rel += re.findall(r'mpegplay "(.+?)",[0|1]', text)#txt内の動画の相対パスを格納
@@ -539,57 +556,76 @@ def func_vid_conv(vid, vid_result):
 	 '--audio-channels', '2',
 	], shell=True, cwd=vidtmpdir, **subprocess_args(True))
 
-	shutil.move(vidtmpdir + '/output.mjpg', vid_result)#完成品を移動
+	shutil.move(os.path.join(vidtmpdir, r'output.mjpg'), vid_result)#完成品を移動
 	shutil.rmtree(vidtmpdir)#作業用フォルダの削除
 
 
 #-----シナリオから抽出した画像の状態を整形-----
 def func_tmode_img(t):
 	global tmode_img_list
-	inst = 'lsp'#とりあえず何もなければlsp
 
-	file = ( (temp_dir + '/' + t[6].replace('\\','/')).lower() )#相対パスを小文字に&絶対パスへ
+	if '#' in t[8]:#変数内に"#"がある(≒パスが入っていない)場合
+		return#処理しない
 
-	#-"カーソル呼び出しで呼ばれた画像かどうか(≒カーソルか)"を代入-
-	if (t[0] == ('setcursor' or 'abssetcursor')):
-		inst = 'cur'
+	if t[8]:#命令文内に変数のなかった場合下記タプルに表記を合わせたダミーのリストを一つ代入
+		vlist = [['', '', '', t[5], t[6], '', t[8], ]]
 
-	#-カーソルではない場合もそれっぽい名前の場合カーソル扱い-
-	else:#たまに「カーソルをsetcursorで呼ばない」作品とかあるのでそれ対策
-		for n in ['cursor', 'offcur', 'oncur']:
-			if n in os.path.splitext(os.path.basename(file))[0]:
-				inst = 'cur'
+	else:#命令文内に変数のあった場合代入元のタプルを変数定義命令の数だけ代入
+		vlist = [immode_var_tup[vn] for vn in [i for i, x in enumerate([r[1] for r in immode_var_tup]) if x == t[3]]]
+	
+	for v in vlist:
 
-	#-画像タグ-
-	if (not inst == 'cur') and (os.path.splitext(file)[1]).lower() == '.png':#カーソルではない&画像がpngなら
-		tmode = 'c'#基本無条件でcopy
-	elif t[3]:#画像タグ指定時
-		tmode = t[3]
-	elif default_tmode:#画像タグなし&txtからモード抽出済
-		tmode = default_tmode[0]#0文字目だけ抜いて使ってる
-	else:#画像タグなし&txtからモード未抽出
-		tmode = 'l'
+		#相対パスを小文字にして絶対パスへ
+		file = ( (temp_dir + '/' + v[6].replace('\\','/').replace(r'"+"','')).lower() )#"+"でパス文字列が継ぎ足されている場合削除
 
-	#-アニメーション数-
-	if t[4]:
-		ani_num = int(t[4])
-	else:
-		ani_num = 1
+		#-呼び出された命令の種類を代入-
+		if t[0] == ('setcursor' or 'abssetcursor'):
+			inst = 'cur'
+		elif t[0] == 'ld':
+			inst = 'ld'
+		else:
+			inst = 'lsp'
 
-	#アルファブレンド画像の場合は画像分割数がアニメーション数x2になるのを
-	#「bool型の(tmode == 'a')に+1した数を掛ける」としている(絶望的な可読性)
-	part_num = (ani_num * ((tmode == 'a') + 1) )
+			#-カーソルではない場合もそれっぽい名前の場合カーソル扱い-
+			for n in ['cursor', 'offcur', 'oncur']:#たまに「カーソルをsetcursorで呼ばない」作品とかあるのでそれ対策
+				if n in os.path.splitext(os.path.basename(file))[0]:
+					inst = 'cur'
 
-	#-[カーソルかどうか, 絶対パス, 透過モード, 分割数]を代入
-	tmode_img_list.append([inst, file, tmode, part_num])
+		#-透過形式-
+		if (not inst == 'cur') and (os.path.splitext(file)[1]).lower() == '.png':#カーソルではない&画像がpngなら
+			tmode = 'c'#基本無条件でcopy
+		elif v[3]:#指定時
+			tmode = v[3]
+		elif default_tmode:#透過形式なし&txtからモード抽出済
+			tmode = default_tmode[0]#0文字目だけ抜いて使ってる
+		else:#透過形式なし&txtからモード未抽出
+			tmode = 'l'
 
-	#print([inst, file, tmode, part_num])#Debug
+		#-アニメーション数-
+		if v[4]:#指定時
+			ani_num = int(v[4])
+		else:
+			ani_num = 1
+
+		#アルファブレンド画像の場合は画像分割数がアニメーション数x2になるのを
+		#「bool型の(tmode == 'a')に+1した数を掛ける」としている(絶望的な可読性)
+		part_num = (ani_num * ((tmode == 'a') + 1) )
+
+		#-[カーソルかどうか, 絶対パス, 透過モード, 分割数]を代入
+		tmode_img_list.append([inst, file, tmode, part_num])
+
+		if debug_mode:
+			print([inst, file, tmode, part_num])#Debug
 
 
 #-----全画像変換処理部分-----
 def func_image_conv(file, file_ext):
-	img = Image.open(file)#画像を開く
-	
+
+	try:
+		img = Image.open(file)#画像を開く
+	except:
+		return#失敗したら終了
+
 	if img.format == False:#画像ではない場合(=画像のフォーマットが存在しない場合)
 		return#終了 - 拡張子偽装対策
 	
@@ -626,7 +662,6 @@ def func_image_conv(file, file_ext):
 	immode_copypng = False#'c'で呼ばれたPNG(≒偽装JPG禁止)かどうか
 	immode_defcur = False#NScripter付属の標準画像のカーソルかどうか
 	immode_cursor = False#(標準かに関わらず)カーソルかどうか
-	immode_alpha = False#画像に透明部分があるとNスクに扱われているか
 	immode_crop = False#分割縮小が必要かどうか
 
 	a_px = (0, 0, 0)#背景画素用仮変数
@@ -642,8 +677,13 @@ def func_image_conv(file, file_ext):
 		if (tmode_img[2] == 'c') and (file_ext == '.png'):
 			immode_copypng = True
 
+		#leftup/rightupをimmode_nearest
+		if tmode_img[2] == ('l' or 'r'):
+			immode_nearest = True
+
 		#---カーソル専用処理---
 		if tmode_img[0] == 'cur':
+			immode_cursor = True
 
 			#---画素比較のためnumpyへ変換---
 			np_img = np.array(img.convert('RGB'))
@@ -656,13 +696,11 @@ def func_image_conv(file, file_ext):
 				
 				#カーソルが公式の画像と同一の時
 				if np.array_equal(np_img, np_img_default):
-					immode_cursor = True
 					immode_defcur = k
 
 			#---(leftup/rightupのみ)背景色を抽出しそこからマスク画像を作成---
-			if (tmode_img[2] == ('l' or 'r')) and (not immode_defcur) and (not immode_alpha) and (not img.mode == 'RGBA'):
-				immode_cursor = True
-				
+			if (tmode_img[2] == ('l' or 'r')) and (not immode_defcur) and (not img.mode == 'RGBA'):
+
 				img = img.convert('RGB')#編集のためまず強制RGB化
 				img_datas = img.getdata()#画像データを取得
 
@@ -686,13 +724,9 @@ def func_image_conv(file, file_ext):
 					
 					img.putdata(px_list)#完了
 					img_mask.putdata(mask_px_list)
-		
-		#---マスク画像処理を行わなかったものも含めleftup/rightupをimmode_alpha---
-		if not immode_alpha:
-			immode_alpha = ( tmode_img[2] == ('l' or 'r') )#immode_alphaにはT/Fが入る - Tなら無理
-	
-	#---立ち絵用横幅偶数指定(ホントはld命令抽出できたらいいんだけどね...)---
-	elif int(img.width) >= 4 and (not immode_alpha) and values['img_even']:#縦横4px以上&透明部分なし&偶数指定ON
+
+	#---立ち絵用横幅偶数指定(ld命令で取りこぼした立ち絵対策)---
+	elif int(img.width) >= 4 and (not immode_nearest) and values['img_even']:#縦横4px以上&透明部分なし&偶数指定ON
 
 		#---ピクセルの色数を変数に代入---
 		chara_mainL = img.getpixel((1, 1))#本画像部分左上1px - 1
@@ -706,7 +740,7 @@ def func_image_conv(file, file_ext):
 
 	#-----処理分岐-----
 	if immode_defcur:#デフォルトの画像そのままのカーソル
-		if values['res_640']:#解像度無変更時
+		if values['res_640']:#解像度640x480時
 			#-変更の必要なし→そのまま代入-
 			img_resize = img_default
 
@@ -724,32 +758,35 @@ def func_image_conv(file, file_ext):
 		crop_result_width = math.ceil(result_width/sp_val)
 
 		#---切り出し→縮小→再結合---
-		#  一部カーソル周りの処理は上記同様bool(T/F)をint(1/0)としてそのまま計算に使ってます
 		img_resize = Image.new(img.mode, (crop_result_width*sp_val, result_height), a_px)#結合用画像
 		for i in range(sp_val):#枚数分繰り返す
 			img_crop = img.crop((crop_width*i, 0, crop_width*(i+1), img.height))#画像切り出し
-			img_crop = img_crop.resize((crop_result_width - immode_cursor, result_height - immode_cursor), Image.LANCZOS)
 
-			#画像本体をLANCZOS、透過部分をNEARESTで処理することによってカーソルをキレイに縮小
 			if immode_cursor:#カーソル時
+				img_crop = img_crop.resize((crop_result_width-1, result_height-1), Image.LANCZOS)
+
+				#画像本体をLANCZOS、透過部分をNEARESTで処理することによってカーソルをキレイに縮小
 				img_bg = Image.new(img.mode, (crop_result_width-1, result_height-1), a_px)#ベタ塗りの背景画像を作成
 				img_mask_crop = img_mask.crop((crop_width*i, 0, crop_width*(i+1), img.height))#画像切り出し
 				img_mask_crop = img_mask_crop.resize((crop_result_width-1, result_height-1), Image.NEAREST)#マスク画像はNEARESTで縮小
 				img_crop = Image.composite(img_crop, img_bg, img_mask_crop)#上記2枚を利用しimg_cropへマスク
 
+			elif immode_nearest:#背景がボケると困る画像(NEAREST)
+				img_crop = img_crop.resize((crop_result_width, result_height), Image.NEAREST)
+
+			else:#それ以外の画像(LANCZOS)
+				img_crop = img_crop.resize((crop_result_width, result_height), Image.LANCZOS)
+
 			img_resize.paste(img_crop, (crop_result_width*i, immode_cursor))#結合用画像へ貼り付け - カーソルは上1px空ける
 
-	elif immode_nearest:
-		img_resize = img.resize((result_width, result_height), Image.NEAREST)#背景がボケると困る画像(NEAREST)
-
 	else:
-		img_resize = img.resize((result_width, result_height), Image.LANCZOS)#それ以外の画像(LANCZOS)
+		img_resize = img.resize((result_width, result_height), Image.LANCZOS)
 
 	#-----画像保存-----
 	if immode_cursor:#カーソル
 		img_resize.save(file_result, 'PNG')#容量削減のためPNG
 
-	elif values['jpg_mode'] and (not immode_alpha) and (not img.mode == 'RGBA') and (not immode_copypng):#jpg圧縮モード&透明部分なし
+	elif values['jpg_mode'] and (not immode_nearest) and (not img.mode == 'RGBA') and (not immode_copypng):#jpg圧縮モード&透明部分なし
 		img_resize.save((file_result), 'JPEG', quality=int(values['jpg_quality']))#jpgmode ON時の不透明png/bmp 拡張子偽装
 
 	elif file_ext in (ext_dict['image'][0]):#元々jpg
@@ -765,10 +802,7 @@ def func_music_conv(file):
 	#---arc.nsa向けフォルダ分け用処理---
 	if values['nsa_mode']:
 		#---ディレクトリ名に"bgm"とあるかで判定---
-		if 'bgm' in str(result_dir_ff):
-			arc_num_sound = r'2'
-		else:
-			arc_num_sound = r'1'
+		arc_num_sound = str( ('bgm' in str(result_dir_ff)) + 1 )
 
 		#---先にファイル保存用ディレクトリを作成---
 		os.makedirs((result_dir_ff.replace(temp_dir, (result_dir + r'/arc' + arc_num_sound))), exist_ok=True)
@@ -817,7 +851,7 @@ def func_arc_nsa(arc_num):
 	except:#異常終了時
 		pass#何もしない
 	else:#正常終了時
-		shutil.move((os.path.dirname(sys.argv[0])) + r"/tools/arc.nsa" , arc_num_dir + '.nsa')#nsa移動
+		shutil.move(same_hierarchy + r"/tools/arc.nsa" , arc_num_dir + '.nsa')#nsa移動
 		shutil.rmtree(arc_num_dir)#nsa化前のデータを削除
 			
 
@@ -857,7 +891,7 @@ def func_ons_ini():
 		'CHANNELS=2\n',
 		'TRIANGLE=27\n', 'CIRCLE=13\n', 'CROSS=32\n', 'SQUARE=305\n', 'LTRIGGER=111\n', 'RTRIGGER=115\n', 'DOWN=274\n', 'LEFT=273\n', 'UP=273\n', 'RIGHT=274\n', 'SELECT=48\n', 'START=97\n', 'ALUP=276\n', 'ALDOWN=275\n',	
 	]
-	open(result_dir + r'/ons.ini', 'w').writelines(ons_ini)
+	open(os.path.join(result_dir, 'ons.ini'), 'w').writelines(ons_ini)
 
 
 
@@ -867,6 +901,32 @@ while True:
 	if event is None or event == 'Exit':
 		break
 
+
+	elif event == 'input_dir':
+		err_flag = False
+
+		#'convert'操作無効化
+		window['convert'].update(disabled=True)
+		window.refresh()
+
+		#-----ディレクトリのパスを先に代入-----
+		search_dir = (values['input_dir'])
+
+		#-----入出力先のパスが競合しそうなら勝手に消す-----
+		if os.path.exists(result_dir):
+			shutil.rmtree(result_dir)
+
+		#-----[関数]シナリオ復号&コピー周り-----
+		os.makedirs(result_dir)#出力用のディレクトリを作成
+		text_list = []
+		func_ext_dec()
+
+		#'convert'操作再度有効化
+		if not err_flag:
+			window['convert'].update(disabled=False)
+			window.refresh()
+
+
 	elif event == 'convert':
 		err_flag = False
 
@@ -874,6 +934,9 @@ while True:
 		window['convert'].update(disabled=True)
 		window.disable()
 		window.refresh()
+
+		#-----[関数]入出力先未指定/競合時エラー-----
+		func_dir_err()
 
 		#-----特定の機能を利用しない場合プログレスバーの計算からはずす-----
 		if values['vid_flag'] == False:
@@ -883,35 +946,20 @@ while True:
 			progbar_per_4 = progbar_per[4]
 			progbar_per[4] = 0
 
-		#-----ディレクトリのパスを先に代入-----
-		temp_dir = (os.path.dirname(sys.argv[0]).replace('\\','/') + r'/_temp')
-		search_dir = (values['input_dir'])
-		result_dir = (values['output_dir'] + r'/result')
-
 		#-----入出力先のパスが競合しそうなら勝手に消す-----
-		if os.path.exists(result_dir):
-			shutil.rmtree(result_dir)
 		if os.path.exists(temp_dir):
 			shutil.rmtree(temp_dir)
-
-		#-----[関数]入出力先未指定/競合時エラー-----
-		func_dir_err()
-
-		#-----[関数]シナリオ復号&コピー周り-----
-		if err_flag == False:
-			text_list = []
-			func_ext_dec()
 
 		#-----シナリオ読み込み&置換処理-----
 		if err_flag == False:
 			vid_list_rel = []#txt内の動画の相対パスを格納するための配列
-			immode_alpha_list_tup = []#txt内の画像(透明指定だけど透過画像じゃないやつ)の相対パスを格納するための配列
-			setwindow_re_tup = []
+			immode_var_tup = []
+			immode_list_tup = []#txt内の画像(透明指定だけど透過画像じゃないやつ)の相対パスを格納するための配列
 
 			for i,textpath in enumerate(text_list):
 				text = open(textpath, 'r', errors="ignore").read()#テキストを読み込み
 
-				if textpath == (result_dir + r'/0.txt'):#[関数]0.txt読み込み時(初回限定)処理
+				if os.path.basename(textpath) == (r'0.txt'):#[関数]0.txt読み込み時(初回限定)処理
 					
 					#とりあえず変数作成(実際使う値の代入はfunc_txt_zeroで行う)
 					default_tmode = ""
@@ -961,9 +1009,8 @@ while True:
 			]
 
 			#---txtから透過処理のあるスプライト表示命令を検知し分割/透明画像のパスを配列へ格納---
-			for t in set(immode_alpha_list_tup) :#set型で重複削除
-				if not re.match(':s', t[6]):#変数内にパスが入っている場合のみ処理
-					func_tmode_img(t)
+			for t in set(immode_list_tup) :#set型で重複削除
+				func_tmode_img(t)
 
 			#---"tmode_img_list"内のパスのみを抽出したリストを作成---
 			TIL_path = [r[1] for r in tmode_img_list]#set型にするとindex使えないので
@@ -1005,8 +1052,19 @@ while True:
 			#-----[関数]ons.ini作成------
 			func_ons_ini()
 
+			#-----入出力先のパスが競合しそうなら勝手に消す-----
+			if os.path.exists(os.path.join(values['output_dir'],r'result')):
+				shutil.rmtree(os.path.join(values['output_dir'],r'result'))
+
+			shutil.move(result_dir, values['output_dir'])#完成品を移動
+		
+			if debug_mode and os.path.isdir(os.path.join(same_hierarchy, 'result_add')):#Debug
+				for f in glob.glob(os.path.join(same_hierarchy, 'result_add', '*')):
+					#result_add内のファイルを完成品へ移動
+					shutil.copy(f, values['output_dir'] + r'/result')#default.ttfとか入れとく
+
 			#-----tempを削除-----
-			shutil.rmtree(temp_dir)
+			shutil.rmtree(os.path.join(os.environ['temp'], '_NSC2ONS4PSP'))
 			
 			#-----終了メッセージ-----
 			sg.popup('処理が終了しました', title='!')
