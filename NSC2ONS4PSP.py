@@ -14,25 +14,30 @@ import os
 import re
 
 ####################################################################################################
-window_title = 'ONScripter Multi Converter for PSP ver.1.2.3'
+window_title = 'ONScripter Multi Converter for PSP ver.1.2.4'
 ####################################################################################################
 
 # -memo-
 # __file__だとexe化時subprocessの相対パス読み込みﾀﾋぬのでsys.argv[0]使う
 # 同じような理由でexit()もsys.exit()にする
-# BGMとSEの区別もうちょいマシな方法ないか模索中
-# jsonでの作品個別処理何も実装してねぇ...
-# os.path.joinを使わないパスの結合をやめないとマズイ気がする
+# BGMとSEの区別もうちょいマシな方法ないか模索中 - BGM/MP3命令の抽出を予定
+# jsonでの作品個別処理何も実装してねぇ... - v1.3.0で実装
+# os.path.joinを使わないパスの結合をやめないとマズイ気がする - 現在修正中
 
 
-# -最新の更新履歴(v1.2.3)- 
-# 画像表示命令文抽出を大幅強化 対応命令文を増加&表記揺れ耐性UP&パスがstraliasやmovで定義された変数だった場合にも対応
-# _tempフォルダを環境変数側のTEMPの方へ出力するよう変更&resultをすべて処理が終わった後に出すように
-# シナリオファイルのデコード及びコピーを、入力先のフォルダを指定した直後のタイミングに変更
-# 透過形式がleftup/rightupになっていた画像の縮小がうまく行われていなかったのを修正
-# 処理に必要なファイルが足りなかった際のエラー表示をまとめて出すよう変更
-# (自分用だが)デバッグモード追加
-
+# -最新の更新履歴(v1.2.4)- 
+# ファイルフォーマットを拡張子ではなく、
+#   ヘッダーで判別する仕様に変更
+#   元々拡張子偽装が行われていたファイルが
+#   正常に変換できるように
+# 命令しなくても使える標準の場所にあるカーソルが
+#   カーソルとして処理されてなかったのを修正
+# leftup/rightupではない透過形式のカーソル画像で、
+#   処理が行えずフリーズしていた不具合を修正
+# 音源データのOGG変換時、名前を変更しないよう変更
+#   (≒自動的に拡張子偽装が行われる)
+# 画像保存時のフォーマットの判定を少し変更&可読性向上(笑)
+#   過去verではpng周りがかなり怪しかったため
 
 # これを読んだあなた。
 # どうかこんな可読性の欠片もないクソコードを書かないでください。
@@ -160,27 +165,6 @@ cur_dictlist = [
 	},
 ]#すとーむ氏に怒られたら消します(爆)
 
-
-#-----拡張子を入れた辞書/配列作成-----
-ext_dict = {#全て小文字で！
-	'image': [
-		['.jpg', '.jpeg'],#JPEG品質指定必須
-		['.bmp', '.png'],#JPEG品質指定不要
-	],
-	'sound': [
-		['.wav', '.mp3'],#OGG化時変換必須
-		['.nbz'],#既にwavへ変換済のはず
-		['.ogg'],#変換後
-	]
-}
-
-all_image = []#全拡張子用画像配列
-for i in ext_dict['image']:
-	all_image.extend(i)
-
-all_repsound = (ext_dict['sound'][0] + ext_dict['sound'][1])#全置換用音源配列
-all_convsound = (ext_dict['sound'][0] + ext_dict['sound'][2])#全変換用音源配列
-
 #-----ディレクトリのパスを先に代入-----
 result_dir = (os.environ['temp'].replace('\\','/') + r'/_NSC2ONS4PSP/result')
 temp_dir = (os.environ['temp'].replace('\\','/') + r'/_NSC2ONS4PSP/tmp')
@@ -257,7 +241,6 @@ def func_progbar_update(mode, num, nummax):#イマイチ自分でも何書いて
 	window['progressbar'].UpdateBar(int(barstart + (num + 1) * (barmax / nummax) ))
 
 
-
 #-----入出力先未指定/競合時エラー-----
 def func_dir_err():
 	global err_flag
@@ -277,7 +260,6 @@ def func_dir_err():
 	elif values['input_dir'] in values['output_dir']:
 		sg.popup('入出力先が競合しています', title='!')
 		err_flag = True
-
 
 
 #-----シナリオ復号&コピー周り-----
@@ -324,7 +306,6 @@ def func_ext_dec():
 		err_flag = True
 
 
-
 #-----0.txt読み込み時(初回限定)処理-----
 def func_txt_zero(text):
 	global default_tmode
@@ -362,7 +343,7 @@ def func_txt_zero(text):
 		game_mode = 640#作品解像度を代入
 
 	if not re.search(r'\*define', text):#*defineがない時
-		sg.popup('不正なtxtが存在します', title='!')
+		sg.popup('0.txtの復号化に失敗しました', title='!')
 		err_flag = True#シナリオじゃなさそうなのでエラー
 
 	#画像が初期設定でどのような透過指定で扱われるかを代入
@@ -384,7 +365,6 @@ def func_txt_zero(text):
 	return text
 
 
-
 #-----全txtへ行う処理-----
 def func_txt_all(text):
 	global vid_list_rel
@@ -396,15 +376,8 @@ def func_txt_all(text):
 	text = re.sub(r'([\n|\t| |:])okcancelbox %(.+?),', r'\1mov %\2,1 ;', text)#okcancelboxをmovで強制ok
 	text = re.sub(r'([\n|\t| |:])yesnobox %(.+?),', r'\1mov %\2,1 ;', text)#yesnoboxをmovで強制yes
 
-	#-置換する拡張子をfor文で処理-
-	if values['ogg_mode']:
-		for rp in (all_repsound):
-			text = text.replace(rp.upper(), '.ogg')#大文字
-			text = text.replace(rp.lower(), '.ogg')#小文字(元々小文字のはずだが念の為)
-
-	else:
-		text = text.replace('.NBZ', '.wav')#大文字
-		text = text.replace('.nbz', '.wav')#小文字
+	text = text.replace('.NBZ', '.wav')#大文字
+	text = text.replace('.nbz', '.wav')#小文字
 
 	if values['sw_txtsize']:#setwindow文字拡大処理
 
@@ -452,7 +425,6 @@ def func_txt_all(text):
 	return text
 
 
-
 #-----tempフォルダを作り展開&コピー-----
 def func_arc_ext():
 
@@ -478,7 +450,7 @@ def func_arc_ext():
 		for txt in txtline.decode('cp932', 'ignore').splitlines():#一行ずつ処理 - なぜかtxtlineがbyteなのでデコード(エラー無視)
 			arc_path_rel = re.findall(r'\[.+?\] +[0-9]+? +(.+)',txt)#切り出し
 			if arc_path_rel:#切り出しに成功した場合
-				arc_path = os.path.join(temp_dir, arc_path_rel[0]).replace('.nbz', '.wav')#絶対パスに変換(&nbzをwavに)
+				arc_path = os.path.join(temp_dir, (arc_path_rel[0]).replace('.nbz', '.wav') )#絶対パスに変換(&nbzをwavに)
 				if os.path.exists(arc_path):#ファイルが存在する場合
 					os.remove(arc_path)#削除
 
@@ -567,16 +539,16 @@ def func_tmode_img(t):
 	if '#' in t[8]:#変数内に"#"がある(≒パスが入っていない)場合
 		return#処理しない
 
-	if t[8]:#命令文内に変数のなかった場合下記タプルに表記を合わせたダミーのリストを一つ代入
-		vlist = [['', '', '', t[5], t[6], '', t[8], ]]
-
-	else:#命令文内に変数のあった場合代入元のタプルを変数定義命令の数だけ代入
+	if not t[8]:#命令文内に変数のあった場合代入元のタプルを変数定義命令の数だけ代入
 		vlist = [immode_var_tup[vn] for vn in [i for i, x in enumerate([r[1] for r in immode_var_tup]) if x == t[3]]]
 	
+	else:#命令文内に変数のなかった場合下記タプルに表記を合わせたダミーのリストを一つ代入
+		vlist = [['', '', '', t[5], t[6], '', t[8], ]]
+
 	for v in vlist:
 
 		#相対パスを小文字にして絶対パスへ
-		file = ( (temp_dir + '/' + v[6].replace('\\','/').replace(r'"+"','')).lower() )#"+"でパス文字列が継ぎ足されている場合削除
+		file = ( (temp_dir + '/' + v[6].replace('\\','/')).lower() )
 
 		#-呼び出された命令の種類を代入-
 		if t[0] == ('setcursor' or 'abssetcursor'):
@@ -615,11 +587,41 @@ def func_tmode_img(t):
 		tmode_img_list.append([inst, file, tmode, part_num])
 
 		if debug_mode:
-			print([inst, file, tmode, part_num])#Debug
+			pass
+			#print([inst, file, tmode, part_num])#Debug
+
+
+#-----フォーマットチェック-----
+def format_check(file):
+	with open(file, "rb") as f:
+		b = f.read(8)
+
+		if re.match(b'^\xff\xd8', b):
+			ff = 'JPEG'
+
+		elif re.match(b'^\x42\x4d', b):
+			ff = 'BMP'
+
+		elif re.match(b'^\x89\x50\x4e\x47\x0d\x0a\x1a\x0a', b):
+			ff = 'PNG'
+
+		elif re.match(b'^\x52\x49\x46\x46', b):
+			ff = 'WAV'
+
+		elif re.match(b'^\x4f\x67\x67\x53', b):
+			ff = 'OGG'
+
+		elif re.match(b'^\xff\xf3', b) or re.match(b'^\xff\xfa', b) or re.match(b'^\xff\xfb', b) or re.match(b'^\x49\x44\x33', b):
+			ff = 'MP3'#ヘッダーについて詳細不明、情報求む
+
+		else:
+			ff = False
+
+	return ff
 
 
 #-----全画像変換処理部分-----
-def func_image_conv(file, file_ext):
+def func_image_conv(file, file_format):
 
 	try:
 		img = Image.open(file)#画像を開く
@@ -659,10 +661,10 @@ def func_image_conv(file, file_ext):
 
 	#---画像処理分岐用変数---
 	immode_nearest = False#NEARESTで圧縮する(≒LANCZOSで圧縮してはいけない)か
-	immode_copypng = False#'c'で呼ばれたPNG(≒偽装JPG禁止)かどうか
 	immode_defcur = False#NScripter付属の標準画像のカーソルかどうか
 	immode_cursor = False#(標準かに関わらず)カーソルかどうか
-	immode_crop = False#分割縮小が必要かどうか
+	img_mask = False#カーソル向けマスク画像代入用
+	sp_val = 0#縮小時分割枚数
 
 	a_px = (0, 0, 0)#背景画素用仮変数
 
@@ -671,11 +673,6 @@ def func_image_conv(file, file_ext):
 		tmode_img = tmode_img_list[TIL_path.index(file.lower())]#リスト逆引き
 
 		sp_val = int(tmode_img[3])
-		immode_crop = True
-
-		#'c'で呼ばれたpngはimmode_copypngをTrueへ
-		if (tmode_img[2] == 'c') and (file_ext == '.png'):
-			immode_copypng = True
 
 		#leftup/rightupをimmode_nearest
 		if tmode_img[2] == ('l' or 'r'):
@@ -736,7 +733,7 @@ def func_image_conv(file, file_ext):
 
 		if chara_mainL == chara_mainR and chara_alphaL == chara_alphaR == (255,255,255):#1,2が同一&3,4が白	
 			sp_val = 2
-			immode_crop = True
+
 
 	#-----処理分岐-----
 	if immode_defcur:#デフォルトの画像そのままのカーソル
@@ -752,7 +749,7 @@ def func_image_conv(file, file_ext):
 			img_resize = Image.open(BytesIO(base64.b64decode(cur_dictlist[(per < 0.5)][immode_defcur])))
 
 
-	elif immode_crop:#縮小時分割が必要な画像(カーソル含む)
+	elif sp_val:#縮小時分割が必要な画像(カーソル含む)
 		#---分割する横幅を指定---
 		crop_width = int(img.width/sp_val)
 		crop_result_width = math.ceil(result_width/sp_val)
@@ -762,7 +759,7 @@ def func_image_conv(file, file_ext):
 		for i in range(sp_val):#枚数分繰り返す
 			img_crop = img.crop((crop_width*i, 0, crop_width*(i+1), img.height))#画像切り出し
 
-			if immode_cursor:#カーソル時
+			if img_mask:#(専用縮小処理が必要な)カーソルの時
 				img_crop = img_crop.resize((crop_result_width-1, result_height-1), Image.LANCZOS)
 
 				#画像本体をLANCZOS、透過部分をNEARESTで処理することによってカーソルをキレイに縮小
@@ -777,23 +774,21 @@ def func_image_conv(file, file_ext):
 			else:#それ以外の画像(LANCZOS)
 				img_crop = img_crop.resize((crop_result_width, result_height), Image.LANCZOS)
 
-			img_resize.paste(img_crop, (crop_result_width*i, immode_cursor))#結合用画像へ貼り付け - カーソルは上1px空ける
+			img_resize.paste(img_crop, (crop_result_width*i, bool(img_mask)))#結合用画像へ貼り付け - 専用カーソルは上1px空ける
 
 	else:
 		img_resize = img.resize((result_width, result_height), Image.LANCZOS)
 
 	#-----画像保存-----
-	if immode_cursor:#カーソル
-		img_resize.save(file_result, 'PNG')#容量削減のためPNG
+	if immode_cursor or file_format == 'PNG':#カーソルか元々PNG
+		img_resize.save(file_result, 'PNG')
 
-	elif values['jpg_mode'] and (not immode_nearest) and (not img.mode == 'RGBA') and (not immode_copypng):#jpg圧縮モード&透明部分なし
-		img_resize.save((file_result), 'JPEG', quality=int(values['jpg_quality']))#jpgmode ON時の不透明png/bmp 拡張子偽装
-
-	elif file_ext in (ext_dict['image'][0]):#元々jpg
-		img_resize.save(file_result, quality=int(values['jpg_quality']))
-
-	else:#それ以外(元々pngかbmp?)
+	elif file_format == 'BMP' and ( immode_nearest or (not values['jpg_mode']) ):#bmpかつLRで呼出またはJPGmode OFF
 		img_resize.save(file_result)
+
+	else:#それ以外 - JPGmode ON時のbmp 拡張子偽装
+		img_resize.save((file_result), 'JPEG', quality=int(values['jpg_quality']))
+
 
 
 
@@ -825,15 +820,18 @@ def func_music_conv(file):
 
 	#---出力先パスの代入---
 	file_result = (file.replace(temp_dir,result_dir2))
+	file_result_ogg = (os.path.splitext(file_result)[0] + ".ogg")
 	
 	if values['ogg_mode']:
 		subprocess.run(['ffmpeg', '-y',
 			'-i', file,
 			'-ab', result_kbps,
 			'-ar', result_Hz,
-			'-ac', '2',
-			(os.path.splitext(file_result)[0] + ".ogg"),
+			'-ac', '2',	file_result_ogg,
 			], shell=True, **subprocess_args(True))
+
+		os.rename(file_result_ogg, file_result)
+
 	else:
 		shutil.copy(file,file_result)#コピーするだけ
 		os.chmod(path=file_result, mode=stat.S_IWRITE)#念の為読み取り専用を外す
@@ -1000,12 +998,12 @@ while True:
 
 			#---画像分割用配列を作成&初期設定済みのものを代入---
 			tmode_img_list = [
-				[True, (temp_dir + r'/cursor0.bmp').lower(), 'l', '3'],
-				[True, (temp_dir + r'/cursor1.bmp').lower(), 'l', '3'],
-				[True, (temp_dir + r'/doncur.bmp').lower(), 'l', '1'],
-				[True, (temp_dir + r'/doffcur.bmp').lower(), 'l', '1'],
-				[True, (temp_dir + r'/uoncur.bmp').lower(), 'l', '1'],
-				[True, (temp_dir + r'/uoffcur.bmp').lower(), 'l', '1'],
+				['cur', (temp_dir + r'/cursor0.bmp').lower(), 'l', '3'],
+				['cur', (temp_dir + r'/cursor1.bmp').lower(), 'l', '3'],
+				['cur', (temp_dir + r'/doncur.bmp').lower(), 'l', '1'],
+				['cur', (temp_dir + r'/doffcur.bmp').lower(), 'l', '1'],
+				['cur', (temp_dir + r'/uoncur.bmp').lower(), 'l', '1'],
+				['cur', (temp_dir + r'/uoffcur.bmp').lower(), 'l', '1'],
 			]
 
 			#---txtから透過処理のあるスプライト表示命令を検知し分割/透明画像のパスを配列へ格納---
@@ -1018,9 +1016,10 @@ while True:
 
 			#---全ファイルのフルパスを配列に代入---
 			files_list = []
-			for rf, sub_dirs, files_list_rel in os.walk(temp_dir): #サブフォルダ含めファイル検索
-				for file_name in files_list_rel:
-					files_list.append(os.path.join(rf,file_name))#パスを代入
+			for rel_dir, sub_dirs, list_rel in os.walk(temp_dir): #サブフォルダ含めファイル検索
+				for name in list_rel:
+					files_list.append(os.path.join(rel_dir,name))#パスを代入
+					#print(os.path.relpath(os.path.join(rel_dir,name), temp_dir))
 
 
 			for i,file in enumerate(files_list):
@@ -1029,15 +1028,18 @@ while True:
 				result_dir_ff = os.path.dirname(file)#さっきせっかく結合したのに無駄だなぁ
 				
 				file = file.replace('\\','/')#文字列として扱いづらいのでとりあえず\置換
-				file_ext = (os.path.splitext(file)[1]).lower()#パスから拡張子を取り出し&強制小文字
+				file_format = format_check(file)
 
 				#-[関数]全画像変換処理部分-
-				if (file_ext in all_image) or (file.lower() in TIL_path):
-					func_image_conv(file, file_ext)
+				if file_format in ['JPEG', 'BMP', 'PNG']:
+					func_image_conv(file, file_format)
 
 				#-[関数]全音源変換処理部分-
-				elif (file_ext in all_convsound):
+				elif file_format in ['MP3', 'WAV', 'OGG']:
 					func_music_conv(file)
+
+				elif debug_mode:#Debug
+					print(file)
 				
 				func_progbar_update(3, i, len(files_list))#左から順に{種類, 現在の順番, 最大数}
 
