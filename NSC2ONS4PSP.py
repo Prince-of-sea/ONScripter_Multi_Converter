@@ -14,7 +14,7 @@ import os
 import re
 
 ####################################################################################################
-window_title = 'ONScripter Multi Converter for PSP ver.1.2.4'
+window_title = 'ONScripter Multi Converter for PSP ver.1.2.5'
 ####################################################################################################
 
 # -memo-
@@ -25,19 +25,13 @@ window_title = 'ONScripter Multi Converter for PSP ver.1.2.4'
 # os.path.joinを使わないパスの結合をやめないとマズイ気がする - 現在修正中
 
 
-# -最新の更新履歴(v1.2.4)- 
-# ファイルフォーマットを拡張子ではなく、
-#   ヘッダーで判別する仕様に変更
-#   元々拡張子偽装が行われていたファイルが
-#   正常に変換できるように
-# 命令しなくても使える標準の場所にあるカーソルが
-#   カーソルとして処理されてなかったのを修正
-# leftup/rightupではない透過形式のカーソル画像で、
-#   処理が行えずフリーズしていた不具合を修正
-# 音源データのOGG変換時、名前を変更しないよう変更
-#   (≒自動的に拡張子偽装が行われる)
-# 画像保存時のフォーマットの判定を少し変更&可読性向上(笑)
-#   過去verではpng周りがかなり怪しかったため
+# -最新の更新履歴(v1.2.5)- 
+# できるだけ変数を相対パスで運用するように修正
+#   ―可読性向上が目的だが焼け石に水
+# 動画再生命令の検出方法を少し変更
+#   ―過去の方法だと変数が通らなかった
+# GUIの表示されている説明文を少し変更
+#   ―実はPNGって途中のverからJPG化できなくなってて...
 
 # これを読んだあなた。
 # どうかこんな可読性の欠片もないクソコードを書かないでください。
@@ -184,8 +178,8 @@ frame_1 = sg.Frame('画像', [
 	 sg.Radio(text='360x270', group_id='A', k='res_360', default=True),
 	 sg.Radio(text='640x480', group_id='A', k='res_640')],
 	[sg.Text('JPG品質：'), sg.Slider(range=(100,1), default_value=95, k='jpg_quality', pad=((0,0),(0,0)), orientation='h')],
-	[sg.Checkbox('無透過のPNGをJPGに変換&拡張子偽装', k='jpg_mode', default=True)],
-	[sg.Checkbox('透過用BMPの横解像度を偶数に指定', k='img_even', default=True)],
+	[sg.Checkbox('無透過BMPをJPGに変換&拡張子偽装', k='jpg_mode', default=True)],
+	[sg.Checkbox('透過BMPの横解像度を偶数に指定', k='img_even', default=True)],
 	[sg.Checkbox('表示が小さすぎる文字を強制拡大', k='sw_txtsize', default=True)],
 ], size=(300, 205))
 
@@ -202,14 +196,14 @@ frame_3 = sg.Frame('その他', [
 	[sg.Checkbox('nsaed.exeで出力ファイルを圧縮する', k='nsa_mode', default=nsaed_exist, disabled=(not nsaed_exist))],
 ], size=(300, 80), pad=(0,0))
 
-flame_4 = sg.Frame('', [
+frame_4 = sg.Frame('', [
 	[sg.Text(' PSPでの画面表示：'), 
 	 sg.Radio(text='拡大しない', group_id='B', k='size_normal', default=True),
 	 sg.Radio(text='拡大(比率維持)', group_id='B', k='size_aspect'),
 	 sg.Radio(text='拡大(フルサイズ)', group_id='B', k='size_full')],
 ], size=(530, 40))
 
-flame_5 = sg.Frame('', [
+frame_5 = sg.Frame('', [
 	[sg.Button('convert', pad=(9,6), disabled=True)]
 ], size=(70, 40))
 
@@ -222,7 +216,7 @@ frame_in_2and3 = sg.Column([[frame_2],[frame_3]])
 layout = [
 	[col],
 	[frame_1,frame_in_2and3],
-	[flame_4,flame_5],
+	[frame_4,frame_5],
 	[progressbar]
 ]
 
@@ -417,9 +411,9 @@ def func_txt_all(text):
 	immode_var_tup += re.findall(r'(stralias|mov)[ |\t]*(\$?[A-Za-z0-9_]+?)[ |\t]*,[ |\t]*"(:(.)/?([0-9]+)?(,.+?)?;)?(.+?)"', text)#パスの入ったmov及びstralias
 
 	if values['vid_flag']:#動画変換処理を行う場合
-		vid_list_rel += re.findall(r'mpegplay "(.+?)",[0|1]', text)#txt内の動画の相対パスを格納
+		vid_list_rel += re.findall(r'mpegplay "(.+?)",([0|1]|%[0-9]+)', text)[0]#txt内の動画の相対パスを格納
 	else:#動画変換処理を行わない場合
-		text = re.sub(r'mpegplay "(.+?)",[0|1]:', r'', text)#if使用時 - 再生部分を抹消
+		text = re.sub(r'mpegplay "(.+?)",([0|1]|%[0-9]+):', r'', text)#if使用時 - 再生部分を抹消
 		text = text.replace('mpegplay ', ';mpegplay ')#再生部分をコメントアウト
 
 	return text
@@ -462,6 +456,7 @@ def func_arc_ext():
 
 #-----格納されたtxt内の動画の相対パスを処理-----
 def func_vid_conv(vid, vid_result):
+	vid_result = str(vid_result).replace('\\','/')#文字列として扱いづらいのでとりあえず\置換
 
 	if not os.path.isfile(vid):#パスのファイルが実際に存在するかチェック
 		return#なければ終了
@@ -797,15 +792,15 @@ def func_music_conv(file):
 	#---arc.nsa向けフォルダ分け用処理---
 	if values['nsa_mode']:
 		#---ディレクトリ名に"bgm"とあるかで判定---
-		arc_num_sound = str( ('bgm' in str(result_dir_ff)) + 1 )
+		arc_num_sound = str( bool('bgm' in str(result_dir_ff)) + 1 )
 
-		#---先にファイル保存用ディレクトリを作成---
-		os.makedirs((result_dir_ff.replace(temp_dir, (result_dir + r'/arc' + arc_num_sound))), exist_ok=True)
 		#---ファイル保存先パス用変数を代入---
-		result_dir2 = (result_dir + r'/arc' + arc_num_sound)
+		result_dir2 = str(os.path.join(result_dir, 'arc' + arc_num_sound))
+		#---先にファイル保存用ディレクトリを作成---
+		os.makedirs(os.path.join(result_dir2, os.path.relpath(result_dir_ff, temp_dir)), exist_ok=True)#保存先作成
 		
 	else:#通常時フォルダ分け用処理
-		os.makedirs((result_dir_ff.replace(temp_dir,result_dir)), exist_ok=True)#保存先作成
+		os.makedirs(os.path.join(result_dir, os.path.relpath(result_dir_ff, temp_dir)), exist_ok=True)#保存先作成
 		result_dir2 = result_dir#保存先パス用変数を代入
 
 	#---ogg変換用処理---
@@ -819,7 +814,7 @@ def func_music_conv(file):
 			result_Hz = str(values['SE_Hz'])
 
 	#---出力先パスの代入---
-	file_result = (file.replace(temp_dir,result_dir2))
+	file_result = os.path.join(result_dir2, os.path.relpath(file, temp_dir))
 	file_result_ogg = (os.path.splitext(file_result)[0] + ".ogg")
 	
 	if values['ogg_mode']:
@@ -986,7 +981,6 @@ while True:
 
 				#---[関数]格納されたtxt内の動画の相対パスを処理---
 				for i,vid_rel in enumerate(set(vid_list_rel)):#set型で重複削除
-					vid_rel = vid_rel.replace('\\','/')#文字列として扱いづらいのでとりあえず\置換
 					vid = os.path.join(temp_dir, vid_rel)#格納された相対パスを絶対パスへ
 					vid_result = os.path.join(result_dir, vid_rel)#処理後の保存先
 				
