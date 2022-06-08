@@ -28,7 +28,7 @@ window_title = 'ONScripter Multi Converter for PSP ver.1.2.7'
 # -最新の更新履歴(v1.2.7)- 
 # なんで1.2.6で修正できてないんだよ
 # 教えはどうなってんだ教えは
-# お前ら禁じられた配列にfindallを
+# お前ら禁じられた配列+=findallを
 # 平気で使ってんじゃねえか
 # 分かってんのか！？
 
@@ -411,7 +411,7 @@ def func_txt_all(text):
 
 	if values['vid_flag']:#動画変換処理を行う場合
 		for a in re.findall(r'mpegplay "(.+?)",([0|1]|%[0-9]+)', text):#txt内の動画の相対パスを格納
-			vid_list_rel += a[0]
+			vid_list_rel.append(a[0])
 
 	else:#動画変換処理を行わない場合
 		text = re.sub(r'mpegplay "(.+?)",([0|1]|%[0-9]+):', r'', text)#if使用時 - 再生部分を抹消
