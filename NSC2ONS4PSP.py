@@ -14,7 +14,7 @@ import os
 import re
 
 ####################################################################################################
-window_title = 'ONScripter Multi Converter for PSP ver.1.2.6'
+window_title = 'ONScripter Multi Converter for PSP ver.1.2.7'
 ####################################################################################################
 
 # -memo-
@@ -25,9 +25,12 @@ window_title = 'ONScripter Multi Converter for PSP ver.1.2.6'
 # os.path.joinを使わないパスの結合をやめないとマズイ気がする - もう無理限界
 
 
-# -最新の更新履歴(v1.2.6)- 
-# 動画のない作品で動画変換をONにするとエラー吐いてたのを修正(ごめんね)
-# JPEG品質指定を動画変換時にも適応
+# -最新の更新履歴(v1.2.7)- 
+# なんで1.2.6で修正できてないんだよ
+# 教えはどうなってんだ教えは
+# お前ら禁じられた配列にfindallを
+# 平気で使ってんじゃねえか
+# 分かってんのか！？
 
 # これを読んだあなた。
 # どうかこんな可読性の欠片もないクソコードを書かないでください。
@@ -407,10 +410,8 @@ def func_txt_all(text):
 	immode_var_tup += re.findall(r'(stralias|mov)[ |\t]*(\$?[A-Za-z0-9_]+?)[ |\t]*,[ |\t]*"(:(.)/?([0-9]+)?(,.+?)?;)?(.+?)"', text)#パスの入ったmov及びstralias
 
 	if values['vid_flag']:#動画変換処理を行う場合
-		try:
-			vid_list_rel += re.findall(r'mpegplay "(.+?)",([0|1]|%[0-9]+)', text)[0]#txt内の動画の相対パスを格納
-		except:
-			pass
+		for a in re.findall(r'mpegplay "(.+?)",([0|1]|%[0-9]+)', text):#txt内の動画の相対パスを格納
+			vid_list_rel += a[0]
 
 	else:#動画変換処理を行わない場合
 		text = re.sub(r'mpegplay "(.+?)",([0|1]|%[0-9]+):', r'', text)#if使用時 - 再生部分を抹消
