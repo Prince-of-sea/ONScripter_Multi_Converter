@@ -14,24 +14,20 @@ import os
 import re
 
 ####################################################################################################
-window_title = 'ONScripter Multi Converter for PSP ver.1.2.5'
+window_title = 'ONScripter Multi Converter for PSP ver.1.2.6'
 ####################################################################################################
 
 # -memo-
 # __file__だとexe化時subprocessの相対パス読み込みﾀﾋぬのでsys.argv[0]使う
 # 同じような理由でexit()もsys.exit()にする
-# BGMとSEの区別もうちょいマシな方法ないか模索中 - BGM/MP3命令の抽出を予定
+# BGMとSEの区別もうちょいマシな方法ないか模索中 - コレでいい気がしてきた
 # jsonでの作品個別処理何も実装してねぇ... - v1.3.0で実装
-# os.path.joinを使わないパスの結合をやめないとマズイ気がする - 現在修正中
+# os.path.joinを使わないパスの結合をやめないとマズイ気がする - もう無理限界
 
 
-# -最新の更新履歴(v1.2.5)- 
-# できるだけ変数を相対パスで運用するように修正
-#   ―可読性向上が目的だが焼け石に水
-# 動画再生命令の検出方法を少し変更
-#   ―過去の方法だと変数が通らなかった
-# GUIの表示されている説明文を少し変更
-#   ―実はPNGって途中のverからJPG化できなくなってて...
+# -最新の更新履歴(v1.2.6)- 
+# 動画のない作品で動画変換をONにするとエラー吐いてたのを修正(ごめんね)
+# JPEG品質指定を動画変換時にも適応
 
 # これを読んだあなた。
 # どうかこんな可読性の欠片もないクソコードを書かないでください。
@@ -411,7 +407,11 @@ def func_txt_all(text):
 	immode_var_tup += re.findall(r'(stralias|mov)[ |\t]*(\$?[A-Za-z0-9_]+?)[ |\t]*,[ |\t]*"(:(.)/?([0-9]+)?(,.+?)?;)?(.+?)"', text)#パスの入ったmov及びstralias
 
 	if values['vid_flag']:#動画変換処理を行う場合
-		vid_list_rel += re.findall(r'mpegplay "(.+?)",([0|1]|%[0-9]+)', text)[0]#txt内の動画の相対パスを格納
+		try:
+			vid_list_rel += re.findall(r'mpegplay "(.+?)",([0|1]|%[0-9]+)', text)[0]#txt内の動画の相対パスを格納
+		except:
+			pass
+
 	else:#動画変換処理を行わない場合
 		text = re.sub(r'mpegplay "(.+?)",([0|1]|%[0-9]+):', r'', text)#if使用時 - 再生部分を抹消
 		text = text.replace('mpegplay ', ';mpegplay ')#再生部分をコメントアウト
@@ -444,7 +444,7 @@ def func_arc_ext():
 		for txt in txtline.decode('cp932', 'ignore').splitlines():#一行ずつ処理 - なぜかtxtlineがbyteなのでデコード(エラー無視)
 			arc_path_rel = re.findall(r'\[.+?\] +[0-9]+? +(.+)',txt)#切り出し
 			if arc_path_rel:#切り出しに成功した場合
-				arc_path = os.path.join(temp_dir, (arc_path_rel[0]).replace('.nbz', '.wav') )#絶対パスに変換(&nbzをwavに)
+				arc_path = os.path.join(temp_dir, str(arc_path_rel[0]).replace('.nbz', '.wav') )#絶対パスに変換(&nbzをwavに)
 				if os.path.exists(arc_path):#ファイルが存在する場合
 					os.remove(arc_path)#削除
 
@@ -496,7 +496,7 @@ def func_vid_conv(vid, vid_result):
 		'-i', vid_result,
 		'-s', str(vid_res),
 		'-r', str(vid_frame),
-		'-qscale', '0',
+		'-qscale', str(int(51-int(values['jpg_quality'])/2)),#JPEG品質指定を動画変換時にも適応
 		vidtmpdir + '/%08d.jpg',#8桁連番
 	], shell=True, **subprocess_args(True))
 
@@ -1021,7 +1021,7 @@ while True:
 				#フルパスからまたディレクトリ部分切り出し
 				result_dir_ff = os.path.dirname(file)#さっきせっかく結合したのに無駄だなぁ
 				
-				file = file.replace('\\','/')#文字列として扱いづらいのでとりあえず\置換
+				file = str(file).replace('\\','/')#文字列として扱いづらいのでとりあえず\置換
 				file_format = format_check(file)
 
 				#-[関数]全画像変換処理部分-
