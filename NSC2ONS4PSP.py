@@ -14,23 +14,21 @@ import os
 import re
 
 ####################################################################################################
-window_title = 'ONScripter Multi Converter for PSP ver.1.2.7'
+window_title = 'ONScripter Multi Converter for PSP ver.1.2.8'
 ####################################################################################################
 
 # -memo-
 # __file__だとexe化時subprocessの相対パス読み込みﾀﾋぬのでsys.argv[0]使う
 # 同じような理由でexit()もsys.exit()にする
-# BGMとSEの区別もうちょいマシな方法ないか模索中 - コレでいい気がしてきた
 # jsonでの作品個別処理何も実装してねぇ... - v1.3.0で実装
 # os.path.joinを使わないパスの結合をやめないとマズイ気がする - もう無理限界
 
 
-# -最新の更新履歴(v1.2.7)- 
-# なんで1.2.6で修正できてないんだよ
-# 教えはどうなってんだ教えは
-# お前ら禁じられた配列+=findallを
-# 平気で使ってんじゃねえか
-# 分かってんのか！？
+# -最新の更新履歴(v1.2.8)- 
+# 将来、PillowでのImageの拡大/縮小時の命令が"Resampling."が必要になるっぽいのでつけた
+# 変換後の0.txtに本ツールのURLを追記
+# 一部のoggファイルで変換時エラーを起こしていたのを修正
+
 
 # これを読んだあなた。
 # どうかこんな可読性の欠片もないクソコードを書かないでください。
@@ -607,7 +605,7 @@ def format_check(file):
 		elif re.match(b'^\x4f\x67\x67\x53', b):
 			ff = 'OGG'
 
-		elif re.match(b'^\xff\xf3', b) or re.match(b'^\xff\xfa', b) or re.match(b'^\xff\xfb', b) or re.match(b'^\x49\x44\x33', b):
+		elif re.match(b'^\xff\xf3', b) or re.match(b'^\xff\xfa', b) or re.match(b'^\xff\xfb', b) or re.match(b'^\x49\x44\x33', b) or re.match(b'^\xff\x00\x00', b):
 			ff = 'MP3'#ヘッダーについて詳細不明、情報求む
 
 		else:
@@ -756,24 +754,24 @@ def func_image_conv(file, file_format):
 			img_crop = img.crop((crop_width*i, 0, crop_width*(i+1), img.height))#画像切り出し
 
 			if img_mask:#(専用縮小処理が必要な)カーソルの時
-				img_crop = img_crop.resize((crop_result_width-1, result_height-1), Image.LANCZOS)
+				img_crop = img_crop.resize((crop_result_width-1, result_height-1), Image.Resampling.LANCZOS)
 
 				#画像本体をLANCZOS、透過部分をNEARESTで処理することによってカーソルをキレイに縮小
 				img_bg = Image.new(img.mode, (crop_result_width-1, result_height-1), a_px)#ベタ塗りの背景画像を作成
 				img_mask_crop = img_mask.crop((crop_width*i, 0, crop_width*(i+1), img.height))#画像切り出し
-				img_mask_crop = img_mask_crop.resize((crop_result_width-1, result_height-1), Image.NEAREST)#マスク画像はNEARESTで縮小
+				img_mask_crop = img_mask_crop.resize((crop_result_width-1, result_height-1), Image.Resampling.NEAREST)#マスク画像はNEARESTで縮小
 				img_crop = Image.composite(img_crop, img_bg, img_mask_crop)#上記2枚を利用しimg_cropへマスク
 
 			elif immode_nearest:#背景がボケると困る画像(NEAREST)
-				img_crop = img_crop.resize((crop_result_width, result_height), Image.NEAREST)
+				img_crop = img_crop.resize((crop_result_width, result_height), Image.Resampling.NEAREST)
 
 			else:#それ以外の画像(LANCZOS)
-				img_crop = img_crop.resize((crop_result_width, result_height), Image.LANCZOS)
+				img_crop = img_crop.resize((crop_result_width, result_height), Image.Resampling.LANCZOS)
 
 			img_resize.paste(img_crop, (crop_result_width*i, bool(img_mask)))#結合用画像へ貼り付け - 専用カーソルは上1px空ける
 
 	else:
-		img_resize = img.resize((result_width, result_height), Image.LANCZOS)
+		img_resize = img.resize((result_width, result_height), Image.Resampling.LANCZOS)
 
 	#-----画像保存-----
 	if immode_cursor or file_format == 'PNG':#カーソルか元々PNG
@@ -826,7 +824,8 @@ def func_music_conv(file):
 			'-ac', '2',	file_result_ogg,
 			], shell=True, **subprocess_args(True))
 
-		os.rename(file_result_ogg, file_result)
+		if not os.path.splitext(file_result)[1] == ".ogg":#元がoggではない場合拡張子偽装を実行
+			os.rename(file_result_ogg, file_result)
 
 	else:
 		shutil.copy(file,file_result)#コピーするだけ
@@ -965,6 +964,7 @@ while True:
 
 				if err_flag == False:#[関数]全txtへ行う処理
 					text = func_txt_all(text)
+					text += ('\n\n;\tConverted by "' + window_title + '"\n;\thttps://github.com/Prince-of-sea/ONScripter_Multi_Converter\n')
 					open(textpath, mode='w').write(text)#全置換処理終了後書き込み
 
 				func_progbar_update(0, i, len(text_list))#左から順に{種類, 現在の順番, 最大数}
@@ -1058,7 +1058,7 @@ while True:
 			if debug_mode and os.path.isdir(os.path.join(same_hierarchy, 'result_add')):#Debug
 				for f in glob.glob(os.path.join(same_hierarchy, 'result_add', '*')):
 					#result_add内のファイルを完成品へ移動
-					shutil.copy(f, values['output_dir'] + r'/result')#default.ttfとか入れとく
+					shutil.copy(f, (os.path.join(values['output_dir'],r'result')))#default.ttfとか入れとく
 
 			#-----tempを削除-----
 			shutil.rmtree(os.path.join(os.environ['temp'], '_NSC2ONS4PSP'))
