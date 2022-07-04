@@ -14,7 +14,7 @@ import os
 import re
 
 ####################################################################################################
-window_title = 'ONScripter Multi Converter for PSP ver.1.2.8'
+window_title = 'ONScripter Multi Converter for PSP ver.1.2.9'
 ####################################################################################################
 
 # -memo-
@@ -24,11 +24,10 @@ window_title = 'ONScripter Multi Converter for PSP ver.1.2.8'
 # os.path.joinを使わないパスの結合をやめないとマズイ気がする - もう無理限界
 
 
-# -最新の更新履歴(v1.2.8)- 
-# 将来、PillowでのImageの拡大/縮小時の命令が"Resampling."が必要になるっぽいのでつけた
-# 変換後の0.txtに本ツールのURLを追記
-# 一部のoggファイルで変換時エラーを起こしていたのを修正
-
+# -最新の更新履歴(v1.2.9)- 
+# .datを弾いてたせいでdat偽装mpgが放置されてたのを修正
+# BGM判定を"ディレクトリ名にbgm(小文字)があるか"から
+#   "名前含むフルパスにBGM(大文字小文字問わず)があるか"に変更
 
 # これを読んだあなた。
 # どうかこんな可読性の欠片もないクソコードを書かないでください。
@@ -422,7 +421,7 @@ def func_txt_all(text):
 def func_arc_ext():
 
 	#---その他ファイルをコピー---
-	shutil.copytree(search_dir, temp_dir, ignore=shutil.ignore_patterns('*.sar', '*.nsa', '*.ns2', '*.exe', '*.dll', '*.txt', '*.dat', '*.sav', 'envdata'))
+	shutil.copytree(search_dir, temp_dir, ignore=shutil.ignore_patterns('*.sar', '*.nsa', '*.ns2', '*.exe', '*.dll', '*.txt', 'envdata'))
 
 	#---存在するarcをここで全てリスト化(もちろん上書き順は考慮)---
 	temp_arc = []
@@ -790,9 +789,8 @@ def func_image_conv(file, file_format):
 def func_music_conv(file):
 	#---arc.nsa向けフォルダ分け用処理---
 	if values['nsa_mode']:
-		#---ディレクトリ名に"bgm"とあるかで判定---
-		arc_num_sound = str( bool('bgm' in str(result_dir_ff)) + 1 )
-
+		#---ファイルパスに"bgm"とあるかで判定---
+		arc_num_sound = str( bool('bgm' in str(file).lower()) + 1 )
 		#---ファイル保存先パス用変数を代入---
 		result_dir2 = str(os.path.join(result_dir, 'arc' + arc_num_sound))
 		#---先にファイル保存用ディレクトリを作成---
