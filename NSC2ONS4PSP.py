@@ -14,20 +14,34 @@ import os
 import re
 
 ####################################################################################################
-window_title = 'ONScripter Multi Converter for PSP ver.1.2.9'
+window_title = 'ONScripter Multi Converter for PSP ver.1.3.0'
 ####################################################################################################
 
 # -memo-
-# __file__だとexe化時subprocessの相対パス読み込みﾀﾋぬのでsys.argv[0]使う
-# 同じような理由でexit()もsys.exit()にする
-# jsonでの作品個別処理何も実装してねぇ... - v1.3.0で実装
+# __file__だとexe化時subprocessの相対パス読み込みﾀﾋぬのでsys.argv[0]使う - 済
+# 同じような理由でexit()もsys.exit()にする - 済
+# jsonでの作品個別処理何も実装してねぇ... - v1.3.0で実装予定だった - 現在未実装orz
 # os.path.joinを使わないパスの結合をやめないとマズイ気がする - もう無理限界
 
 
-# -最新の更新履歴(v1.2.9)- 
-# .datを弾いてたせいでdat偽装mpgが放置されてたのを修正
-# BGM判定を"ディレクトリ名にbgm(小文字)があるか"から
-#   "名前含むフルパスにBGM(大文字小文字問わず)があるか"に変更
+# -最新の更新履歴(v1.3.0)- 
+# PNG減色圧縮モードの追加
+# !- 非透過PNGは設定関係なく強制圧縮されるようになってます
+#    どうもONS for PSPって背景の色数勝手に落としてるっぽいし...
+#    つまりこの設定で影響が出るのは"256色以上の非透過PNGスプライト"のみ(滅多にないでしょ...?)
+# 上記に伴うUI変更
+#    ちょっとわかりにくくなったけど許して
+# "savedata"ファルダがある作品を変換した際、
+#    勝手に変換後データにも"savedata"ファルダを作成する機能を追加
+# 一部解像度新表記の読み取りに失敗し
+#    勝手に640x480判定になっていたのを修正
+# 画像分割や命令取得の取りこぼしを多少減らした
+#    主にタブとかスペースとか
+# savescreenshot命令を自動削除するように変更
+#    ついでにmpegplay未使用時の命令削除もそれに合わせた書き方に
+# OGG音質設定のビットレート初期値を
+#    それぞれ112→96、56→48へ低下
+
 
 # これを読んだあなた。
 # どうかこんな可読性の欠片もないクソコードを書かないでください。
@@ -176,21 +190,22 @@ frame_1 = sg.Frame('画像', [
 	[sg.Text('JPG品質：'), sg.Slider(range=(100,1), default_value=95, k='jpg_quality', pad=((0,0),(0,0)), orientation='h')],
 	[sg.Checkbox('無透過BMPをJPGに変換&拡張子偽装', k='jpg_mode', default=True)],
 	[sg.Checkbox('透過BMPの横解像度を偶数に指定', k='img_even', default=True)],
-	[sg.Checkbox('表示が小さすぎる文字を強制拡大', k='sw_txtsize', default=True)],
+	[sg.Checkbox('透過PNGの色数を削減し圧縮', k='AlphaPNG_conv', default=False)],
 ], size=(300, 205))
 
 frame_2 = sg.Frame('音源', [
-	[sg.Checkbox('音源をOGGへ圧縮する', k='ogg_mode', default=ffmpeg_exist, disabled=(not ffmpeg_exist))],
-	[sg.Text('BGM：'), sg.Combo(values=(kbps_list), default_value='112', readonly=True, k='BGM_kbps', disabled=(not ffmpeg_exist)), sg.Text('kbps'), 
-	 sg.Combo(values=(Hz_list), default_value='44100', readonly=True, k='BGM_Hz', disabled=(not ffmpeg_exist)), sg.Text('Hz'),],
-	[sg.Text('SE：'), sg.Combo(values=(kbps_list), default_value='56', readonly=True, k='SE_kbps', disabled=(not ffmpeg_exist)), sg.Text('kbps'), 
-	 sg.Combo(values=(Hz_list), default_value='22050', readonly=True, k='SE_Hz', disabled=(not ffmpeg_exist)), sg.Text('Hz'),],
-], size=(300, 125), pad=(0,0))
+	[sg.Checkbox('音源をOGGへ圧縮する - [BGM/SE]', k='ogg_mode', default=ffmpeg_exist, disabled=(not ffmpeg_exist))],
+	[sg.Combo(values=(kbps_list), default_value='96', readonly=True, k='BGM_kbps', disabled=(not ffmpeg_exist)),
+	 sg.Combo(values=(Hz_list), default_value='44100', readonly=True, k='BGM_Hz', disabled=(not ffmpeg_exist)), sg.Text('/'),
+	 sg.Combo(values=(kbps_list), default_value='48', readonly=True, k='SE_kbps', disabled=(not ffmpeg_exist)),
+	 sg.Combo(values=(Hz_list), default_value='22050', readonly=True, k='SE_Hz', disabled=(not ffmpeg_exist)), ],
+], size=(300, 95), pad=(0,0))
 
 frame_3 = sg.Frame('その他', [
 	[sg.Checkbox('smjpeg_encode.exeで動画を変換する', k='vid_flag', default=(smjpeg_exist and ffmpeg_exist), disabled=(not (smjpeg_exist and ffmpeg_exist)))],
 	[sg.Checkbox('nsaed.exeで出力ファイルを圧縮する', k='nsa_mode', default=nsaed_exist, disabled=(not nsaed_exist))],
-], size=(300, 80), pad=(0,0))
+	[sg.Checkbox('表示が小さすぎる文字を強制拡大', k='sw_txtsize', default=False)],
+], size=(300, 110), pad=(0,0))
 
 frame_4 = sg.Frame('', [
 	[sg.Text(' PSPでの画面表示：'), 
@@ -304,7 +319,7 @@ def func_txt_zero(text):
 	global err_flag
 	global per
 
-	newnsc_mode = (r';\$V[0-9]{2,}G([0-9]{2,})S([0-9]{3,}),([0-9]{3,})L[0-9]{2,}')#ONS解像度新表記
+	newnsc_mode = (r';\$V[0-9]{1,}G([0-9]{1,})S([0-9]{1,}),([0-9]{1,})L[0-9]{1,}')#ONS解像度新表記
 	newnsc_search = re.search(newnsc_mode, text)
 	oldnsc_mode = (r';mode([0-9]{3})')#ONS解像度旧表記
 	oldnsc_search = re.search(oldnsc_mode, text)
@@ -362,9 +377,9 @@ def func_txt_all(text):
 	global immode_list_tup
 
 	#-PSPで使用できない命令を無効化する-
-	text = re.sub(r'([\n|\t| |:])avi "(.+?)",([0|1])', r'\1mpegplay "\2",\3', text)#aviをmpegplayで再生(後に拡張子偽装)
-	text = re.sub(r'([\n|\t| |:])okcancelbox %(.+?),', r'\1mov %\2,1 ;', text)#okcancelboxをmovで強制ok
-	text = re.sub(r'([\n|\t| |:])yesnobox %(.+?),', r'\1mov %\2,1 ;', text)#yesnoboxをmovで強制yes
+	text = re.sub(r'([\n|\t| |:])avi[\t\s]+"(.+?)",([0|1]|%[0-9]+)', r'\1mpegplay "\2",\3', text)#aviをmpegplayで再生(後に拡張子偽装)
+	text = re.sub(r'([\n|\t| |:])okcancelbox[\t\s]+%(.+?),', r'\1mov %\2,1 ;', text)#okcancelboxをmovで強制ok
+	text = re.sub(r'([\n|\t| |:])yesnobox[\t\s]+%(.+?),', r'\1mov %\2,1 ;', text)#yesnoboxをmovで強制yes
 
 	text = text.replace('.NBZ', '.wav')#大文字
 	text = text.replace('.nbz', '.wav')#小文字
@@ -398,21 +413,23 @@ def func_txt_all(text):
 	#-txt内の画像の相対パスを格納-
 
 	#[0]が命令文/[3]が(パスの入っている)変数名/[5]が透過形式/[6]が分割数/[8]が相対パス - [3]か[8]はどちらかのみ代入される
-	immode_list_tup += re.findall(r'(ld)[ |\t]+([lcr])[ |\t]*,[ |\t]*((\$?[A-Za-z0-9_]+?)|"(:(.)/?([0-9]+)?(,.+?)?;)?(.+?)")[ |\t]*,[ |\t]*[0-9]+', text)#ld
-	immode_list_tup += re.findall(r'((abs)?setcursor)[ |\t]+%?.+?[ |\t]*,[ |\t]*((\$?[A-Za-z0-9_]+?)|"(:(.)/?([0-9]+)?(,.+?)?;)?(.+?)")([ |\t]*,[ |\t]*(([0-9]{1,3})|(%.+?))){1,3}', text)#setcursor系
-	immode_list_tup += re.findall(r'(lsp(h)?)[ |\t]+%?.+?[ |\t]*,[ |\t]*((\$?[A-Za-z0-9_]+?)|"(:(.)/?([0-9]+)?(,.+?)?;)?(.+?)")([ |\t]*,[ |\t]*(([0-9]{1,3})|(%.+?))){1,3}', text)#lsp系
-	immode_list_tup += re.findall(r'(lsph?2(add|sub)?)[ |\t]+%?.+?[ |\t]*,[ |\t]*((\$?[A-Za-z0-9_]+?)|"(:(.)/?([0-9]+)?(,.+?)?;)?(.+?)")(([ |\t]*,[ |\t]*((-?[0-9]{1,3})|(%.+?))){1,6})?', text)#lsp2系
+	immode_list_tup += re.findall(r'(ld)[\t\s]+([lcr])[\t\s]*,[\t\s]*((\$?[A-Za-z0-9_]+?)|"(:(.)/?([0-9]+)?(,.+?)?;)?(.+?)")[\t\s]*,[\t\s]*[0-9]+', text)#ld
+	immode_list_tup += re.findall(r'((abs)?setcursor)[\t\s]+%?.+?[\t\s]*,[\t\s]*((\$?[A-Za-z0-9_]+?)|"(:(.)/?([0-9]+)?(,.+?)?;)?(.+?)")([\t\s]*,[\t\s]*(([0-9]{1,3})|(%.+?))){1,3}', text)#setcursor系
+	immode_list_tup += re.findall(r'(lsp(h)?)[\t\s]+%?.+?[\t\s]*,[\t\s]*((\$?[A-Za-z0-9_]+?)|"(:(.)/?([0-9]+)?(,.+?)?;)?(.+?)")([\t\s]*,[\t\s]*(([0-9]{1,3})|(%.+?))){1,3}', text)#lsp系
+	immode_list_tup += re.findall(r'(lsph?2(add|sub)?)[\t\s]+%?.+?[\t\s]*,[\t\s]*((\$?[A-Za-z0-9_]+?)|"(:(.)/?([0-9]+)?(,.+?)?;)?(.+?)")(([\t\s]*,[\t\s]*((-?[0-9]{1,3})|(%.+?))){1,6})?', text)#lsp2系
 
 	#[0]が命令文/[1]が変数名/[3]が透過形式/[4]が分割数/[6]が相対パス
-	immode_var_tup += re.findall(r'(stralias|mov)[ |\t]*(\$?[A-Za-z0-9_]+?)[ |\t]*,[ |\t]*"(:(.)/?([0-9]+)?(,.+?)?;)?(.+?)"', text)#パスの入ったmov及びstralias
+	immode_var_tup += re.findall(r'(stralias|mov)[\t\s]*(\$?[A-Za-z0-9_]+?)[\t\s]*,[\t\s]*"(:(.)/?([0-9]+)?(,.+?)?;)?(.+?)"', text)#パスの入ったmov及びstralias
+
+	#savescreenshot抹消(PSPだとクソ重いしほぼ確実に取得サイズずれるし...)
+	text = re.sub(r'savescreenshot2?[\t\s]+"(.+?)"[\t\s]*([:|\n])', r'wait 0\2', text)
 
 	if values['vid_flag']:#動画変換処理を行う場合
 		for a in re.findall(r'mpegplay "(.+?)",([0|1]|%[0-9]+)', text):#txt内の動画の相対パスを格納
 			vid_list_rel.append(a[0])
 
 	else:#動画変換処理を行わない場合
-		text = re.sub(r'mpegplay "(.+?)",([0|1]|%[0-9]+):', r'', text)#if使用時 - 再生部分を抹消
-		text = text.replace('mpegplay ', ';mpegplay ')#再生部分をコメントアウト
+		text = re.sub(r'mpegplay[\t\s]+"(.+?)"[\t\s]*,[\t\s]*([0|1]|%[0-9]+)[\t\s]*([:|\n])', r'wait 0\3', text)
 
 	return text
 
@@ -716,7 +733,7 @@ def func_image_conv(file, file_format):
 					img_mask.putdata(mask_px_list)
 
 	#---立ち絵用横幅偶数指定(ld命令で取りこぼした立ち絵対策)---
-	elif int(img.width) >= 4 and (not immode_nearest) and values['img_even']:#縦横4px以上&透明部分なし&偶数指定ON
+	elif (int(img.width) >= 4) and (not immode_nearest) and values['img_even']:#縦横4px以上&透明部分なし&偶数指定ON
 
 		#---ピクセルの色数を変数に代入---
 		chara_mainL = img.getpixel((1, 1))#本画像部分左上1px - 1
@@ -724,7 +741,7 @@ def func_image_conv(file, file_format):
 		chara_alphaL = img.getpixel((img.width/2, 1))#透過部分左上1px - 3
 		chara_alphaR = img.getpixel((img.width-1, 1))#透過部分右上1px - 4
 
-		if chara_mainL == chara_mainR and chara_alphaL == chara_alphaR == (255,255,255):#1,2が同一&3,4が白	
+		if (chara_mainL == chara_mainR) and (chara_alphaL == chara_alphaR == (255,255,255)):#1,2が同一&3,4が白	
 			sp_val = 2
 
 
@@ -772,11 +789,29 @@ def func_image_conv(file, file_format):
 	else:
 		img_resize = img.resize((result_width, result_height), Image.Resampling.LANCZOS)
 
+	#-----PNG減色-----
+	if file_format == 'PNG':
+		if img_resize.mode == 'RGB':#非透過は強制
+			img_resize = img_resize.quantize(colors=256, method=0, kmeans=100, dither=1)
+
+		elif values['AlphaPNG_conv']:#透過は場合に応じて
+			img_resize.load()
+			alpha = img_resize.split()[-1]
+			img_resize = img_resize.convert('RGB').convert('P', palette=Image.Palette.ADAPTIVE, colors=255)
+			mask = Image.eval(alpha, lambda a: 255 if a <=128 else 0)
+			img_resize.paste(255, mask)
+
 	#-----画像保存-----
-	if immode_cursor or file_format == 'PNG':#カーソルか元々PNG
+	if immode_cursor:#カーソル
 		img_resize.save(file_result, 'PNG')
 
-	elif file_format == 'BMP' and ( immode_nearest or (not values['jpg_mode']) ):#bmpかつLRで呼出またはJPGmode OFF
+	elif (file_format == 'PNG') and (not img_resize.mode == 'RGB') and values['AlphaPNG_conv']:#減色透過PNG
+		img_resize.save(file_result, 'PNG', transparency=255)
+
+	elif (file_format == 'PNG'):#元々PNG
+		img_resize.save(file_result, 'PNG')
+
+	elif (file_format == 'BMP') and ( immode_nearest or (not values['jpg_mode']) ):#bmpかつLRで呼出またはJPGmode OFF
 		img_resize.save(file_result)
 
 	else:#それ以外 - JPGmode ON時のbmp 拡張子偽装
@@ -1051,8 +1086,12 @@ while True:
 			if os.path.exists(os.path.join(values['output_dir'],r'result')):
 				shutil.rmtree(os.path.join(values['output_dir'],r'result'))
 
+			#-----savedataフォルダ作成(無いとエラー出す作品向け)-----
+			if os.path.isdir(os.path.join(values['input_dir'], 'savedata')):
+				os.makedirs(os.path.join(result_dir, 'savedata'))
+
 			shutil.move(result_dir, values['output_dir'])#完成品を移動
-		
+
 			if debug_mode and os.path.isdir(os.path.join(same_hierarchy, 'result_add')):#Debug
 				for f in glob.glob(os.path.join(same_hierarchy, 'result_add', '*')):
 					#result_add内のファイルを完成品へ移動
