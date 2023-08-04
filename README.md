@@ -12,15 +12,17 @@
  <br>
  [制作/検証に使用した作者のPC環境]<br>
  PCスペック:<br>
- [![CPU-Z](https://valid.x86.fr/cache/banner/cgwavn-2.png)](https://valid.x86.fr/cgwavn)<br>
- FFmpeg-version:2021-05-05-git-7c451b609c<br>
- Python-version:Python 3.7.7<br>
+ [![CPU-Z](https://valid.x86.fr/cache/banner/d8ltzd-2.png)](https://valid.x86.fr/d8ltzd)<br>
+ FFmpeg-version:version 6.0-full_build<br>
+ Python-version:Python 3.11.3<br>
+ pngquant-version:2.17.0<br>
 
 ## 動作に必要なもの
  - ["ONScripter_Multi_Converter" exe本体](https://github.com/Prince-of-sea/ONScripter_Multi_Converter/releases/latest)
  - [smjpeg_encode.exe(すとーむ様作成)](http://web.archive.org/web/20130203074100/http://www.geocities.jp/stm_torm/ons/smjpeg4.zip)
  - [nsaed.exe(すとーむ様作成)](https://web.archive.org/web/20130328141650/http://www.geocities.jp/stm_torm/nsaed2.zip)
  - [GARBro.Console(게지네様作成)](https://drive.google.com/file/d/1gH9nNRxaz8GexN0B1hWyUc3o692bkWXX/view)
+ - [pngquant](https://pngquant.org/)
  - [FFmpeg](https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-full.7z)
  - [NScripterで制作されたゲーム](https://erogamescape.dyndns.org/~ap2/ero/toukei_kaiseki/attlist.php?att[66]=on)(当然ですが...)
 
@@ -35,6 +37,7 @@
 [パスの通ってるディレクトリ]
    ffmpeg.exe
    ffprobe.exe
+   pngquant.exe
 
 
 [適当な名前のツール用ディレクトリ]
@@ -59,47 +62,46 @@
 
 #### 上段メニュー
  - **入力先**<br>
-[Browse]からゲーム用ディレクトリを指定します<br>
+ [Browse]からゲーム用ディレクトリを指定します<br>
 
  - **出力先**<br>
-[Browse]から出力先の任意のディレクトリを指定します<br>
-実際は「(選択したディレクトリ)\result」へ保存されます<br>
-また、ディレクトリが競合した場合**勝手に消す**ので注意！<br>
+ [Browse]から出力先の任意のディレクトリを指定します<br>
+ 実際は「(選択したディレクトリ)\PSP_{入力先の名前}」へ保存されます<br>
+ また、ディレクトリが競合した場合**勝手に消す**ので注意！<br>
 
 #### 画像
- - **変換する解像度を指定**<br>
+ - **解像度指定**<br>
  変換後のゲームの解像度を指定します<br>
  基本的には"360x270"のままで問題ありません<br>
 
- - **JPG品質**<br>
+ - **JPG品質( -画像、-動画)**<br>
  JPGに変換された画像の品質を指定します<br>
  数値が低いほど容量が少なく、高いほど画質がきれいです<br>
+ v1.4.0より通常の画像向けと動画向けで別々に指定できるようになりました<br>
+
+ - **未指定時JPG/BMP横解像度**<br>
+ 画像の横解像度を特定の倍数にすることによって、<br>
+ "立ち絵の横に謎の縦線が表示される"不具合を回避します<br>
+ デフォルトは2<br>
 
  - **無透過のBMPをJPGに変換&拡張子偽装**<br>
  背景が透過されていないBMPに対して、JPG変換を行います<br>
 
- - **透過用BMPの横解像度を偶数に指定**<br>
- [「画像の左半分にイラスト、右半分に透過処理」](http://binaryheaven.ivory.ne.jp/o_show/nscripter/syo/05.htm)<br>
- が描かれている(と思われる)画像を大雑把に抽出し、<br>
- 画像の横解像度を偶数にすることによって、<br>
- "立ち絵の横に謎の縦線が表示される"不具合を回避します<br>
-
  - **透過PNGの色数を削減し圧縮**<br>
  透過PNGを256色まで減色し、大幅に容量を減らすことが出来ます<br>
- 仕様として、"黒塗り"と"半透明"が表現できないため<br>
- 作品によっては大幅に画質が落ちてしまうことがあります<br>
  
 #### 音源
  - **音源をOGGへ圧縮する**<br>
  FFmpegを使用し、ゲーム内の全ての音源データを変換します<br>
  BGMとSE(というかBGM以外)で別々に設定を行うことができます<br>
- (BGMとSEの区別は「パス名に"bgm"と入っているか」です)<br>
+ (BGMとSEの区別は「パス名に"bgm"と入っているか」＆「シナリオファイル内でBGMとして利用された形跡があるか」です)<br>
 
 #### その他
- - **smjpeg_encode.exeで動画を変換する**<br>
- シナリオ内の"avi"または"mpegplay"命令で再生する動画を<br>
- "smjpeg_encode.exe"を使ってPSP向けの形式に変換します<br>
- 動画未使用の作品の場合、特にこの設定に意味はないです<br>
+ - **常にメモリ内にフォントを読み込んでおく**<br>
+ PSPで動作させる際、常にフォントをRAMに読み込ませ、<br>
+ 文字表示を高速化させるかどうかの設定です<br>
+ RAMの消費量が増えるためPSP-1000での利用は非推奨<br>
+ (処理としてはons.iniの"FONTMEMORY"を書き換えてるだけ)<br>
 
  - **nsaed.exeで出力ファイルを圧縮する**<br>
  全ての画像/音源ファイルの変換処理が終了した後に、<br>
@@ -119,7 +121,7 @@
  - **convert**<br>
  ここを押すと変換開始<br>
 
-[convert]を押してしばらく(数分～1.5時間)待ったあと、<br>
+[convert]を押してしばらく(数秒～数分)待ったあと、<br>
 "処理が終了しました"と表示されたら変換完了です<br>
 [ONScripter for PSPのEBOOT.PBP](https://archive.org/download/ons.-7z/Old%20Versions/onscripter-20110111_psp.zip)と[default.ttf](https://www.google.com/search?q=PSP+default.ttf)を準備し、<br>
 [CFWまたはLCFW搭載のPSP](https://www.google.com/search?q=PSP+CFW6.61+ME%2FLME)に入れてレッツプレイ<br>

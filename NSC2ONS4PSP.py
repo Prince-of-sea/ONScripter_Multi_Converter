@@ -1,53 +1,47 @@
+from pathlib import Path
 from io import BytesIO
 from PIL import Image
+import mozjpeg_lossless_optimization as mozj
+import zopfli as zf
 import PySimpleGUI as sg
 import numpy as np
+import concurrent.futures
 import subprocess
+import tempfile
 import shutil
 import base64
-import json
 import math
 import stat
-import glob
+import json
 import sys
-import os
 import re
+import os
+#import time
 
-####################################################################################################
-window_title = 'ONScripter Multi Converter for PSP ver.1.3.0'
 ####################################################################################################
 
 # -memo-
 # __file__だとexe化時subprocessの相対パス読み込みﾀﾋぬのでsys.argv[0]使う - 済
 # 同じような理由でexit()もsys.exit()にする - 済
 # jsonでの作品個別処理何も実装してねぇ... - v1.3.0で実装予定だった - 現在未実装orz
-# os.path.joinを使わないパスの結合をやめないとマズイ気がする - もう無理限界
+# os.path.joinを使わないパスの結合をやめないとマズイ気がする - 済
 
 
-# -最新の更新履歴(v1.3.0)- 
-# PNG減色圧縮モードの追加
-# !- 非透過PNGは設定関係なく強制圧縮されるようになってます
-#    どうもONS for PSPって背景の色数勝手に落としてるっぽいし...
-#    つまりこの設定で影響が出るのは"256色以上の非透過PNGスプライト"のみ(滅多にないでしょ...?)
-# 上記に伴うUI変更
-#    ちょっとわかりにくくなったけど許して
-# "savedata"ファルダがある作品を変換した際、
-#    勝手に変換後データにも"savedata"ファルダを作成する機能を追加
-# 一部解像度新表記の読み取りに失敗し
-#    勝手に640x480判定になっていたのを修正
-# 画像分割や命令取得の取りこぼしを多少減らした
-#    主にタブとかスペースとか
-# savescreenshot命令を自動削除するように変更
-#    ついでにmpegplay未使用時の命令削除もそれに合わせた書き方に
-# OGG音質設定のビットレート初期値を
-#    それぞれ112→96、56→48へ低下
+# -最新の更新履歴(v1.4.0)- 
+# 内部のソースコードを一新
+# すべてのJPGおよびPNGに対し自動的に可逆圧縮を行う機能を追加
+# JPEG品質について、画像と動画で別々に指定できるように
+# 画像/音声/動画変換時にマルチスレッド処理を有効化
+# PNGの減色にpngquantを利用するよう変更
+# BGM/SEの判定に再生命令検知機能を追加
+# '常にメモリ内にフォントを読み込んでおく'復活
+# 新たに'未指定時JPG/BMP横解像度'機能を追加
+# 上記に伴い内部の自動立ち絵判定機能削除
 
 
 # これを読んだあなた。
 # どうかこんな可読性の欠片もないクソコードを書かないでください。
 # それだけが私の望みです。
-
-debug_mode = 0
 
 ######################################## subprocessがexe化時正常に動かんときの対策 ########################################
 
@@ -94,237 +88,163 @@ def subprocess_args(include_stdout=True):
 	return ret
 
 
-######################################## GUI表示前の変数設定 ########################################
 
-sg.theme('DarkBlue12')#テーマ設定
+def get_cur_dictlist():
+		#-----カーソル画像(容量削減のためpng変換済)をbase64にしたものを入れた辞書作成-----
+	cur_dictlist = [
+		{#ONSforPSP向けカーソル(大)
+			'cursor0':r'iVBORw0KGgoAAAANSUhEUgAAAC0AAAAPCAIAAAD/HNHwAAAAj0lEQVQ4y82VyQ7AIAhExw7//8eYHtSm6SK0atTzE15YNMQQCSoUU88GQFUJEnTe8ZP+E2KIRy1IArBro26yeJtk9iCpJaydY4C3XMxTm8wcydtDZhOLlMc6Om06ekulq91tKqSYM3a+WSt+GynmiHnnsY2U6QbvHgMMPu5Lv7j3famT672nfeP++V9W+G93ESCa8D+TnaQAAAAASUVORK5CYII=',
+			'cursor1':r'iVBORw0KGgoAAAANSUhEUgAAAC0AAAAPCAIAAAD/HNHwAAAAzklEQVQ4y82VwQ6EMAhEB4b//2Oqh01atUrB3cMS06iY12FoqzRp+IMw+HOSv5ghxzcAJH3+3AG/k1LXneHr8a1u2sdgVpIgrlcsccXXXgpJEenjwoCK7gzfDo9+b7KD4JwlTlx3H1zeKo/4dvVHtbWxg1S1oT04XdG94tuxPgAX00Qk3gVZ3Sv+c1/iqOpe8U996cWdbpJ9SZwiAX/0RTf9JLrD33Bn/2L+6EvtgK/qXvENwNhylcjrzvCtr7hCr/3Nio5DXvxvM9zaKgZ2wdx/zNkKEJkAAAAASUVORK5CYII=',
+			'doffcur':r'iVBORw0KGgoAAAANSUhEUgAAAA8AAAAPCAIAAAC0tAIdAAAAWklEQVQoz6XOUQrAMAgD0KS9dkEmvXZlH4Vt6NgqDX6F8JBG60fHQkSkIJMCoElbgQdG3v7lJ3yvc/YHf8Eb9iv/hPdsxzs4bcNo8VSVZOxzNo0W24rqPp45AUToPSOLkQr8AAAAAElFTkSuQmCC',
+			'doncur':r'iVBORw0KGgoAAAANSUhEUgAAAA8AAAAPCAIAAAC0tAIdAAAAR0lEQVQoz63MSQoAIAzAwGj//+SKB1Fccak5h3HBBZSTRMRzkweQI1jRB3vHJ7i67+w1X2CLPeNr2Gi3fAfb7cyP8Bd7AQMRI24RSJT2NRMAAAAASUVORK5CYII=',
+			'uoffcur':r'iVBORw0KGgoAAAANSUhEUgAAAA8AAAAPCAIAAAC0tAIdAAAAVklEQVQoz6XSQQrAMAhE0Znm4GLIuaWLQCkd02L6cSXyViIYOr13kro/UCm5Hj4AuHtD+74u2BOeKf/DvsMpv2srrPyWvYIffM1mMN7hKzOr2wD0JdJOvKAx3W/Xg8MAAAAASUVORK5CYII=',
+			'uoncur':r'iVBORw0KGgoAAAANSUhEUgAAAA8AAAAPCAIAAAC0tAIdAAAAYUlEQVQoz63SwQ6AIAwD0Hbz//+4qwc9oBAVtUcCb00Gi4U+QmYKOh0HZhJDGICkRP5rN1V7/outbtKRf21rfKPl52xuu2TxpkOEoN22/dRm0TbJ6zeZOdd7AeBw/yWGWQE8NSgGtZLCjwAAAABJRU5ErkJggg==',
+		},
+		{#ONSforPSP向けカーソル(小)
+			'cursor0':r'iVBORw0KGgoAAAANSUhEUgAAACcAAAANCAIAAACl9uAyAAAAgUlEQVQ4y8WUUQ6AIAxDi939bzziB2CMwpiguO+XtqNhIYZIUKFYOBsAVSVIsEt7GM+EGOKxJ0kA1t7qYEo+g8muJLVIWbov5ZNLwvTghm7KZzPZt81I9XW63pP5xGjmrFtfaJQRo5h+f6OMfOfn7nVO695ri/n7v85rPbtN6+/wDuhygvG0PdbKAAAAAElFTkSuQmCC',
+			'cursor1':r'iVBORw0KGgoAAAANSUhEUgAAACcAAAANCAIAAACl9uAyAAAAqElEQVQ4y8WU0QrDIAxFbxL//4+v28NKqyFelMEWpNAYj+Foa906fh6Of0QDAFYz8R1YMtv1GsGxkACrjU/6E0xPWX/5U8mahcAzVq1Ipo8tR4SZRcSY22eVGkpmm2mcpAkWLhbJO8dqQcls6czcvff+ecq7stffglkbTk6E4cmzNDwyF4Z1DIaTZ2Ulf6+AWLbPyjVrZrt7392PBz5Wk3b6Hxas3QMC3gQZVYcUrNnxAAAAAElFTkSuQmCC',
+			'doffcur':r'iVBORw0KGgoAAAANSUhEUgAAAA0AAAANCAIAAAD9iXMrAAAAU0lEQVQoz53OUQrAIAwD0ESvLZQVr23Yh7BJGVIX+hXCoxTVr45tzKwglwKgWdtjA+PE25ATe3dZ75N8sF9eIFfswIOocO5OMpRZj6JCVVHXz2ZuT8c0N4UKKogAAAAASUVORK5CYII=',
+			'doncur':r'iVBORw0KGgoAAAANSUhEUgAAAA0AAAANCAIAAAD9iXMrAAAAQUlEQVQoz6XMSQoAIAzAwNj+/8kVD6Ko1D3nMCGGiLFOVYWzBEA3mGFX3pzMWPOdeh5ZsTevJ1vs2SvkgP14HgYkIlcPPtx0t78AAAAASUVORK5CYII=',
+			'uoffcur':r'iVBORw0KGgoAAAANSUhEUgAAAA0AAAANCAIAAAD9iXMrAAAAT0lEQVQoz5XQQQrAQAhD0aRzcFHm3NLFQCmRFv24EnkLkUyZiCApywu99G77BuDuC+vvruUd7CTk3HtjlRx6FROy6zGZX9iTmU08APL92g2gESrNuMCtcwAAAABJRU5ErkJggg==',
+			'uoncur':r'iVBORw0KGgoAAAANSUhEUgAAAA0AAAANCAIAAAD9iXMrAAAAUklEQVQoz6XQQQrAMAhE0a/m/jce010JWkjazlLhOWhpSYmICKF15pzFOwZICuK/t1Qq5AdPrepCvvX0vL7JU8/S0tI2R90HMOfcegMgKN/vuQCdCxsLwTbFvwAAAABJRU5ErkJggg==',
+		},
+		{#NScripter付属 公式カーソル
+			'cursor0':r'iVBORw0KGgoAAAANSUhEUgAAAEgAAAAYCAMAAABuvUuCAAADAFBMVEUKMjwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAALCwsMDAwNDQ0ODg4PDw8QEBARERESEhITExMBAQFGAQGCAQG0AQHcAQH+AQEBRgFGRgGCRgG0RgHcRgH+RgEBggFGggGCggG0ggHcggH+ggEBtAFGtAGCtAG0tAHctAH+tAEB3AFG3AGC3AG03AHc3AH+3AEB/gFG/gGC/gG0/gHc/gH+/gEBAUZGAUaCAUa0AUbcAUb+AUYBRkZGRkaCRka0RkbcRkb+RkYBgkZGgkaCgka0gkbcgkb+gkYBtEZGtEaCtEa0tEbctEb+tEYB3EZG3EaC3Ea03Ebc3Eb+3EYB/kZG/kaC/ka0/kbc/kb+/kYBAYJGAYKCAYK0AYLcAYL+AYIBRoJGRoKCRoK0RoLcRoL+RoIBgoJGgoKCgoK0goLcgoL+goIBtIJGtIKCtIK0tILctIL+tIIB3IJG3IKC3IK03ILc3IL+3IIB/oJG/oKC/oK0/oLc/oL+/oIBAbRGAbSCAbS0AbTcAbT+AbQBRrRGRrSCRrS0RrTcRrT+RrQBgrRGgrSCgrS0grTcgrT+grQBtLRGtLSCtLS0tLTctLT+tLQB3LRG3LSC3LS03LTc3LT+3LQB/rRG/rSC/rS0/rTc/rT+/rQBAdxGAdyCAdy0AdzcAdz+AdwBRtxGRtyCRty0RtzcRtz+RtwBgtxGgtyCgty0gtzcgtz+gtwBtNxGtNyCtNy0tNzctNz+tNwB3NxG3NyC3Ny03Nzc3Nz+3NwB/txG/tyC/ty0/tzc/tz+/twBAf5GAf6CAf60Af7cAf7+Af4BRv5GRv6CRv60Rv7cRv7+Rv4Bgv5Ggv6Cgv60gv7cgv7+gv4BtP5GtP6CtP60tP7ctP7+tP4B3P5G3P6C3P603P7c3P7+3P4B/v5G/v6C/v60/v7c/v7+/v7s7Ozt7e3u7u7v7+/w8PDx8fHy8vLz8/P09PT///8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD1zcP1tjmEAAAArElEQVQ4y62VQRKDIBAEJ9a8wzsv8c08ImfuvCSHaCpxZxcIcMFqanpHy9LH80DGgkUUpBUqAq5qqCsBV+V2VRMIIOV9TKXwu1HFtIrnrlV+V4P5udIqp6udwGbIUd0xO0JdKkKeNsYLvJmnWCtQDkkjvGHRoiE7YG7tpAgwuwJNzV30t+ZXNKH5Fg1pisEMA0VrIDCjuf2a6ws5rbkaDWkgMYNAHnuz05rf0Qsvl2gb7WN46wAAAABJRU5ErkJggg==',
+			'cursor1':r'iVBORw0KGgoAAAANSUhEUgAAAEgAAAAYCAMAAABuvUuCAAADAFBMVEUKMjwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAALCwsMDAwNDQ0ODg4PDw8QEBARERESEhITExMBAQFGAQGCAQG0AQHcAQH+AQEBRgFGRgGCRgG0RgHcRgH+RgEBggFGggGCggG0ggHcggH+ggEBtAFGtAGCtAG0tAHctAH+tAEB3AFG3AGC3AG03AHc3AH+3AEB/gFG/gGC/gG0/gHc/gH+/gEBAUZGAUaCAUa0AUbcAUb+AUYBRkZGRkaCRka0RkbcRkb+RkYBgkZGgkaCgka0gkbcgkb+gkYBtEZGtEaCtEa0tEbctEb+tEYB3EZG3EaC3Ea03Ebc3Eb+3EYB/kZG/kaC/ka0/kbc/kb+/kYBAYJGAYKCAYK0AYLcAYL+AYIBRoJGRoKCRoK0RoLcRoL+RoIBgoJGgoKCgoK0goLcgoL+goIBtIJGtIKCtIK0tILctIL+tIIB3IJG3IKC3IK03ILc3IL+3IIB/oJG/oKC/oK0/oLc/oL+/oIBAbRGAbSCAbS0AbTcAbT+AbQBRrRGRrSCRrS0RrTcRrT+RrQBgrRGgrSCgrS0grTcgrT+grQBtLRGtLSCtLS0tLTctLT+tLQB3LRG3LSC3LS03LTc3LT+3LQB/rRG/rSC/rS0/rTc/rT+/rQBAdxGAdyCAdy0AdzcAdz+AdwBRtxGRtyCRty0RtzcRtz+RtwBgtxGgtyCgty0gtzcgtz+gtwBtNxGtNyCtNy0tNzctNz+tNwB3NxG3NyC3Ny03Nzc3Nz+3NwB/txG/tyC/ty0/tzc/tz+/twBAf5GAf6CAf60Af7cAf7+Af4BRv5GRv6CRv60Rv7cRv7+Rv4Bgv5Ggv6Cgv60gv7cgv7+gv4BtP5GtP6CtP60tP7ctP7+tP4B3P5G3P6C3P603P7c3P7+3P4B/v5G/v6C/v60/v7c/v7+/v7s7Ozt7e3u7u7v7+/w8PDx8fHy8vLz8/P09PT///8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD1zcP1tjmEAAAA10lEQVQ4y92VuxnDIAyEz/mYw/1NwswMkVo9k6SIeUoCilShM75fpzMYrjd+M17420IBuPvnfEQZSADA1BR3XsrL0EiYib6S52AhAQByLHMyVvIcDCQAABJswnXQSI1GAUVV8hw00qIRIL7zMXnysdcemaJlRDyvlg4aeaKxwULrS0wOGinRGk0s5H2vI2Ks2krurNq4IYt514TroJF+Q3Ivn3cYx45W0WwHPxqlOp5GG5EajZaz76CQfTTa2axo4p9gnoNYJ2T7xfdydSrUca2uo3jcIfABY9pmdCPNuuMAAAAASUVORK5CYII=',
+			'doffcur':r'iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAMAAADXqc3KAAADAFBMVEUKMjwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAALCwsMDAwNDQ0ODg4PDw8QEBARERESEhITExMBAQFGAQGCAQG0AQHcAQH+AQEBRgFGRgGCRgG0RgHcRgH+RgEBggFGggGCggG0ggHcggH+ggEBtAFGtAGCtAG0tAHctAH+tAEB3AFG3AGC3AG03AHc3AH+3AEB/gFG/gGC/gG0/gHc/gH+/gEBAUZGAUaCAUa0AUbcAUb+AUYBRkZGRkaCRka0RkbcRkb+RkYBgkZGgkaCgka0gkbcgkb+gkYBtEZGtEaCtEa0tEbctEb+tEYB3EZG3EaC3Ea03Ebc3Eb+3EYB/kZG/kaC/ka0/kbc/kb+/kYBAYJGAYKCAYK0AYLcAYL+AYIBRoJGRoKCRoK0RoLcRoL+RoIBgoJGgoKCgoK0goLcgoL+goIBtIJGtIKCtIK0tILctIL+tIIB3IJG3IKC3IK03ILc3IL+3IIB/oJG/oKC/oK0/oLc/oL+/oIBAbRGAbSCAbS0AbTcAbT+AbQBRrRGRrSCRrS0RrTcRrT+RrQBgrRGgrSCgrS0grTcgrT+grQBtLRGtLSCtLS0tLTctLT+tLQB3LRG3LSC3LS03LTc3LT+3LQB/rRG/rSC/rS0/rTc/rT+/rQBAdxGAdyCAdy0AdzcAdz+AdwBRtxGRtyCRty0RtzcRtz+RtwBgtxGgtyCgty0gtzcgtz+gtwBtNxGtNyCtNy0tNzctNz+tNwB3NxG3NyC3Ny03Nzc3Nz+3NwB/txG/tyC/ty0/tzc/tz+/twBAf5GAf6CAf60Af7cAf7+Af4BRv5GRv6CRv60Rv7cRv7+Rv4Bgv5Ggv6Cgv60gv7cgv7+gv4BtP5GtP6CtP60tP7ctP7+tP4B3P5G3P6C3P603P7c3P7+3P4B/v5G/v6C/v60/v7c/v7+/v7s7Ozt7e3u7u7v7+/w8PDx8fHy8vLz8/P09PT///8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD1zcP1tjmEAAAAXklEQVQoz43SwRGAIAxE0YWhNwuhLhvYDlKEPXlAJEpI2OOfebdNF+wVnGZnXgBkVBOIIyxCgSdmQoEv/oSCSHwJBbHQpIFQDPKAWHTSwYZo5AU7AlWDtUj6PscAuAGzRhXOUU3rogAAAABJRU5ErkJggg==',
+			'doncur':r'iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAMAAADXqc3KAAADAFBMVEUKMjwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAALCwsMDAwNDQ0ODg4PDw8QEBARERESEhITExMBAQFGAQGCAQG0AQHcAQH+AQEBRgFGRgGCRgG0RgHcRgH+RgEBggFGggGCggG0ggHcggH+ggEBtAFGtAGCtAG0tAHctAH+tAEB3AFG3AGC3AG03AHc3AH+3AEB/gFG/gGC/gG0/gHc/gH+/gEBAUZGAUaCAUa0AUbcAUb+AUYBRkZGRkaCRka0RkbcRkb+RkYBgkZGgkaCgka0gkbcgkb+gkYBtEZGtEaCtEa0tEbctEb+tEYB3EZG3EaC3Ea03Ebc3Eb+3EYB/kZG/kaC/ka0/kbc/kb+/kYBAYJGAYKCAYK0AYLcAYL+AYIBRoJGRoKCRoK0RoLcRoL+RoIBgoJGgoKCgoK0goLcgoL+goIBtIJGtIKCtIK0tILctIL+tIIB3IJG3IKC3IK03ILc3IL+3IIB/oJG/oKC/oK0/oLc/oL+/oIBAbRGAbSCAbS0AbTcAbT+AbQBRrRGRrSCRrS0RrTcRrT+RrQBgrRGgrSCgrS0grTcgrT+grQBtLRGtLSCtLS0tLTctLT+tLQB3LRG3LSC3LS03LTc3LT+3LQB/rRG/rSC/rS0/rTc/rT+/rQBAdxGAdyCAdy0AdzcAdz+AdwBRtxGRtyCRty0RtzcRtz+RtwBgtxGgtyCgty0gtzcgtz+gtwBtNxGtNyCtNy0tNzctNz+tNwB3NxG3NyC3Ny03Nzc3Nz+3NwB/txG/tyC/ty0/tzc/tz+/twBAf5GAf6CAf60Af7cAf7+Af4BRv5GRv6CRv60Rv7cRv7+Rv4Bgv5Ggv6Cgv60gv7cgv7+gv4BtP5GtP6CtP60tP7ctP7+tP4B3P5G3P6C3P603P7c3P7+3P4B/v5G/v6C/v60/v7c/v7+/v7s7Ozt7e3u7u7v7+/w8PDx8fHy8vLz8/P09PT///8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD1zcP1tjmEAAAAWElEQVQoz43LsQ2AMAwAwSdiDnrvX3kIlvAkFCFgwNj58qVbduJWtvBL+wE0LASaiIiIkokvESUXbyJKJZ5ElFp40kEpbnKCWgwywITo5AIzAvNgSmAOcACduxSyPiuMsgAAAABJRU5ErkJggg==',
+			'uoffcur':r'iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAMAAADXqc3KAAADAFBMVEUKMjwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAALCwsMDAwNDQ0ODg4PDw8QEBARERESEhITExMBAQFGAQGCAQG0AQHcAQH+AQEBRgFGRgGCRgG0RgHcRgH+RgEBggFGggGCggG0ggHcggH+ggEBtAFGtAGCtAG0tAHctAH+tAEB3AFG3AGC3AG03AHc3AH+3AEB/gFG/gGC/gG0/gHc/gH+/gEBAUZGAUaCAUa0AUbcAUb+AUYBRkZGRkaCRka0RkbcRkb+RkYBgkZGgkaCgka0gkbcgkb+gkYBtEZGtEaCtEa0tEbctEb+tEYB3EZG3EaC3Ea03Ebc3Eb+3EYB/kZG/kaC/ka0/kbc/kb+/kYBAYJGAYKCAYK0AYLcAYL+AYIBRoJGRoKCRoK0RoLcRoL+RoIBgoJGgoKCgoK0goLcgoL+goIBtIJGtIKCtIK0tILctIL+tIIB3IJG3IKC3IK03ILc3IL+3IIB/oJG/oKC/oK0/oLc/oL+/oIBAbRGAbSCAbS0AbTcAbT+AbQBRrRGRrSCRrS0RrTcRrT+RrQBgrRGgrSCgrS0grTcgrT+grQBtLRGtLSCtLS0tLTctLT+tLQB3LRG3LSC3LS03LTc3LT+3LQB/rRG/rSC/rS0/rTc/rT+/rQBAdxGAdyCAdy0AdzcAdz+AdwBRtxGRtyCRty0RtzcRtz+RtwBgtxGgtyCgty0gtzcgtz+gtwBtNxGtNyCtNy0tNzctNz+tNwB3NxG3NyC3Ny03Nzc3Nz+3NwB/txG/tyC/ty0/tzc/tz+/twBAf5GAf6CAf60Af7cAf7+Af4BRv5GRv6CRv60Rv7cRv7+Rv4Bgv5Ggv6Cgv60gv7cgv7+gv4BtP5GtP6CtP60tP7ctP7+tP4B3P5G3P6C3P603P7c3P7+3P4B/v5G/v6C/v60/v7c/v7+/v7s7Ozt7e3u7u7v7+/w8PDx8fHy8vLz8/P09PT///8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD1zcP1tjmEAAAAYElEQVQoz5XLwRGAMAhE0Y1jb3RAd9tAOrCI9OQhJqISGLmEfOaVBn92sxP1mJ9tAeyBgMofQcCSXLA/k6SCIwySCd7lIomgTZ3Egs+mkgm+o0os+K0qa1Ea3V4DAXEPJ5x3ES+KPfL8AAAAAElFTkSuQmCC',
+			'uoncur':r'iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAMAAADXqc3KAAADAFBMVEUKMjwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAALCwsMDAwNDQ0ODg4PDw8QEBARERESEhITExMBAQFGAQGCAQG0AQHcAQH+AQEBRgFGRgGCRgG0RgHcRgH+RgEBggFGggGCggG0ggHcggH+ggEBtAFGtAGCtAG0tAHctAH+tAEB3AFG3AGC3AG03AHc3AH+3AEB/gFG/gGC/gG0/gHc/gH+/gEBAUZGAUaCAUa0AUbcAUb+AUYBRkZGRkaCRka0RkbcRkb+RkYBgkZGgkaCgka0gkbcgkb+gkYBtEZGtEaCtEa0tEbctEb+tEYB3EZG3EaC3Ea03Ebc3Eb+3EYB/kZG/kaC/ka0/kbc/kb+/kYBAYJGAYKCAYK0AYLcAYL+AYIBRoJGRoKCRoK0RoLcRoL+RoIBgoJGgoKCgoK0goLcgoL+goIBtIJGtIKCtIK0tILctIL+tIIB3IJG3IKC3IK03ILc3IL+3IIB/oJG/oKC/oK0/oLc/oL+/oIBAbRGAbSCAbS0AbTcAbT+AbQBRrRGRrSCRrS0RrTcRrT+RrQBgrRGgrSCgrS0grTcgrT+grQBtLRGtLSCtLS0tLTctLT+tLQB3LRG3LSC3LS03LTc3LT+3LQB/rRG/rSC/rS0/rTc/rT+/rQBAdxGAdyCAdy0AdzcAdz+AdwBRtxGRtyCRty0RtzcRtz+RtwBgtxGgtyCgty0gtzcgtz+gtwBtNxGtNyCtNy0tNzctNz+tNwB3NxG3NyC3Ny03Nzc3Nz+3NwB/txG/tyC/ty0/tzc/tz+/twBAf5GAf6CAf60Af7cAf7+Af4BRv5GRv6CRv60Rv7cRv7+Rv4Bgv5Ggv6Cgv60gv7cgv7+gv4BtP5GtP6CtP60tP7ctP7+tP4B3P5G3P6C3P603P7c3P7+3P4B/v5G/v6C/v60/v7c/v7+/v7s7Ozt7e3u7u7v7+/w8PDx8fHy8vLz8/P09PT///8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD1zcP1tjmEAAAAXElEQVQoz5XLsRGAQAhE0dWxjs2tZKs3JrcSg/MUlYORBOYzb9oQz+xuUvFjJAiY/ggCntSCbV2kFOyhk0rwLicpBH1qJBd8NlMl+I6mXPBbTWOxRACwNRG7wscB7eQO5yBktpIAAAAASUVORK5CYII=',
+		},
+	]#すとーむ氏に怒られたら消します(爆)
+	return cur_dictlist
 
-if debug_mode:
-	#---デバッグモード---
-	window_title += ' - !DEBUG MODE!'
-	# 注意:これは作者側での開発用です 他人が使うことを想定していません
-	os.environ['temp'] = 'D:'#TEMPをDドライブへ(現状C:がSATAでD:がNVMeのため)
-	same_hierarchy = 'C:/_software/_zisaku/ONScripter_Multi_Converter'#本来同一階層に置く予定のexeをここから読む
-	default_input = ''
-	default_output = (os.environ['USERPROFILE'].replace('\\','/') + r'/Desktop')#出力先を自動でデスクトップに
+
+
+def start_check(same_hierarchy):
 	
-else:
-	#---通常時処理---
-	same_hierarchy = (os.path.dirname(sys.argv[0]))#同一階層のパスを変数へ代入
-	default_input = ''
-	default_output = ''
+	#起動時必要なファイルリスト
+	start_file_list = [
+		Path(same_hierarchy / 'tools' / 'nsaed.exe'),
+		Path(same_hierarchy / 'tools' / 'smjpeg_encode.exe'),
+		Path(same_hierarchy / 'tools' / 'Garbro_console' / 'GARbro.Console.exe')
+	]
 
-try:#ffmpeg存在チェック
-	subprocess.run('ffmpeg', **subprocess_args(True))
-	subprocess.run('ffprobe', **subprocess_args(True))
-except:
-	ffmpeg_exist = False
-else:
-	ffmpeg_exist = True
+	#ffmpeg/probe/pngquantは別で存在チェック
+	try:
+		subprocess.run('ffmpeg', **subprocess_args(True))
+	except:
+		ffmpeg_exist = False
+	else:
+		ffmpeg_exist = True
 
-nsaed_path = os.path.join(same_hierarchy, 'tools', 'nsaed.exe')#nsaed存在チェック
-nsaed_exist = os.path.exists(nsaed_path)
+	try:
+		subprocess.run('ffprobe', **subprocess_args(True))
+	except:
+		ffprobe_exist = False
+	else:
+		ffprobe_exist = True
 
-smjpeg_path = os.path.join(same_hierarchy, 'tools', 'smjpeg_encode.exe')#smjpeg存在チェック
-smjpeg_exist = os.path.exists(smjpeg_path)#ffmpeg非導入時は強制NG
+	try:
+		subprocess.run('pngquant', **subprocess_args(True))
+	except:
+		pngquant_exist = False
+	else:
+		pngquant_exist = True
 
-GARbro_path = os.path.join(same_hierarchy, 'tools', 'Garbro_console', 'GARbro.Console.exe')#Garbro存在チェック
-GARbro_exist = os.path.exists(GARbro_path)
+	#エラーメッセージ作成
+	errmsg = ''
 
-if not (ffmpeg_exist and nsaed_exist and smjpeg_exist and GARbro_exist):
-	errmsg = '以下のものが利用できません'
-	errmsg += '' if ffmpeg_exist else '\nffmpeg.exe及びffprobe.exe'
-	errmsg += '' if nsaed_exist else '\n./tools/nsaed.exe'
-	errmsg += '' if smjpeg_exist else '\n./tools/smjpeg_encode.exe'
-	errmsg += '' if GARbro_exist else '\n./tools/Garbro_console/GARbro.Console.exe\n\nGARbroは本ツールの動作に必須です\n終了します...'
-	sg.popup(errmsg, title='!')
+	if not ffmpeg_exist:
+		errmsg += 'ffmpeg.exeが見つかりません\n'
 
-	if not GARbro_exist:#GARBroがない場合強制終了
-		sys.exit()
+	if not ffprobe_exist:
+		errmsg += 'ffprobe.exeが見つかりません\n'
 
-#-----カーソル画像(容量削減のためpng変換済)をbase64にしたものを入れた辞書作成-----
-cur_dictlist = [
-	{#ONSforPSP向けカーソル(大)
-		'cursor0':r'iVBORw0KGgoAAAANSUhEUgAAAC0AAAAPCAIAAAD/HNHwAAAAj0lEQVQ4y82VyQ7AIAhExw7//8eYHtSm6SK0atTzE15YNMQQCSoUU88GQFUJEnTe8ZP+E2KIRy1IArBro26yeJtk9iCpJaydY4C3XMxTm8wcydtDZhOLlMc6Om06ekulq91tKqSYM3a+WSt+GynmiHnnsY2U6QbvHgMMPu5Lv7j3famT672nfeP++V9W+G93ESCa8D+TnaQAAAAASUVORK5CYII=',
-		'cursor1':r'iVBORw0KGgoAAAANSUhEUgAAAC0AAAAPCAIAAAD/HNHwAAAAzklEQVQ4y82VwQ6EMAhEB4b//2Oqh01atUrB3cMS06iY12FoqzRp+IMw+HOSv5ghxzcAJH3+3AG/k1LXneHr8a1u2sdgVpIgrlcsccXXXgpJEenjwoCK7gzfDo9+b7KD4JwlTlx3H1zeKo/4dvVHtbWxg1S1oT04XdG94tuxPgAX00Qk3gVZ3Sv+c1/iqOpe8U996cWdbpJ9SZwiAX/0RTf9JLrD33Bn/2L+6EvtgK/qXvENwNhylcjrzvCtr7hCr/3Nio5DXvxvM9zaKgZ2wdx/zNkKEJkAAAAASUVORK5CYII=',
-		'doffcur':r'iVBORw0KGgoAAAANSUhEUgAAAA8AAAAPCAIAAAC0tAIdAAAAWklEQVQoz6XOUQrAMAgD0KS9dkEmvXZlH4Vt6NgqDX6F8JBG60fHQkSkIJMCoElbgQdG3v7lJ3yvc/YHf8Eb9iv/hPdsxzs4bcNo8VSVZOxzNo0W24rqPp45AUToPSOLkQr8AAAAAElFTkSuQmCC',
-		'doncur':r'iVBORw0KGgoAAAANSUhEUgAAAA8AAAAPCAIAAAC0tAIdAAAAR0lEQVQoz63MSQoAIAzAwGj//+SKB1Fccak5h3HBBZSTRMRzkweQI1jRB3vHJ7i67+w1X2CLPeNr2Gi3fAfb7cyP8Bd7AQMRI24RSJT2NRMAAAAASUVORK5CYII=',
-		'uoffcur':r'iVBORw0KGgoAAAANSUhEUgAAAA8AAAAPCAIAAAC0tAIdAAAAVklEQVQoz6XSQQrAMAhE0Znm4GLIuaWLQCkd02L6cSXyViIYOr13kro/UCm5Hj4AuHtD+74u2BOeKf/DvsMpv2srrPyWvYIffM1mMN7hKzOr2wD0JdJOvKAx3W/Xg8MAAAAASUVORK5CYII=',
-		'uoncur':r'iVBORw0KGgoAAAANSUhEUgAAAA8AAAAPCAIAAAC0tAIdAAAAYUlEQVQoz63SwQ6AIAwD0Hbz//+4qwc9oBAVtUcCb00Gi4U+QmYKOh0HZhJDGICkRP5rN1V7/outbtKRf21rfKPl52xuu2TxpkOEoN22/dRm0TbJ6zeZOdd7AeBw/yWGWQE8NSgGtZLCjwAAAABJRU5ErkJggg==',
-	},
-	{#ONSforPSP向けカーソル(小)
-		'cursor0':r'iVBORw0KGgoAAAANSUhEUgAAACcAAAANCAIAAACl9uAyAAAAgUlEQVQ4y8WUUQ6AIAxDi939bzziB2CMwpiguO+XtqNhIYZIUKFYOBsAVSVIsEt7GM+EGOKxJ0kA1t7qYEo+g8muJLVIWbov5ZNLwvTghm7KZzPZt81I9XW63pP5xGjmrFtfaJQRo5h+f6OMfOfn7nVO695ri/n7v85rPbtN6+/wDuhygvG0PdbKAAAAAElFTkSuQmCC',
-		'cursor1':r'iVBORw0KGgoAAAANSUhEUgAAACcAAAANCAIAAACl9uAyAAAAqElEQVQ4y8WU0QrDIAxFbxL//4+v28NKqyFelMEWpNAYj+Foa906fh6Of0QDAFYz8R1YMtv1GsGxkACrjU/6E0xPWX/5U8mahcAzVq1Ipo8tR4SZRcSY22eVGkpmm2mcpAkWLhbJO8dqQcls6czcvff+ecq7stffglkbTk6E4cmzNDwyF4Z1DIaTZ2Ulf6+AWLbPyjVrZrt7392PBz5Wk3b6Hxas3QMC3gQZVYcUrNnxAAAAAElFTkSuQmCC',
-		'doffcur':r'iVBORw0KGgoAAAANSUhEUgAAAA0AAAANCAIAAAD9iXMrAAAAU0lEQVQoz53OUQrAIAwD0ESvLZQVr23Yh7BJGVIX+hXCoxTVr45tzKwglwKgWdtjA+PE25ATe3dZ75N8sF9eIFfswIOocO5OMpRZj6JCVVHXz2ZuT8c0N4UKKogAAAAASUVORK5CYII=',
-		'doncur':r'iVBORw0KGgoAAAANSUhEUgAAAA0AAAANCAIAAAD9iXMrAAAAQUlEQVQoz6XMSQoAIAzAwNj+/8kVD6Ko1D3nMCGGiLFOVYWzBEA3mGFX3pzMWPOdeh5ZsTevJ1vs2SvkgP14HgYkIlcPPtx0t78AAAAASUVORK5CYII=',
-		'uoffcur':r'iVBORw0KGgoAAAANSUhEUgAAAA0AAAANCAIAAAD9iXMrAAAAT0lEQVQoz5XQQQrAQAhD0aRzcFHm3NLFQCmRFv24EnkLkUyZiCApywu99G77BuDuC+vvruUd7CTk3HtjlRx6FROy6zGZX9iTmU08APL92g2gESrNuMCtcwAAAABJRU5ErkJggg==',
-		'uoncur':r'iVBORw0KGgoAAAANSUhEUgAAAA0AAAANCAIAAAD9iXMrAAAAUklEQVQoz6XQQQrAMAhE0a/m/jce010JWkjazlLhOWhpSYmICKF15pzFOwZICuK/t1Qq5AdPrepCvvX0vL7JU8/S0tI2R90HMOfcegMgKN/vuQCdCxsLwTbFvwAAAABJRU5ErkJggg==',
-	},
-	{#NScripter付属 公式カーソル
-		'cursor0':r'iVBORw0KGgoAAAANSUhEUgAAAEgAAAAYCAMAAABuvUuCAAADAFBMVEUKMjwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAALCwsMDAwNDQ0ODg4PDw8QEBARERESEhITExMBAQFGAQGCAQG0AQHcAQH+AQEBRgFGRgGCRgG0RgHcRgH+RgEBggFGggGCggG0ggHcggH+ggEBtAFGtAGCtAG0tAHctAH+tAEB3AFG3AGC3AG03AHc3AH+3AEB/gFG/gGC/gG0/gHc/gH+/gEBAUZGAUaCAUa0AUbcAUb+AUYBRkZGRkaCRka0RkbcRkb+RkYBgkZGgkaCgka0gkbcgkb+gkYBtEZGtEaCtEa0tEbctEb+tEYB3EZG3EaC3Ea03Ebc3Eb+3EYB/kZG/kaC/ka0/kbc/kb+/kYBAYJGAYKCAYK0AYLcAYL+AYIBRoJGRoKCRoK0RoLcRoL+RoIBgoJGgoKCgoK0goLcgoL+goIBtIJGtIKCtIK0tILctIL+tIIB3IJG3IKC3IK03ILc3IL+3IIB/oJG/oKC/oK0/oLc/oL+/oIBAbRGAbSCAbS0AbTcAbT+AbQBRrRGRrSCRrS0RrTcRrT+RrQBgrRGgrSCgrS0grTcgrT+grQBtLRGtLSCtLS0tLTctLT+tLQB3LRG3LSC3LS03LTc3LT+3LQB/rRG/rSC/rS0/rTc/rT+/rQBAdxGAdyCAdy0AdzcAdz+AdwBRtxGRtyCRty0RtzcRtz+RtwBgtxGgtyCgty0gtzcgtz+gtwBtNxGtNyCtNy0tNzctNz+tNwB3NxG3NyC3Ny03Nzc3Nz+3NwB/txG/tyC/ty0/tzc/tz+/twBAf5GAf6CAf60Af7cAf7+Af4BRv5GRv6CRv60Rv7cRv7+Rv4Bgv5Ggv6Cgv60gv7cgv7+gv4BtP5GtP6CtP60tP7ctP7+tP4B3P5G3P6C3P603P7c3P7+3P4B/v5G/v6C/v60/v7c/v7+/v7s7Ozt7e3u7u7v7+/w8PDx8fHy8vLz8/P09PT///8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD1zcP1tjmEAAAArElEQVQ4y62VQRKDIBAEJ9a8wzsv8c08ImfuvCSHaCpxZxcIcMFqanpHy9LH80DGgkUUpBUqAq5qqCsBV+V2VRMIIOV9TKXwu1HFtIrnrlV+V4P5udIqp6udwGbIUd0xO0JdKkKeNsYLvJmnWCtQDkkjvGHRoiE7YG7tpAgwuwJNzV30t+ZXNKH5Fg1pisEMA0VrIDCjuf2a6ws5rbkaDWkgMYNAHnuz05rf0Qsvl2gb7WN46wAAAABJRU5ErkJggg==',
-		'cursor1':r'iVBORw0KGgoAAAANSUhEUgAAAEgAAAAYCAMAAABuvUuCAAADAFBMVEUKMjwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAALCwsMDAwNDQ0ODg4PDw8QEBARERESEhITExMBAQFGAQGCAQG0AQHcAQH+AQEBRgFGRgGCRgG0RgHcRgH+RgEBggFGggGCggG0ggHcggH+ggEBtAFGtAGCtAG0tAHctAH+tAEB3AFG3AGC3AG03AHc3AH+3AEB/gFG/gGC/gG0/gHc/gH+/gEBAUZGAUaCAUa0AUbcAUb+AUYBRkZGRkaCRka0RkbcRkb+RkYBgkZGgkaCgka0gkbcgkb+gkYBtEZGtEaCtEa0tEbctEb+tEYB3EZG3EaC3Ea03Ebc3Eb+3EYB/kZG/kaC/ka0/kbc/kb+/kYBAYJGAYKCAYK0AYLcAYL+AYIBRoJGRoKCRoK0RoLcRoL+RoIBgoJGgoKCgoK0goLcgoL+goIBtIJGtIKCtIK0tILctIL+tIIB3IJG3IKC3IK03ILc3IL+3IIB/oJG/oKC/oK0/oLc/oL+/oIBAbRGAbSCAbS0AbTcAbT+AbQBRrRGRrSCRrS0RrTcRrT+RrQBgrRGgrSCgrS0grTcgrT+grQBtLRGtLSCtLS0tLTctLT+tLQB3LRG3LSC3LS03LTc3LT+3LQB/rRG/rSC/rS0/rTc/rT+/rQBAdxGAdyCAdy0AdzcAdz+AdwBRtxGRtyCRty0RtzcRtz+RtwBgtxGgtyCgty0gtzcgtz+gtwBtNxGtNyCtNy0tNzctNz+tNwB3NxG3NyC3Ny03Nzc3Nz+3NwB/txG/tyC/ty0/tzc/tz+/twBAf5GAf6CAf60Af7cAf7+Af4BRv5GRv6CRv60Rv7cRv7+Rv4Bgv5Ggv6Cgv60gv7cgv7+gv4BtP5GtP6CtP60tP7ctP7+tP4B3P5G3P6C3P603P7c3P7+3P4B/v5G/v6C/v60/v7c/v7+/v7s7Ozt7e3u7u7v7+/w8PDx8fHy8vLz8/P09PT///8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD1zcP1tjmEAAAA10lEQVQ4y92VuxnDIAyEz/mYw/1NwswMkVo9k6SIeUoCilShM75fpzMYrjd+M17420IBuPvnfEQZSADA1BR3XsrL0EiYib6S52AhAQByLHMyVvIcDCQAABJswnXQSI1GAUVV8hw00qIRIL7zMXnysdcemaJlRDyvlg4aeaKxwULrS0wOGinRGk0s5H2vI2Ks2krurNq4IYt514TroJF+Q3Ivn3cYx45W0WwHPxqlOp5GG5EajZaz76CQfTTa2axo4p9gnoNYJ2T7xfdydSrUca2uo3jcIfABY9pmdCPNuuMAAAAASUVORK5CYII=',
-		'doffcur':r'iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAMAAADXqc3KAAADAFBMVEUKMjwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAALCwsMDAwNDQ0ODg4PDw8QEBARERESEhITExMBAQFGAQGCAQG0AQHcAQH+AQEBRgFGRgGCRgG0RgHcRgH+RgEBggFGggGCggG0ggHcggH+ggEBtAFGtAGCtAG0tAHctAH+tAEB3AFG3AGC3AG03AHc3AH+3AEB/gFG/gGC/gG0/gHc/gH+/gEBAUZGAUaCAUa0AUbcAUb+AUYBRkZGRkaCRka0RkbcRkb+RkYBgkZGgkaCgka0gkbcgkb+gkYBtEZGtEaCtEa0tEbctEb+tEYB3EZG3EaC3Ea03Ebc3Eb+3EYB/kZG/kaC/ka0/kbc/kb+/kYBAYJGAYKCAYK0AYLcAYL+AYIBRoJGRoKCRoK0RoLcRoL+RoIBgoJGgoKCgoK0goLcgoL+goIBtIJGtIKCtIK0tILctIL+tIIB3IJG3IKC3IK03ILc3IL+3IIB/oJG/oKC/oK0/oLc/oL+/oIBAbRGAbSCAbS0AbTcAbT+AbQBRrRGRrSCRrS0RrTcRrT+RrQBgrRGgrSCgrS0grTcgrT+grQBtLRGtLSCtLS0tLTctLT+tLQB3LRG3LSC3LS03LTc3LT+3LQB/rRG/rSC/rS0/rTc/rT+/rQBAdxGAdyCAdy0AdzcAdz+AdwBRtxGRtyCRty0RtzcRtz+RtwBgtxGgtyCgty0gtzcgtz+gtwBtNxGtNyCtNy0tNzctNz+tNwB3NxG3NyC3Ny03Nzc3Nz+3NwB/txG/tyC/ty0/tzc/tz+/twBAf5GAf6CAf60Af7cAf7+Af4BRv5GRv6CRv60Rv7cRv7+Rv4Bgv5Ggv6Cgv60gv7cgv7+gv4BtP5GtP6CtP60tP7ctP7+tP4B3P5G3P6C3P603P7c3P7+3P4B/v5G/v6C/v60/v7c/v7+/v7s7Ozt7e3u7u7v7+/w8PDx8fHy8vLz8/P09PT///8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD1zcP1tjmEAAAAXklEQVQoz43SwRGAIAxE0YWhNwuhLhvYDlKEPXlAJEpI2OOfebdNF+wVnGZnXgBkVBOIIyxCgSdmQoEv/oSCSHwJBbHQpIFQDPKAWHTSwYZo5AU7AlWDtUj6PscAuAGzRhXOUU3rogAAAABJRU5ErkJggg==',
-		'doncur':r'iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAMAAADXqc3KAAADAFBMVEUKMjwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAALCwsMDAwNDQ0ODg4PDw8QEBARERESEhITExMBAQFGAQGCAQG0AQHcAQH+AQEBRgFGRgGCRgG0RgHcRgH+RgEBggFGggGCggG0ggHcggH+ggEBtAFGtAGCtAG0tAHctAH+tAEB3AFG3AGC3AG03AHc3AH+3AEB/gFG/gGC/gG0/gHc/gH+/gEBAUZGAUaCAUa0AUbcAUb+AUYBRkZGRkaCRka0RkbcRkb+RkYBgkZGgkaCgka0gkbcgkb+gkYBtEZGtEaCtEa0tEbctEb+tEYB3EZG3EaC3Ea03Ebc3Eb+3EYB/kZG/kaC/ka0/kbc/kb+/kYBAYJGAYKCAYK0AYLcAYL+AYIBRoJGRoKCRoK0RoLcRoL+RoIBgoJGgoKCgoK0goLcgoL+goIBtIJGtIKCtIK0tILctIL+tIIB3IJG3IKC3IK03ILc3IL+3IIB/oJG/oKC/oK0/oLc/oL+/oIBAbRGAbSCAbS0AbTcAbT+AbQBRrRGRrSCRrS0RrTcRrT+RrQBgrRGgrSCgrS0grTcgrT+grQBtLRGtLSCtLS0tLTctLT+tLQB3LRG3LSC3LS03LTc3LT+3LQB/rRG/rSC/rS0/rTc/rT+/rQBAdxGAdyCAdy0AdzcAdz+AdwBRtxGRtyCRty0RtzcRtz+RtwBgtxGgtyCgty0gtzcgtz+gtwBtNxGtNyCtNy0tNzctNz+tNwB3NxG3NyC3Ny03Nzc3Nz+3NwB/txG/tyC/ty0/tzc/tz+/twBAf5GAf6CAf60Af7cAf7+Af4BRv5GRv6CRv60Rv7cRv7+Rv4Bgv5Ggv6Cgv60gv7cgv7+gv4BtP5GtP6CtP60tP7ctP7+tP4B3P5G3P6C3P603P7c3P7+3P4B/v5G/v6C/v60/v7c/v7+/v7s7Ozt7e3u7u7v7+/w8PDx8fHy8vLz8/P09PT///8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD1zcP1tjmEAAAAWElEQVQoz43LsQ2AMAwAwSdiDnrvX3kIlvAkFCFgwNj58qVbduJWtvBL+wE0LASaiIiIkokvESUXbyJKJZ5ElFp40kEpbnKCWgwywITo5AIzAvNgSmAOcACduxSyPiuMsgAAAABJRU5ErkJggg==',
-		'uoffcur':r'iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAMAAADXqc3KAAADAFBMVEUKMjwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAALCwsMDAwNDQ0ODg4PDw8QEBARERESEhITExMBAQFGAQGCAQG0AQHcAQH+AQEBRgFGRgGCRgG0RgHcRgH+RgEBggFGggGCggG0ggHcggH+ggEBtAFGtAGCtAG0tAHctAH+tAEB3AFG3AGC3AG03AHc3AH+3AEB/gFG/gGC/gG0/gHc/gH+/gEBAUZGAUaCAUa0AUbcAUb+AUYBRkZGRkaCRka0RkbcRkb+RkYBgkZGgkaCgka0gkbcgkb+gkYBtEZGtEaCtEa0tEbctEb+tEYB3EZG3EaC3Ea03Ebc3Eb+3EYB/kZG/kaC/ka0/kbc/kb+/kYBAYJGAYKCAYK0AYLcAYL+AYIBRoJGRoKCRoK0RoLcRoL+RoIBgoJGgoKCgoK0goLcgoL+goIBtIJGtIKCtIK0tILctIL+tIIB3IJG3IKC3IK03ILc3IL+3IIB/oJG/oKC/oK0/oLc/oL+/oIBAbRGAbSCAbS0AbTcAbT+AbQBRrRGRrSCRrS0RrTcRrT+RrQBgrRGgrSCgrS0grTcgrT+grQBtLRGtLSCtLS0tLTctLT+tLQB3LRG3LSC3LS03LTc3LT+3LQB/rRG/rSC/rS0/rTc/rT+/rQBAdxGAdyCAdy0AdzcAdz+AdwBRtxGRtyCRty0RtzcRtz+RtwBgtxGgtyCgty0gtzcgtz+gtwBtNxGtNyCtNy0tNzctNz+tNwB3NxG3NyC3Ny03Nzc3Nz+3NwB/txG/tyC/ty0/tzc/tz+/twBAf5GAf6CAf60Af7cAf7+Af4BRv5GRv6CRv60Rv7cRv7+Rv4Bgv5Ggv6Cgv60gv7cgv7+gv4BtP5GtP6CtP60tP7ctP7+tP4B3P5G3P6C3P603P7c3P7+3P4B/v5G/v6C/v60/v7c/v7+/v7s7Ozt7e3u7u7v7+/w8PDx8fHy8vLz8/P09PT///8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD1zcP1tjmEAAAAYElEQVQoz5XLwRGAMAhE0Y1jb3RAd9tAOrCI9OQhJqISGLmEfOaVBn92sxP1mJ9tAeyBgMofQcCSXLA/k6SCIwySCd7lIomgTZ3Egs+mkgm+o0os+K0qa1Ea3V4DAXEPJ5x3ES+KPfL8AAAAAElFTkSuQmCC',
-		'uoncur':r'iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAMAAADXqc3KAAADAFBMVEUKMjwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAALCwsMDAwNDQ0ODg4PDw8QEBARERESEhITExMBAQFGAQGCAQG0AQHcAQH+AQEBRgFGRgGCRgG0RgHcRgH+RgEBggFGggGCggG0ggHcggH+ggEBtAFGtAGCtAG0tAHctAH+tAEB3AFG3AGC3AG03AHc3AH+3AEB/gFG/gGC/gG0/gHc/gH+/gEBAUZGAUaCAUa0AUbcAUb+AUYBRkZGRkaCRka0RkbcRkb+RkYBgkZGgkaCgka0gkbcgkb+gkYBtEZGtEaCtEa0tEbctEb+tEYB3EZG3EaC3Ea03Ebc3Eb+3EYB/kZG/kaC/ka0/kbc/kb+/kYBAYJGAYKCAYK0AYLcAYL+AYIBRoJGRoKCRoK0RoLcRoL+RoIBgoJGgoKCgoK0goLcgoL+goIBtIJGtIKCtIK0tILctIL+tIIB3IJG3IKC3IK03ILc3IL+3IIB/oJG/oKC/oK0/oLc/oL+/oIBAbRGAbSCAbS0AbTcAbT+AbQBRrRGRrSCRrS0RrTcRrT+RrQBgrRGgrSCgrS0grTcgrT+grQBtLRGtLSCtLS0tLTctLT+tLQB3LRG3LSC3LS03LTc3LT+3LQB/rRG/rSC/rS0/rTc/rT+/rQBAdxGAdyCAdy0AdzcAdz+AdwBRtxGRtyCRty0RtzcRtz+RtwBgtxGgtyCgty0gtzcgtz+gtwBtNxGtNyCtNy0tNzctNz+tNwB3NxG3NyC3Ny03Nzc3Nz+3NwB/txG/tyC/ty0/tzc/tz+/twBAf5GAf6CAf60Af7cAf7+Af4BRv5GRv6CRv60Rv7cRv7+Rv4Bgv5Ggv6Cgv60gv7cgv7+gv4BtP5GtP6CtP60tP7ctP7+tP4B3P5G3P6C3P603P7c3P7+3P4B/v5G/v6C/v60/v7c/v7+/v7s7Ozt7e3u7u7v7+/w8PDx8fHy8vLz8/P09PT///8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD1zcP1tjmEAAAAXElEQVQoz5XLsRGAQAhE0dWxjs2tZKs3JrcSg/MUlYORBOYzb9oQz+xuUvFjJAiY/ggCntSCbV2kFOyhk0rwLicpBH1qJBd8NlMl+I6mXPBbTWOxRACwNRG7wscB7eQO5yBktpIAAAAASUVORK5CYII=',
-	},
-]#すとーむ氏に怒られたら消します(爆)
-
-#-----ディレクトリのパスを先に代入-----
-result_dir = (os.environ['temp'].replace('\\','/') + r'/_NSC2ONS4PSP/result')
-temp_dir = (os.environ['temp'].replace('\\','/') + r'/_NSC2ONS4PSP/tmp')
-
-######################################## GUI表示部分 ########################################
-kbps_list = ['128', '112', '96', '64', '56', '48', '32']
-Hz_list = ['44100', '22050', '11025']
-
-col = [
-	[sg.Text('入力先：'), sg.InputText(k='input_dir', size=(67, 15), default_text=default_input, readonly=True, enable_events=True), sg.FolderBrowse()],
-	[sg.Text('出力先：'), sg.InputText(k='output_dir', size=(67, 15), default_text=default_output, readonly=True), sg.FolderBrowse()],
-]
-
-frame_1 = sg.Frame('画像', [
-	[sg.Text('変換する解像度を指定：')],
-	[sg.Radio(text='320x240', group_id='A', k='res_320'),
-	 sg.Radio(text='360x270', group_id='A', k='res_360', default=True),
-	 sg.Radio(text='640x480', group_id='A', k='res_640')],
-	[sg.Text('JPG品質：'), sg.Slider(range=(100,1), default_value=95, k='jpg_quality', pad=((0,0),(0,0)), orientation='h')],
-	[sg.Checkbox('無透過BMPをJPGに変換&拡張子偽装', k='jpg_mode', default=True)],
-	[sg.Checkbox('透過BMPの横解像度を偶数に指定', k='img_even', default=True)],
-	[sg.Checkbox('透過PNGの色数を削減し圧縮', k='AlphaPNG_conv', default=False)],
-], size=(300, 205))
-
-frame_2 = sg.Frame('音源', [
-	[sg.Checkbox('音源をOGGへ圧縮する - [BGM/SE]', k='ogg_mode', default=ffmpeg_exist, disabled=(not ffmpeg_exist))],
-	[sg.Combo(values=(kbps_list), default_value='96', readonly=True, k='BGM_kbps', disabled=(not ffmpeg_exist)),
-	 sg.Combo(values=(Hz_list), default_value='44100', readonly=True, k='BGM_Hz', disabled=(not ffmpeg_exist)), sg.Text('/'),
-	 sg.Combo(values=(kbps_list), default_value='48', readonly=True, k='SE_kbps', disabled=(not ffmpeg_exist)),
-	 sg.Combo(values=(Hz_list), default_value='22050', readonly=True, k='SE_Hz', disabled=(not ffmpeg_exist)), ],
-], size=(300, 95), pad=(0,0))
-
-frame_3 = sg.Frame('その他', [
-	[sg.Checkbox('smjpeg_encode.exeで動画を変換する', k='vid_flag', default=(smjpeg_exist and ffmpeg_exist), disabled=(not (smjpeg_exist and ffmpeg_exist)))],
-	[sg.Checkbox('nsaed.exeで出力ファイルを圧縮する', k='nsa_mode', default=nsaed_exist, disabled=(not nsaed_exist))],
-	[sg.Checkbox('表示が小さすぎる文字を強制拡大', k='sw_txtsize', default=False)],
-], size=(300, 110), pad=(0,0))
-
-frame_4 = sg.Frame('', [
-	[sg.Text(' PSPでの画面表示：'), 
-	 sg.Radio(text='拡大しない', group_id='B', k='size_normal', default=True),
-	 sg.Radio(text='拡大(比率維持)', group_id='B', k='size_aspect'),
-	 sg.Radio(text='拡大(フルサイズ)', group_id='B', k='size_full')],
-], size=(530, 40))
-
-frame_5 = sg.Frame('', [
-	[sg.Button('convert', pad=(9,6), disabled=True)]
-], size=(70, 40))
-
-progressbar = sg.Frame('', [
-	[sg.ProgressBar(10000, orientation='h', size=(60, 15), key='progressbar')]
-], size=(610, 25))
-
-frame_in_2and3 = sg.Column([[frame_2],[frame_3]])
-
-layout = [
-	[col],
-	[frame_1,frame_in_2and3],
-	[frame_4,frame_5],
-	[progressbar]
-]
-
-window = sg.Window(window_title, layout, size=(640, 360), element_justification='c', margins=(0,0))#ウインドウを表示
-
-
-######################################## 関数へ逃しておく処理 ########################################
-
-#-----プログレスバー更新-----
-progbar_per = [2,5,3,85,5]#全体の処理のざっくりとした割合([txt置換, arc展開, 動画, 画像音楽, nsa化])
-def func_progbar_update(mode, num, nummax):#イマイチ自分でも何書いてんのか分かんないの笑う
-
-	barstart = ( sum(progbar_per[0:mode]) / sum(progbar_per) * 10000 )
-	barmax =( (progbar_per[mode]) / sum(progbar_per) * 10000 )
+	if not pngquant_exist:
+		errmsg += 'pngquant.exeが見つかりません\n'
+		
+	for f in start_file_list:
+		if not f.exists():
+			errmsg += ( str(f.relative_to(same_hierarchy)) + 'が用意されていません\n')
 	
-	window['progressbar'].UpdateBar(int(barstart + (num + 1) * (barmax / nummax) ))
+	return errmsg
 
 
-#-----入出力先未指定/競合時エラー-----
-def func_dir_err():
-	global err_flag
 
-	if not (values['input_dir']):#output_dirと表記を合わせるためあえてtemp_dir未使用
-		sg.popup('入力先が指定されていません', title='!')
-		err_flag = True
-	elif os.path.exists(values['input_dir']) == False:
-		sg.popup('入力先が存在しません', title='!')
-		err_flag = True  
-	if not (values['output_dir']):
-		sg.popup('出力先が指定されていません', title='!')
-		err_flag = True
-	elif os.path.exists(values['output_dir']) == False:
-		sg.popup('出力先が存在しません', title='!')
-		err_flag = True
-	elif values['input_dir'] in values['output_dir']:
-		sg.popup('入出力先が競合しています', title='!')
-		err_flag = True
+def scenario_check(path_input_dir):
 
+	path_00txt = Path(path_input_dir / '00.txt')
+	path_0txt  = Path(path_input_dir / '0.txt')
+	path_nsdat = Path(path_input_dir / 'nscript.dat')
 
-#-----シナリオ復号&コピー周り-----
-def func_ext_dec():
-	global err_flag
-	global text_list
+	if path_00txt.exists() or path_0txt.exists():
+		text = ''
+		if path_00txt.exists():
+			for i in range(0, 100):
+				range_path = Path(path_input_dir / (str(i).zfill(2) + '.txt'))
+		
+				if range_path.exists():				
+					text += open(range_path, 'r', errors='ignore').read()
+					text += '\n\n;##\n;{} end\n;##\n\n'.format(str(range_path.name))	
+		
+		else:
+			for i in range(0, 10):
+				range_path = Path(path_input_dir / (str(i) + '.txt'))
 
-	search_nscript_dat = os.path.join(search_dir, 'nscript.dat')
-	search_00_txt = os.path.join(search_dir, '00.txt')
-	search_0_txt = os.path.join(search_dir, '0.txt')
-	result_0_txt = os.path.join(result_dir, '0.txt')
+				if range_path.exists():				
+					text += open(range_path, 'r', errors='ignore').read()
+					text += '\n\n;##\n;{} end\n;##\n\n'.format(str(range_path.name))
 
-	if os.path.isfile(search_0_txt) or os.path.isfile(search_00_txt):#0.txtか00.txt
-		for num in range(0, 10):#0~9(00~09).txtまでを調べる
-			if os.path.isfile(search_00_txt):#二桁連番で配列格納を繰り返す00.txtのばあい
-				oldtext = (os.path.join(search_dir, str(num).zfill(2) + '.txt'))#zfillで先頭を0埋め
-			else:#一桁連番で配列格納を繰り返す0.txtのばあい
-				oldtext = (os.path.join(search_dir, str(num) + '.txt'))
-					
-			newtext = (os.path.join(result_dir, str(num) + '.txt'))
-
-			if os.path.isfile(oldtext):#txtがあれば
-				shutil.copy(oldtext,newtext)#コピー
-				os.chmod(path=newtext, mode=stat.S_IWRITE)#念の為読み取り専用を外す
-				text_list.append(newtext)#シナリオのパスを配列へ格納
-
-	elif os.path.isfile(search_nscript_dat):#復号化処理を行うnscript.datのばあい
-		oldtext = search_nscript_dat
-		newtext = result_0_txt
-			
-		open(newtext, 'w')#復号化後の新規txt作成
-
-		data = open(oldtext,"rb").read()#復号化前のtxt読み込み用変数
+	elif path_nsdat.exists():
+		data = open(path_nsdat,"rb").read()#復号化前のtxt読み込み用変数
 		bin_list = []#復号したバイナリを格納する配列の作成
+		
 		for b in range(len(data)):#復号 0x84でbitxorしてるんだけどいまいち自分でもよく分かってない
 			bin_list.append(bytes.fromhex(str((hex(int(data[b]) ^ int(0x84))[2:].zfill(2)))))
-
-		open(newtext, 'ab').write(b''.join(bin_list))#復号したバイナリをまとめて新規txtへ
-			
-		text_list.append(newtext)#シナリオのパスを配列へ格納
 		
-	else:#それ以外(エラー)
-		sg.popup('シナリオファイルが見つかりません', title='!')
-		err_flag = True
+		text = (b''.join(bin_list)).decode('cp932', errors='ignore')
+
+	else:
+		text = ''
+
+	return text
 
 
-#-----0.txt読み込み時(初回限定)処理-----
-def func_txt_zero(text):
-	global default_tmode
-	global resolution
-	global game_mode
-	global err_flag
-	global per
 
+def in_out_dir_check(input_dir, output_dir):
+	
+	#エラーメッセージ作成
+	errmsg = ''
+	
+	if not input_dir:#output_dirと表記を合わせるためあえてtemp_dir未使用
+		errmsg = '入力先が指定されていません'
+
+	elif Path(input_dir).exists() == False:
+		errmsg = '入力先が存在しません'
+  
+	if not output_dir:
+		errmsg = '出力先が指定されていません'
+
+	elif Path(output_dir).exists() == False:
+		errmsg = '出力先が存在しません'
+
+	elif input_dir in output_dir:
+		errmsg = '入出力先が競合しています'
+	
+	return errmsg
+
+
+
+def zero_txt_check(text):
+	errmsg = ''
+
+	##### 解像度抽出(&置換) #####
 	newnsc_mode = (r';\$V[0-9]{1,}G([0-9]{1,})S([0-9]{1,}),([0-9]{1,})L[0-9]{1,}')#ONS解像度新表記
 	newnsc_search = re.search(newnsc_mode, text)
 	oldnsc_mode = (r';mode([0-9]{3})')#ONS解像度旧表記
 	oldnsc_search = re.search(oldnsc_mode, text)
 
-	#-解像度抽出(&置換)-
 	if newnsc_search:#ONS解像度新表記時
 		newnsc_width = int(newnsc_search.group(2))
 		newnsc_height = int(newnsc_search.group(3))
@@ -338,8 +258,7 @@ def func_txt_zero(text):
 			game_mode = newnsc_width#作品解像度を代入
 
 		else:
-			sg.popup('解像度の関係上このソフトは変換できません', title='!')
-			err_flag = True
+			errmsg = '解像度の関係上このソフトは変換できません'
 
 	elif oldnsc_search:#ONS解像度旧表記時
 		game_mode = int(oldnsc_search.group(1))#作品解像度を代入
@@ -347,40 +266,23 @@ def func_txt_zero(text):
 	else:#ONS解像度無表記時
 		game_mode = 640#作品解像度を代入
 
-	if not re.search(r'\*define', text):#*defineがない時
-		sg.popup('0.txtの復号化に失敗しました', title='!')
-		err_flag = True#シナリオじゃなさそうなのでエラー
+	#*defineがない時
+	if not re.search(r'\*define', text):
+		errmsg = '0.txtの復号化に失敗しました'
 
-	#画像が初期設定でどのような透過指定で扱われるかを代入
-	default_tmode= re.findall(r'\n[\t| ]*transmode ([leftup|rightup|copy|alpha])[\t| ]*', text)
-
-	#-解像度指定-
-	if values['res_320']:#ラジオボタンから代入
-		resolution = 320
-	elif values['res_360']:
-		resolution = 360
-	elif values['res_640']:
-		resolution = 640
-
-	if not re.search(r'\n[\t| ]*nsa[\t| ]*', text):#nsa読み込み命令が無い時
-		text = text.replace('*define', '*define\nnsa')#*define直下に命令追記(保険)
-
-	per = resolution / game_mode#画像縮小率=指定解像度/作品解像度
-
-	return text
+	return game_mode, errmsg, text
 
 
-#-----全txtへ行う処理-----
-def func_txt_all(text):
-	global vid_list_rel
-	global immode_var_tup
-	global immode_list_tup
 
-	#-PSPで使用できない命令を無効化する-
+def zero_txt_conv(text, per, values, default_transmode):
+
+	#-PSPで使用できない命令を無効化する- (ここ将来的に変数定義上書きとかで消したいよね)
+	text = re.sub(r'savescreenshot2?[\t\s]+"(.+?)"[\t\s]*([:|\n])', r'wait 0\2', text)#savescreenshot抹消(PSPだとクソ重いしほぼ確実に取得サイズずれるし...)
 	text = re.sub(r'([\n|\t| |:])avi[\t\s]+"(.+?)",([0|1]|%[0-9]+)', r'\1mpegplay "\2",\3', text)#aviをmpegplayで再生(後に拡張子偽装)
 	text = re.sub(r'([\n|\t| |:])okcancelbox[\t\s]+%(.+?),', r'\1mov %\2,1 ;', text)#okcancelboxをmovで強制ok
 	text = re.sub(r'([\n|\t| |:])yesnobox[\t\s]+%(.+?),', r'\1mov %\2,1 ;', text)#yesnoboxをmovで強制yes
 
+	#nbz
 	text = text.replace('.NBZ', '.wav')#大文字
 	text = text.replace('.nbz', '.wav')#小文字
 
@@ -409,250 +311,206 @@ def func_txt_all(text):
 				
 				text = text.replace(sw, sw_re)
 
-
 	#-txt内の画像の相対パスを格納-
 
+	#画像表示命令抽出
 	#[0]が命令文/[3]が(パスの入っている)変数名/[5]が透過形式/[6]が分割数/[8]が相対パス - [3]か[8]はどちらかのみ代入される
-	immode_list_tup += re.findall(r'(ld)[\t\s]+([lcr])[\t\s]*,[\t\s]*((\$?[A-Za-z0-9_]+?)|"(:(.)/?([0-9]+)?(,.+?)?;)?(.+?)")[\t\s]*,[\t\s]*[0-9]+', text)#ld
-	immode_list_tup += re.findall(r'((abs)?setcursor)[\t\s]+%?.+?[\t\s]*,[\t\s]*((\$?[A-Za-z0-9_]+?)|"(:(.)/?([0-9]+)?(,.+?)?;)?(.+?)")([\t\s]*,[\t\s]*(([0-9]{1,3})|(%.+?))){1,3}', text)#setcursor系
-	immode_list_tup += re.findall(r'(lsp(h)?)[\t\s]+%?.+?[\t\s]*,[\t\s]*((\$?[A-Za-z0-9_]+?)|"(:(.)/?([0-9]+)?(,.+?)?;)?(.+?)")([\t\s]*,[\t\s]*(([0-9]{1,3})|(%.+?))){1,3}', text)#lsp系
-	immode_list_tup += re.findall(r'(lsph?2(add|sub)?)[\t\s]+%?.+?[\t\s]*,[\t\s]*((\$?[A-Za-z0-9_]+?)|"(:(.)/?([0-9]+)?(,.+?)?;)?(.+?)")(([\t\s]*,[\t\s]*((-?[0-9]{1,3})|(%.+?))){1,6})?', text)#lsp2系
+	immode_dict_tup  = re.findall(r'(ld)[\t\s]+([lcr])[\t\s]*,[\t\s]*((\$?[A-Za-z0-9_]+?)|"(:(.)/?([0-9]+)?(,.+?)?;)?(.+?)")[\t\s]*,[\t\s]*[0-9]+', text)#ld
+	immode_dict_tup += re.findall(r'((abs)?setcursor)[\t\s]+%?.+?[\t\s]*,[\t\s]*((\$?[A-Za-z0-9_]+?)|"(:(.)/?([0-9]+)?(,.+?)?;)?(.+?)")([\t\s]*,[\t\s]*(([0-9]{1,3})|(%.+?))){1,3}', text)#setcursor系
+	immode_dict_tup += re.findall(r'(lsp(h)?)[\t\s]+%?.+?[\t\s]*,[\t\s]*((\$?[A-Za-z0-9_]+?)|"(:(.)/?([0-9]+)?(,.+?)?;)?(.+?)")([\t\s]*,[\t\s]*(([0-9]{1,3})|(%.+?))){1,3}', text)#lsp系
+	immode_dict_tup += re.findall(r'(lsph?2(add|sub)?)[\t\s]+%?.+?[\t\s]*,[\t\s]*((\$?[A-Za-z0-9_]+?)|"(:(.)/?([0-9]+)?(,.+?)?;)?(.+?)")(([\t\s]*,[\t\s]*((-?[0-9]{1,3})|(%.+?))){1,6})?', text)#lsp2系
 
+	#変数に画像表示命令用の文字列突っ込んである場合があるのでそれ抽出
 	#[0]が命令文/[1]が変数名/[3]が透過形式/[4]が分割数/[6]が相対パス
-	immode_var_tup += re.findall(r'(stralias|mov)[\t\s]*(\$?[A-Za-z0-9_]+?)[\t\s]*,[\t\s]*"(:(.)/?([0-9]+)?(,.+?)?;)?(.+?)"', text)#パスの入ったmov及びstralias
-
-	#savescreenshot抹消(PSPだとクソ重いしほぼ確実に取得サイズずれるし...)
-	text = re.sub(r'savescreenshot2?[\t\s]+"(.+?)"[\t\s]*([:|\n])', r'wait 0\2', text)
-
-	if values['vid_flag']:#動画変換処理を行う場合
-		for a in re.findall(r'mpegplay "(.+?)",([0|1]|%[0-9]+)', text):#txt内の動画の相対パスを格納
-			vid_list_rel.append(a[0])
-
-	else:#動画変換処理を行わない場合
-		text = re.sub(r'mpegplay[\t\s]+"(.+?)"[\t\s]*,[\t\s]*([0|1]|%[0-9]+)[\t\s]*([:|\n])', r'wait 0\3', text)
-
-	return text
-
-
-#-----tempフォルダを作り展開&コピー-----
-def func_arc_ext():
-
-	#---その他ファイルをコピー---
-	shutil.copytree(search_dir, temp_dir, ignore=shutil.ignore_patterns('*.sar', '*.nsa', '*.ns2', '*.exe', '*.dll', '*.txt', 'envdata'))
-
-	#---存在するarcをここで全てリスト化(もちろん上書き順は考慮)---
-	temp_arc = []
-	temp_arc += sorted(glob.glob(search_dir + r'/*.ns2'))
-	temp_arc += reversed(sorted(glob.glob(search_dir + r'/*.nsa')))
-	temp_arc += reversed(sorted(glob.glob(search_dir + r'/*.sar')))
-
-	#---↑のリスト順にarcを処理---
-	for i,path in enumerate(temp_arc):
-
-		#---展開時競合するファイルを先に削除(GARBroに上書きオプションがないため)---
-		#はじめは"input=a text=True"とかで上書き確認へ応答処理しようと思ってたけど
-		#どうもinputとpyinstraller -noconsoleって両立できないんだよね...
-		
-		txtline = subprocess.check_output([GARbro_path, 'l',path,]#展開予定のファイル一覧を取得
-					,shell=True, **subprocess_args(False))#check_output時はFalse 忘れずに
-
-		for txt in txtline.decode('cp932', 'ignore').splitlines():#一行ずつ処理 - なぜかtxtlineがbyteなのでデコード(エラー無視)
-			arc_path_rel = re.findall(r'\[.+?\] +[0-9]+? +(.+)',txt)#切り出し
-			if arc_path_rel:#切り出しに成功した場合
-				arc_path = os.path.join(temp_dir, str(arc_path_rel[0]).replace('.nbz', '.wav') )#絶対パスに変換(&nbzをwavに)
-				if os.path.exists(arc_path):#ファイルが存在する場合
-					os.remove(arc_path)#削除
-
-		subprocess.run([GARbro_path, 'x', '-ca', '-o', temp_dir, path,]#展開
-			,shell=True, **subprocess_args(True))
-		
-		func_progbar_update(1, i, len(temp_arc))#左から順に{種類, 現在の順番, 最大数}
-
-
-#-----格納されたtxt内の動画の相対パスを処理-----
-def func_vid_conv(vid, vid_result):
-	vid_result = str(vid_result).replace('\\','/')#文字列として扱いづらいのでとりあえず\置換
-
-	if not os.path.isfile(vid):#パスのファイルが実際に存在するかチェック
-		return#なければ終了
-
-	vidtmpdir = (os.path.splitext(vid_result)[0] + '_tmp')
-	os.makedirs(vidtmpdir)
-
-	vid_info_txt = subprocess.check_output([#動画情報を代入
-		'ffprobe', '-hide_banner',
-		'-v', 'error', '-print_format',
-		'json', '-show_streams',
-		'-i', vid,
-	],text=True, shell=True, **subprocess_args(False))#check_output時はFalse 忘れずに
-	vid_info = json.loads(vid_info_txt)
-
-	#fpsの上2桁を抽出(fpsが小数点の際たまに暴走して299700fpsとかになるので)& "/1" 削除
-	vid_frame = (vid_info['streams'][0]['r_frame_rate'].replace('/1', ''))[:2]
-
-	#(横幅/2の切り上げ)*2でfpsを偶数へ
-	vid_frame = math.ceil(int(vid_frame)/2)*2#だって奇数fpsの動画なんてまず無いし...
-	vid_codec = (vid_info['streams'][0]['codec_name'])#コーデック取得
-
-	#-展開前にPSPの再生可能形式(MPEG-1か2)へ-
-	if vid_codec == 'mpeg2video' or vid_codec == 'mpeg1video':#判定
-		shutil.copy(vid,vid_result)#そのまま再生できそうならコピー
-		os.chmod(path=vid_result, mode=stat.S_IWRITE)#念の為読み取り専用を外す
-	else:
-		subprocess.run(['ffmpeg', '-y',#そのまま再生できなそうならエンコード
-			'-i', vid,
-			'-vcodec', 'mpeg2video',
-			'-qscale', '0',
-			vid_result,
-		], shell=True, **subprocess_args(True))
-
-	#-連番画像展開-
-	subprocess.run(['ffmpeg', '-y',
-		'-i', vid_result,
-		'-s', str(vid_res),
-		'-r', str(vid_frame),
-		'-qscale', str(int(51-int(values['jpg_quality'])/2)),#JPEG品質指定を動画変換時にも適応
-		vidtmpdir + '/%08d.jpg',#8桁連番
-	], shell=True, **subprocess_args(True))
-
-	#-音源抽出+16bitPCMへ変換-
-	try:
-		subprocess.run(['ffmpeg', '-y',
-			'-i', vid_result,
-			'-f', 's16le',#よく考えるとなんで16bitPCMなんだろう
-			'-vn',
-			'-ar', str(values['BGM_Hz']),
-			'-ac', '2',
-			vidtmpdir + '/audiodump.pcm',
-		], shell=True, **subprocess_args(True))
-	except:
-		pass#エラー時飛ばす(無音源動画対策)
-
-	os.remove(vid_result)#変換前動画が変換後動画と競合しないようここで削除
-
-	#-抽出ファイルをsmjpeg_encode.exeで結合-
-	subprocess.run([smjpeg_path,
-	 '--video-fps', str(vid_frame),#小数点使用不可
-	 '--audio-rate', str(values['BGM_Hz']),
-	 '--audio-bits', '16',
-	 '--audio-channels', '2',
-	], shell=True, cwd=vidtmpdir, **subprocess_args(True))
-
-	shutil.move(os.path.join(vidtmpdir, r'output.mjpg'), vid_result)#完成品を移動
-	shutil.rmtree(vidtmpdir)#作業用フォルダの削除
-
-
-#-----シナリオから抽出した画像の状態を整形-----
-def func_tmode_img(t):
-	global tmode_img_list
-
-	if '#' in t[8]:#変数内に"#"がある(≒パスが入っていない)場合
-		return#処理しない
-
-	if not t[8]:#命令文内に変数のあった場合代入元のタプルを変数定義命令の数だけ代入
-		vlist = [immode_var_tup[vn] for vn in [i for i, x in enumerate([r[1] for r in immode_var_tup]) if x == t[3]]]
+	immode_var_tup = re.findall(r'(stralias|mov)[\t\s]*(\$?[A-Za-z0-9_]+?)[\t\s]*,[\t\s]*"(:(.)/?([0-9]+)?(,.+?)?;)?(.+?)"', text)#パスの入ったmov及びstralias
 	
-	else:#命令文内に変数のなかった場合下記タプルに表記を合わせたダミーのリストを一つ代入
-		vlist = [['', '', '', t[5], t[6], '', t[8], ]]
+	#画像状態保存用辞書作成
+	immode_dict = {
+		#カーソル類は最初から書いとく
+		Path(r'cursor0.bmp'):{'cursor': True, 'trans': 'l', 'part': 3},
+		Path(r'cursor1.bmp'):{'cursor': True, 'trans': 'l', 'part': 3},
+		Path(r'doncur.bmp'):{'cursor': True, 'trans': 'l', 'part': 1},
+		Path(r'doffcur.bmp'):{'cursor': True, 'trans': 'l', 'part': 1},
+		Path(r'uoncur.bmp'):{'cursor': True, 'trans': 'l', 'part': 1},
+		Path(r'uoffcur.bmp'):{'cursor': True, 'trans': 'l', 'part': 1},	
+	}
 
-	for v in vlist:
+	for l in immode_dict_tup:
+		p = ''
 
-		#相対パスを小文字にして絶対パスへ
-		file = ( (temp_dir + '/' + v[6].replace('\\','/')).lower() )
+		if ( bool(l[8]) and (not r'$' in l[8]) ):
+			p = l[8]
 
-		#-呼び出された命令の種類を代入-
-		if t[0] == ('setcursor' or 'abssetcursor'):
-			inst = 'cur'
-		elif t[0] == 'ld':
-			inst = 'ld'
+		elif ( bool(l[3]) and (not r'$' in l[3]) ):
+			p = l[3]
+
+		if p:
+			#カーソルかどうか
+			cursor = bool(r'setcursor' in l[0])
+
+			#透過モード
+			trans = l[5] if bool(l[5]) else default_transmode
+
+			#表示時画像分割数
+			part = int(l[6]) if bool(l[6]) else 1
+
+			immode_dict[Path(p)] = {
+				'cursor': cursor,
+				'trans': trans,
+				'part': part,	
+			}
+
+	for l in immode_var_tup:
+		p = ''
+		if ( bool(l[6]) and (not r'$' in l[6]) ):
+			p = l[6]
+
+		if p:
+			#透過モード
+			trans = l[3] if bool(l[3]) else default_transmode
+
+			#表示時画像分割数
+			part = int(l[4]) if bool(l[4]) else 1
+
+			immode_dict[Path(p)] = {
+				'cursor': False,
+				'trans': trans,
+				'part': part,	
+			}
+	
+	#音楽抽出
+	msc_list = []#txt内の音源の相対パスを格納するための配列
+	for a in re.findall(r'(bgm|mp3loop)[\t\s]+"(.+?)"', text):#txt内の音源の相対パスを格納
+		msc_list.append(Path(a[1]))
+	
+	#動画変換処理を行う - 現時点で動画はヘッダで判別できないので仕方なく命令文抽出で判断
+	vid_list = []#txt内の動画の相対パスを格納するための配列
+	for a in re.findall(r'mpegplay[\t\s]+"(.+?)",([0|1]|%[0-9]+)', text):#txt内の動画の相対パスを格納
+		vid_list.append(Path(a[0]))
+
+	#重複除去
+	vid_list = set(vid_list)
+
+	return text, immode_dict, vid_list, msc_list
+
+
+
+def arc_extract(GARbro_path, p, ex_dir):
+
+	#---展開時競合するファイルを先に削除(GARBroに上書きオプションがないため)---
+	#はじめは"input=a text=True"とかで上書き確認へ応答処理しようと思ってたけど
+	#どうもinputとpyinstraller -noconsoleって両立できないんだよね...
+		
+	txtline = subprocess.check_output([GARbro_path, 'l', str(p)]#展開予定のファイル一覧を取得
+				,shell=True, **subprocess_args(False))#check_output時はFalse 忘れずに
+
+	for txt in txtline.decode('cp932', 'ignore').splitlines():#一行ずつ処理 - なぜかtxtlineがbyteなのでデコード(エラー無視)
+		arc_path_rel = re.findall(r'\[.+?\] +[0-9]+? +(.+)',txt)#切り出し
+		if arc_path_rel:#切り出しに成功した場合
+			arc_path = Path(ex_dir / str(arc_path_rel[0]))#絶対パスに変換
+			if ( str(arc_path.suffix).lower() == r'.nbz' ):#nbzをwavに
+				arc_path = arc_path.with_suffix(r'.wav')
+			arc_path.unlink(missing_ok=True)#ファイルが存在する場合は削除
+
+	subprocess.run([GARbro_path, 'x', '-ca', '-o', ex_dir, p]#展開
+		,shell=True, **subprocess_args(True))
+	
+	return
+
+
+
+def func_video_conv(f, values, res, same_hierarchy, temp_dir, ex_dir):
+	smjpeg_path = Path(same_hierarchy / 'tools' / 'smjpeg_encode.exe')
+	vid_res = (str(res) + r':' + str(int(res/4*3)))#引数用動画解像度代入
+	vid_result = (temp_dir / 'no_comp' / f.relative_to(ex_dir))
+
+	#保存先作成
+	vid_result.parent.mkdir(parents=True,  exist_ok=True)
+
+	if not f.exists():#パスのファイルが実際に存在するかチェック
+		return#なければ終了
+	
+	with tempfile.TemporaryDirectory() as vidtmpdir:#一時ディレクトリ作成
+		vidtmpdir = Path(vidtmpdir)
+
+		vid_info_txt = subprocess.check_output([#動画情報を代入
+			'ffprobe', '-hide_banner',
+			'-v', 'error', '-print_format',
+			'json', '-show_streams',
+			'-i', f,
+		],text=True, shell=True, **subprocess_args(False))#check_output時はFalse 忘れずに
+		vid_info = json.loads(vid_info_txt)
+
+		#fpsの上2桁を抽出(fpsが小数点の際たまに暴走して299700fpsとかになるので)& "/1" 削除
+		vid_frame = (vid_info['streams'][0]['r_frame_rate'].replace('/1', ''))[:2]
+
+		#(横幅/2の切り上げ)*2でfpsを偶数へ
+		vid_frame = math.ceil(int(vid_frame)/2)*2#だって奇数fpsの動画なんてまず無いし...
+		vid_codec = (vid_info['streams'][0]['codec_name'])#コーデック取得
+
+		#-展開前にPSPの再生可能形式(MPEG-1か2)へ-
+		if vid_codec == 'mpeg2video' or vid_codec == 'mpeg1video':#判定
+			shutil.copy(f,vid_result)#そのまま再生できそうならコピー
+			os.chmod(path=vid_result, mode=stat.S_IWRITE)#念の為読み取り専用を外す
 		else:
-			inst = 'lsp'
+			subprocess.run(['ffmpeg', '-y',#そのまま再生できなそうならエンコード
+				'-i', f,
+				'-vcodec', 'mpeg2video',
+				'-qscale', '0',
+				str(vid_result),
+			], shell=True, **subprocess_args(True))
 
-			#-カーソルではない場合もそれっぽい名前の場合カーソル扱い-
-			for n in ['cursor', 'offcur', 'oncur']:#たまに「カーソルをsetcursorで呼ばない」作品とかあるのでそれ対策
-				if n in os.path.splitext(os.path.basename(file))[0]:
-					inst = 'cur'
+		#-連番画像展開-
+		subprocess.run(['ffmpeg', '-y',
+			'-i', str(vid_result),
+			'-s', str(vid_res),
+			'-r', str(vid_frame),
+			'-qscale', str(int(51-int(values['jpg_quality_2'])/2)),#JPEG品質指定を動画変換時にも適応
+			str(vidtmpdir) + '/%08d.jpg',#8桁連番
+		], shell=True, **subprocess_args(True))
 
-		#-透過形式-
-		if (not inst == 'cur') and (os.path.splitext(file)[1]).lower() == '.png':#カーソルではない&画像がpngなら
-			tmode = 'c'#基本無条件でcopy
-		elif v[3]:#指定時
-			tmode = v[3]
-		elif default_tmode:#透過形式なし&txtからモード抽出済
-			tmode = default_tmode[0]#0文字目だけ抜いて使ってる
-		else:#透過形式なし&txtからモード未抽出
-			tmode = 'l'
+		#-音源抽出+16bitPCMへ変換-
+		try:
+			subprocess.run(['ffmpeg', '-y',
+				'-i', (vid_result),
+				'-f', 's16le',#よく考えるとなんで16bitPCMなんだろう
+				'-vn',
+				'-ar', '44100',
+				'-ac', '2',
+				str(vidtmpdir) + '/audiodump.pcm',
+			], shell=True, **subprocess_args(True))
+		except:
+			pass#エラー時飛ばす(無音源動画対策)
 
-		#-アニメーション数-
-		if v[4]:#指定時
-			ani_num = int(v[4])
-		else:
-			ani_num = 1
+		vid_result.unlink(missing_ok=True)#変換前動画が変換後動画と競合しないようここで削除
 
-		#アルファブレンド画像の場合は画像分割数がアニメーション数x2になるのを
-		#「bool型の(tmode == 'a')に+1した数を掛ける」としている(絶望的な可読性)
-		part_num = (ani_num * ((tmode == 'a') + 1) )
+		#-抽出ファイルをsmjpeg_encode.exeで結合-
+		subprocess.run([str(smjpeg_path),
+		 '--video-fps', str(vid_frame),#小数点使用不可
+		 '--audio-rate', '44100',
+		 '--audio-bits', '16',
+		 '--audio-channels', '2',
+		], shell=True, cwd=vidtmpdir, **subprocess_args(True))
 
-		#-[カーソルかどうか, 絶対パス, 透過モード, 分割数]を代入
-		tmode_img_list.append([inst, file, tmode, part_num])
-
-		if debug_mode:
-			pass
-			#print([inst, file, tmode, part_num])#Debug
-
-
-#-----フォーマットチェック-----
-def format_check(file):
-	with open(file, "rb") as f:
-		b = f.read(8)
-
-		if re.match(b'^\xff\xd8', b):
-			ff = 'JPEG'
-
-		elif re.match(b'^\x42\x4d', b):
-			ff = 'BMP'
-
-		elif re.match(b'^\x89\x50\x4e\x47\x0d\x0a\x1a\x0a', b):
-			ff = 'PNG'
-
-		elif re.match(b'^\x52\x49\x46\x46', b):
-			ff = 'WAV'
-
-		elif re.match(b'^\x4f\x67\x67\x53', b):
-			ff = 'OGG'
-
-		elif re.match(b'^\xff\xf3', b) or re.match(b'^\xff\xfa', b) or re.match(b'^\xff\xfb', b) or re.match(b'^\x49\x44\x33', b) or re.match(b'^\xff\x00\x00', b):
-			ff = 'MP3'#ヘッダーについて詳細不明、情報求む
-
-		else:
-			ff = False
-
-	return ff
+		shutil.move((vidtmpdir / r'output.mjpg'), vid_result)#完成品を移動
+	
+	return
 
 
-#-----全画像変換処理部分-----
-def func_image_conv(file, file_format):
+
+def func_image_conv(f, fc, values, def_trans, immode_dict, per, temp_dir, ex_dir, nsa_save_image):
+	img_result = (temp_dir / nsa_save_image / f.relative_to(ex_dir))
+
+	#保存先作成
+	img_result.parent.mkdir(parents=True,  exist_ok=True)
 
 	try:
-		img = Image.open(file)#画像を開く
+		img = Image.open(f)#画像を開く
 	except:
 		return#失敗したら終了
 
 	if img.format == False:#画像ではない場合(=画像のフォーマットが存在しない場合)
 		return#終了 - 拡張子偽装対策
-	
-	#---arc.nsa向けフォルダ分け用処理---
-	if values['nsa_mode'] == True:
-		#---先にファイル保存用ディレクトリを作成---
-		os.makedirs((result_dir_ff.replace(temp_dir,(result_dir + r'/arc' ))), exist_ok=True)
-		#---ファイル保存先パス用変数を代入---
-		result_dir2 = (result_dir + r'/arc')
-
-	else:#通常時フォルダ分け用処理
-		os.makedirs((result_dir_ff.replace(temp_dir,result_dir)), exist_ok=True)#保存先作成
-		result_dir2 = result_dir#保存先パス用変数を代入
-
-	file_result = file.replace(temp_dir,result_dir2)#出力先パス用変数の代入
 
 	if ('transparency' in img.info):#αチャンネル付き&非RGBAな画像をRGBAへ変換
 		img = img.convert('RGBA')
@@ -668,105 +526,92 @@ def func_image_conv(file, file_format):
 		result_width = 1
 	if result_height < 1:
 		result_height = 1
-
-	#---画像処理分岐用変数---
-	immode_nearest = False#NEARESTで圧縮する(≒LANCZOSで圧縮してはいけない)か
-	immode_defcur = False#NScripter付属の標準画像のカーソルかどうか
-	immode_cursor = False#(標準かに関わらず)カーソルかどうか
-	img_mask = False#カーソル向けマスク画像代入用
-	sp_val = 0#縮小時分割枚数
-
+	
 	a_px = (0, 0, 0)#背景画素用仮変数
+	img_mask = False#マスク用仮変数
 
-	#---"tmode_img_list"内にある場合---
-	if file.lower() in TIL_path:
-		tmode_img = tmode_img_list[TIL_path.index(file.lower())]#リスト逆引き
+	#---設定生成---
+	if f.relative_to(ex_dir) in immode_dict.keys():
+		#すでに辞書にある場合
+		img_d = immode_dict[f.relative_to(ex_dir)]#取ってくるだけ
 
-		sp_val = int(tmode_img[3])
+	else:
+		#ない場合
+		cur_chk = False
+		for n in ['cursor', 'offcur', 'oncur']:#それっぽい名前の場合カーソル扱い - たまに「カーソルをsetcursorで呼ばない」作品とかあるのでそれ対策
+			if n in str(f.stem):
+				cur_chk = True
 
-		#leftup/rightupをimmode_nearest
-		if tmode_img[2] == ('l' or 'r'):
-			immode_nearest = True
+		img_d = {
+			'cursor': cur_chk,
+			'trans': def_trans,
+			'part': int(values['img_multi']),
+		}
+	
+	#---カーソル専用処理---
+	if img_d['cursor']:
+		#---画素比較のためnumpyへ変換---
+		np_img = np.array(img.convert('RGB'))
 
-		#---カーソル専用処理---
-		if tmode_img[0] == 'cur':
-			immode_cursor = True
+		#---for文で標準画像とそれぞれ比較---
+		cur_dictlist = get_cur_dictlist()
+		for k, v in cur_dictlist[2].items():
 
-			#---画素比較のためnumpyへ変換---
-			np_img = np.array(img.convert('RGB'))
-
-			#---for文で標準画像とそれぞれ比較---
-			for k, v in cur_dictlist[2].items():
-
-				img_default = Image.open(BytesIO(base64.b64decode(v)))
-				np_img_default = np.array(img_default.convert('RGB'))
+			img_default = Image.open(BytesIO(base64.b64decode(v)))
+			np_img_default = np.array(img_default.convert('RGB'))
 				
-				#カーソルが公式の画像と同一の時
-				if np.array_equal(np_img, np_img_default):
-					immode_defcur = k
+			#カーソルが公式の画像と同一の時
+			if np.array_equal(np_img, np_img_default):
+				img_d['default_cursor'] = k
+	
+	#---(leftup/rightupのみ)背景色を抽出しそこからマスク画像を作成---
+	if (img_d['cursor']) and (img_d['trans'] in ['l', 'r']) and (not img_d.get('default_cursor')) and (not img.mode == 'RGBA'):
+		#これキレイだけどガチで重いんで基本カーソル専用!!!!
+		#透過背景を灰色っぽくすることで縮小時に画像周りの色を目立たなくする
 
-			#---(leftup/rightupのみ)背景色を抽出しそこからマスク画像を作成---
-			if (tmode_img[2] == ('l' or 'r')) and (not immode_defcur) and (not img.mode == 'RGBA'):
+		img = img.convert('RGB')#編集のためまず強制RGB化
+		img_datas = img.getdata()#画像データを取得
 
-				img = img.convert('RGB')#編集のためまず強制RGB化
-				img_datas = img.getdata()#画像データを取得
+		if img_d['trans'] == 'l':
+			a_px = img.getpixel((0, 0))#左上の1pxを背景色に指定
+		elif img_d['trans'] == 'r':
+			a_px = img.getpixel((img.width-1, 0))#右上の1pxを背景色に指定
 
-				if tmode_img[2] == 'l':
-					a_px = img.getpixel((0, 0))#左上の1pxを背景色に指定
-				elif tmode_img[2] == 'r':
-					a_px = img.getpixel((img.width-1, 0))#右上の1pxを背景色に指定
+		img_mask = Image.new('L', img.size, 0)
 
-				img_mask = Image.new("L", img.size, 0)
-
-				#-ピクセル代入用配列作成-
-				px_list = []
-				mask_px_list = []
-				for px in img_datas:
-					if px == a_px:#背景色と一致したら
-						px_list.append((128, 128, 128))#灰色に
-						mask_px_list.append((0))#マスクは白
-					else:#それ以外は
-						px_list.append(px)#そのまま
-						mask_px_list.append((255))#マスクは黒
+		#-ピクセル代入用配列作成-
+		px_list = []
+		mask_px_list = []
+		for px in img_datas:
+			if px == a_px:#背景色と一致したら
+				px_list.append((128, 128, 128))#灰色に
+				mask_px_list.append((0))#マスクは白
+			else:#それ以外は
+				px_list.append(px)#そのまま
+				mask_px_list.append((255))#マスクは黒
 					
-					img.putdata(px_list)#完了
-					img_mask.putdata(mask_px_list)
-
-	#---立ち絵用横幅偶数指定(ld命令で取りこぼした立ち絵対策)---
-	elif (int(img.width) >= 4) and (not immode_nearest) and values['img_even']:#縦横4px以上&透明部分なし&偶数指定ON
-
-		#---ピクセルの色数を変数に代入---
-		chara_mainL = img.getpixel((1, 1))#本画像部分左上1px - 1
-		chara_mainR = img.getpixel((img.width/2-1, 1))#本画像部分右上1px - 2
-		chara_alphaL = img.getpixel((img.width/2, 1))#透過部分左上1px - 3
-		chara_alphaR = img.getpixel((img.width-1, 1))#透過部分右上1px - 4
-
-		if (chara_mainL == chara_mainR) and (chara_alphaL == chara_alphaR == (255,255,255)):#1,2が同一&3,4が白	
-			sp_val = 2
-
+			img.putdata(px_list)#完了
+			img_mask.putdata(mask_px_list)
+	
+	#アルファブレンド画像の場合は画像分割数2倍
+	if (img_d['trans'] == 'a'):
+		img_d['part'] *= 2
 
 	#-----処理分岐-----
-	if immode_defcur:#デフォルトの画像そのままのカーソル
-		if values['res_640']:#解像度640x480時
-			#-変更の必要なし→そのまま代入-
-			img_resize = img_default
+	if img_d.get('default_cursor'):#デフォルトの画像そのままのカーソル
+		#-読み込んだものと同じカーソルの縮小版を辞書から持ってくる&デコード&代入-
+		#  縮小率50%を境にアイコンサイズ(大/小)を決定
+		#  bool(T/F)の結果をint(1/0)として使っている
+		img_resize = Image.open(BytesIO(base64.b64decode(cur_dictlist[(per < 0.5)][img_d['default_cursor']])))
 
-		else:#解像度変更時
-
-			#-読み込んだものと同じカーソルの縮小版を辞書から持ってくる&デコード&代入-
-			#  縮小率50%を境にアイコンサイズ(大/小)を決定
-			#  bool(T/F)の結果をint(1/0)として使っている
-			img_resize = Image.open(BytesIO(base64.b64decode(cur_dictlist[(per < 0.5)][immode_defcur])))
-
-
-	elif sp_val:#縮小時分割が必要な画像(カーソル含む)
+	elif (img_d['part'] > 1):#縮小時分割が必要な画像(カーソル含む)
 		#---分割する横幅を指定---
-		crop_width = int(img.width/sp_val)
-		crop_result_width = math.ceil(result_width/sp_val)
+		crop_width = int(img.width/img_d['part'])
+		crop_result_width = math.ceil(result_width/img_d['part'])
 
 		#---切り出し→縮小→再結合---
-		img_resize = Image.new(img.mode, (crop_result_width*sp_val, result_height), a_px)#結合用画像
-		for i in range(sp_val):#枚数分繰り返す
+		img_resize = Image.new(img.mode, (crop_result_width*img_d['part'], result_height), a_px)#結合用画像
+		for i in range(img_d['part']):#枚数分繰り返す
 			img_crop = img.crop((crop_width*i, 0, crop_width*(i+1), img.height))#画像切り出し
 
 			if img_mask:#(専用縮小処理が必要な)カーソルの時
@@ -778,7 +623,7 @@ def func_image_conv(file, file_format):
 				img_mask_crop = img_mask_crop.resize((crop_result_width-1, result_height-1), Image.Resampling.NEAREST)#マスク画像はNEARESTで縮小
 				img_crop = Image.composite(img_crop, img_bg, img_mask_crop)#上記2枚を利用しimg_cropへマスク
 
-			elif immode_nearest:#背景がボケると困る画像(NEAREST)
+			elif (img_d['trans'] in ['l', 'r']):#背景がボケると困る画像(NEAREST)
 				img_crop = img_crop.resize((crop_result_width, result_height), Image.Resampling.NEAREST)
 
 			else:#それ以外の画像(LANCZOS)
@@ -788,102 +633,136 @@ def func_image_conv(file, file_format):
 
 	else:
 		img_resize = img.resize((result_width, result_height), Image.Resampling.LANCZOS)
-
-	#-----PNG減色-----
-	if file_format == 'PNG':
-		if img_resize.mode == 'RGB':#非透過は強制
-			img_resize = img_resize.quantize(colors=256, method=0, kmeans=100, dither=1)
-
-		elif values['AlphaPNG_conv']:#透過は場合に応じて
-			img_resize.load()
-			alpha = img_resize.split()[-1]
-			img_resize = img_resize.convert('RGB').convert('P', palette=Image.Palette.ADAPTIVE, colors=255)
-			mask = Image.eval(alpha, lambda a: 255 if a <=128 else 0)
-			img_resize.paste(255, mask)
-
+	
 	#-----画像保存-----
-	if immode_cursor:#カーソル
-		img_resize.save(file_result, 'PNG')
+	if img_d['cursor']:#カーソル
 
-	elif (file_format == 'PNG') and (not img_resize.mode == 'RGB') and values['AlphaPNG_conv']:#減色透過PNG
-		img_resize.save(file_result, 'PNG', transparency=255)
+		#PNG可逆
+		img_io = BytesIO()
+		img_resize.save(img_io, format="PNG")
+		img_io.seek(0)
+		with open(img_result, "wb") as img_resize_comp:
+			img_resize_comp.write(zf.ZopfliPNG().optimize(img_io.read()))
 
-	elif (file_format == 'PNG'):#元々PNG
-		img_resize.save(file_result, 'PNG')
+	elif (fc == 'PNG'):#元々PNG
 
-	elif (file_format == 'BMP') and ( immode_nearest or (not values['jpg_mode']) ):#bmpかつLRで呼出またはJPGmode OFF
-		img_resize.save(file_result)
+		if values['PNGcolor_comp']:
+			#PNG減色→可逆
+			img_resize.save(img_result, format="PNG")
+			subprocess.run(['pngquant', '--floyd=1', '--speed=1', '--quality=0-100', '--force', '--ext', '.png', str(img_result)], shell=True, **subprocess_args(True))
+			with open(img_result, "rb") as im:
+				im_bin = im.read()
+			with open(img_result, "wb") as im:
+				im.write(zf.ZopfliPNG().optimize(im_bin))
+
+		else:
+			#PNG可逆
+			img_io = BytesIO()
+			img_resize.save(img_io, format="PNG")
+			img_io.seek(0)
+			with open(img_result, "wb") as img_resize_comp:
+				img_resize_comp.write(zf.ZopfliPNG().optimize(img_io.read()))
+
+	elif (fc == 'BMP') and ( (img_d['trans'] in ['l', 'r']) or (not values['jpg_mode']) ):#bmpかつLRで呼出またはJPGmode OFF
+		img_resize.save(img_result)
 
 	else:#それ以外 - JPGmode ON時のbmp 拡張子偽装
-		img_resize.save((file_result), 'JPEG', quality=int(values['jpg_quality']))
+		#JPG可逆
+		img_io = BytesIO()
+		img_resize.save(img_io, format="JPEG", quality=int(values['jpg_quality_1']))
+		img_io.seek(0)
+		with open(img_result, "wb") as img_resize_comp:
+			img_resize_comp.write(mozj.optimize(img_io.read()))
+
+	return
 
 
 
+def func_music_conv(f, values, temp_dir, ex_dir, msc_list, nsa_save_music, nsa_save_voice):
 
-#-----全音源変換処理部分-----
-def func_music_conv(file):
-	#---arc.nsa向けフォルダ分け用処理---
-	if values['nsa_mode']:
-		#---ファイルパスに"bgm"とあるかで判定---
-		arc_num_sound = str( bool('bgm' in str(file).lower()) + 1 )
-		#---ファイル保存先パス用変数を代入---
-		result_dir2 = str(os.path.join(result_dir, 'arc' + arc_num_sound))
-		#---先にファイル保存用ディレクトリを作成---
-		os.makedirs(os.path.join(result_dir2, os.path.relpath(result_dir_ff, temp_dir)), exist_ok=True)#保存先作成
-		
-	else:#通常時フォルダ分け用処理
-		os.makedirs(os.path.join(result_dir, os.path.relpath(result_dir_ff, temp_dir)), exist_ok=True)#保存先作成
-		result_dir2 = result_dir#保存先パス用変数を代入
-
-	#---ogg変換用処理---
-	if values['ogg_mode']:
-		#---ディレクトリ名に"bgm"とあるかで判定---
-		if 'bgm' in str(result_dir_ff):	
-			result_kbps = str(values['BGM_kbps']) + 'k'
-			result_Hz = str(values['BGM_Hz'])
-		else:
-			result_kbps = str(values['SE_kbps']) + 'k'
-			result_Hz = str(values['SE_Hz'])
-
-	#---出力先パスの代入---
-	file_result = os.path.join(result_dir2, os.path.relpath(file, temp_dir))
-	file_result_ogg = (os.path.splitext(file_result)[0] + ".ogg")
-	
-	if values['ogg_mode']:
-		subprocess.run(['ffmpeg', '-y',
-			'-i', file,
-			'-ab', result_kbps,
-			'-ar', result_Hz,
-			'-ac', '2',	file_result_ogg,
-			], shell=True, **subprocess_args(True))
-
-		if not os.path.splitext(file_result)[1] == ".ogg":#元がoggではない場合拡張子偽装を実行
-			os.rename(file_result_ogg, file_result)
+	#---ディレクトリ名に"bgm"もしくは"cd"とあるか&bgm命令抽出で判定---
+	if ( 'bgm' in str(f.relative_to(ex_dir)) ) or ( 'cd' in str(f.relative_to(ex_dir)) ) or ( (f.relative_to(ex_dir))  in msc_list ):
+		msc_result = (temp_dir / nsa_save_music / f.relative_to(ex_dir))
+		result_kbps = str(values['BGM_kbps']) + 'k'
+		result_Hz = str(values['BGM_Hz'])
 
 	else:
-		shutil.copy(file,file_result)#コピーするだけ
-		os.chmod(path=file_result, mode=stat.S_IWRITE)#念の為読み取り専用を外す
+		msc_result = (temp_dir / nsa_save_voice / f.relative_to(ex_dir))
+		result_kbps = str(values['SE_kbps']) + 'k'
+		result_Hz = str(values['SE_Hz'])
+	
+	msc_result.parent.mkdir(parents=True,  exist_ok=True)#保存先作成
+	
+	#---ogg変換用処理---
+	if values['ogg_mode']:
+		with tempfile.TemporaryDirectory() as msctmpdir:#一時ディレクトリ作成
+			msctmpdir = Path(msctmpdir)
+			msc_temp_ogg = Path(msctmpdir / 'a.ogg')
+
+			subprocess.run(['ffmpeg', '-y',
+				'-i', str(f),
+				'-ab', result_kbps,
+				'-ar', result_Hz,
+				'-ac', '2',	str(msc_temp_ogg),
+				], shell=True, **subprocess_args(True))
+			
+			#一時ディレクトリ作成→そちらにogg保存→元の場所に移行 にすることによって、
+			#並列処理時の競合を防ぐ
+			msc_temp_ogg.rename(msc_result)
+
+	else:
+		os.chmod(path=f, mode=stat.S_IWRITE)#念の為読み取り専用を外す
+		shutil.move(f,msc_result)#移動するだけ
+
+	return
 
 
 
-#-----arc.nsa圧縮-----
-def func_arc_nsa(arc_num):
-	arc_num_dir = (result_dir + r'/' + arc_num)
-	if os.path.exists(arc_num_dir) == False:#なければ終了
+def func_data_move(f, temp_dir, nsa_save, ex_dir):
+	d = (temp_dir / nsa_save['other'] / f.relative_to(ex_dir)).parent
+	d.mkdir(parents=True,  exist_ok=True)
+	os.chmod(path=f, mode=stat.S_IWRITE)#念の為読み取り専用を外す
+	shutil.move(f, d)
+	return
+
+
+
+def func_arc_nsa(temp_dir, a, same_hierarchy):
+	nsaed_path = Path(same_hierarchy / 'tools' / 'nsaed.exe')
+	nsaed_path_copy = Path(temp_dir / 'nsaed.exe')
+
+	#nsaed.exeは"自分と同階層にarc.nsaを作成する"仕様なので、
+	#exe自体をtempにコピーしてから使う
+	shutil.copy(nsaed_path, nsaed_path_copy)
+
+
+	arc_dir = Path( temp_dir / a )
+	arc_result = Path( temp_dir / 'no_comp' / str(a + '.nsa') ) 
+
+	#保存先作成
+	arc_result.parent.mkdir(parents=True,  exist_ok=True)
+
+	if not arc_dir.exists():#なければ終了
 		return
 
 	try:
-		subprocess.call([nsaed_path, arc_num_dir], shell=True, **subprocess_args(True))
+		subprocess.call([nsaed_path_copy, arc_dir], shell=True, **subprocess_args(True))
 	except:#異常終了時
-		pass#何もしない
+		pass#何もしない - 本当は再実行とかするべきなんだろうけど
 	else:#正常終了時
-		shutil.move(same_hierarchy + r"/tools/arc.nsa" , arc_num_dir + '.nsa')#nsa移動
-		shutil.rmtree(arc_num_dir)#nsa化前のデータを削除
-			
+		Path(temp_dir / 'arc.nsa').rename(arc_result)#nsa移動
+
+	return
 
 
-#-----ons.ini作成-----
-def func_ons_ini():
+
+def func_ons_ini(values, resolution):
+
+	#-メモリにフォントを読み込んでおくか-
+	if values['ram_font']:
+		ini_fm = 'ON'
+	else:
+		ini_fm = 'OFF'
 
 	#-解像度拡大-
 	if values['size_normal']:#拡大しない
@@ -910,216 +789,300 @@ def func_ons_ini():
 		'ASPECT=' + ini_asp + '\n',
 		'SCREENBPP=32\n',
 		'CPUCLOCK=333\n',
-		'FONTMEMORY=ON\n',
+		'FONTMEMORY=' + ini_fm + '\n',
 		'ANALOGKEY=ON1\n',
 		'CURSORSPEED=10\n',
 		'SAMPLINGRATE=' + ini_rate +'\n',
 		'CHANNELS=2\n',
 		'TRIANGLE=27\n', 'CIRCLE=13\n', 'CROSS=32\n', 'SQUARE=305\n', 'LTRIGGER=111\n', 'RTRIGGER=115\n', 'DOWN=274\n', 'LEFT=273\n', 'UP=273\n', 'RIGHT=274\n', 'SELECT=48\n', 'START=97\n', 'ALUP=276\n', 'ALDOWN=275\n',	
 	]
-	open(os.path.join(result_dir, 'ons.ini'), 'w').writelines(ons_ini)
+	return ons_ini
 
 
 
-######################################## Event Loop ########################################
-while True:
-	event, values = window.read()
-	if event is None or event == 'Exit':
-		break
+def format_check(file):
+	with open(file, 'rb') as f:
+		b = f.read(8)
+
+		if re.match(b'^\xff\xd8', b):
+			ff = 'JPEG'
+
+		elif re.match(b'^\x42\x4d', b):
+			ff = 'BMP'
+
+		elif re.match(b'^\x89\x50\x4e\x47\x0d\x0a\x1a\x0a', b):
+			ff = 'PNG'
+
+		elif re.match(b'^\x52\x49\x46\x46', b):
+			ff = 'WAV'#これ単なるRIFFだからAVIとかも引っかかるんだが...
+
+		elif re.match(b'^\x4f\x67\x67\x53', b):
+			ff = 'OGG'
+
+		elif re.match(b'^\xff\xf3', b) or re.match(b'^\xff\xfa', b) or re.match(b'^\xff\xfb', b) or re.match(b'^\x49\x44\x33', b) or re.match(b'^\xff\x00\x00', b):
+			ff = 'MP3'#ヘッダーについて詳細不明、情報求む
+
+		else:
+			ff = False
+
+	return ff
 
 
-	elif event == 'input_dir':
-		err_flag = False
 
-		#'convert'操作無効化
-		window['convert'].update(disabled=True)
-		window.refresh()
+def gui_msg(msg, msg_title):
 
-		#-----ディレクトリのパスを先に代入-----
-		search_dir = (values['input_dir'])
+	sg.theme('DarkBlue12')#テーマ設定
+	sg.popup(msg, title=msg_title)
 
-		#-----入出力先のパスが競合しそうなら勝手に消す-----
-		if os.path.exists(result_dir):
-			shutil.rmtree(result_dir)
-
-		#-----[関数]シナリオ復号&コピー周り-----
-		os.makedirs(result_dir)#出力用のディレクトリを作成
-		text_list = []
-		func_ext_dec()
-
-		#'convert'操作再度有効化
-		if not err_flag:
-			window['convert'].update(disabled=False)
-			window.refresh()
+	return
 
 
-	elif event == 'convert':
-		err_flag = False
 
-		#-----とりあえず真っ先にウインドウの操作無効化-----
-		window['convert'].update(disabled=True)
-		window.disable()
-		window.refresh()
+def gui_main(window_title, default_input, default_output):
+	
+	sg.theme('DarkBlue12')#テーマ設定
 
-		#-----[関数]入出力先未指定/競合時エラー-----
-		func_dir_err()
+	kbps_list = ['128', '112', '96', '64', '56', '48', '32']
+	Hz_list = ['44100', '22050', '11025']
 
-		#-----特定の機能を利用しない場合プログレスバーの計算からはずす-----
-		if values['vid_flag'] == False:
-			progbar_per_2 = progbar_per[2]
-			progbar_per[2] = 0
-		if values['nsa_mode'] == False:
-			progbar_per_4 = progbar_per[4]
-			progbar_per[4] = 0
+	col_1 = [
+		[sg.Text('入力先：'), sg.InputText(k='input_dir', size=(67, 15), default_text=default_input, readonly=True, enable_events=True), sg.FolderBrowse()],
+		[sg.Text('出力先：'), sg.InputText(k='output_dir', size=(67, 15), default_text=default_output, readonly=True), sg.FolderBrowse()],
+	]
 
-		#-----入出力先のパスが競合しそうなら勝手に消す-----
-		if os.path.exists(temp_dir):
-			shutil.rmtree(temp_dir)
+	frame_1 = sg.Frame('画像', [
+		[sg.Text('未指定時JPG/BMP横解像度：'),
+		 sg.Combo(values=(list(range(1,9))), default_value='2', readonly=True, k='img_multi'),
+		 sg.Text('の倍数')],
+		[sg.Text('JPG品質-画像：'), sg.Slider(range=(100,1), default_value=95, k='jpg_quality_1', pad=((0,0),(0,0)), orientation='h')],
+		[sg.Text('JPG品質-動画：'), sg.Slider(range=(100,1), default_value=92, k='jpg_quality_2', pad=((0,0),(0,0)), orientation='h')],
+		[sg.Text('解像度指定：'),
+		 sg.Radio(text='360x270', group_id='A', k='res_360', default=True),
+		 sg.Radio(text='320x240', group_id='A', k='res_320')],
+		[sg.Checkbox('BMPをJPGに変換&拡張子偽装', k='jpg_mode', default=True)],
+		[sg.Checkbox('PNGの色数を削減し圧縮', k='PNGcolor_comp', default=True)],
+	], size=(300, 215))
 
-		#-----シナリオ読み込み&置換処理-----
-		if err_flag == False:
-			vid_list_rel = []#txt内の動画の相対パスを格納するための配列
-			immode_var_tup = []
-			immode_list_tup = []#txt内の画像(透明指定だけど透過画像じゃないやつ)の相対パスを格納するための配列
+	frame_2 = sg.Frame('音源', [
+		[sg.Checkbox('音源をOGGへ圧縮する', k='ogg_mode', default=True)],
+		[sg.Text('BGM：'), sg.Combo(values=(kbps_list), default_value='96', readonly=True, k='BGM_kbps'), sg.Text('kbps'), 
+		 sg.Combo(values=(Hz_list), default_value='44100', readonly=True, k='BGM_Hz'), sg.Text('Hz'),],
+		[sg.Text('SE：'), sg.Combo(values=(kbps_list), default_value='48', readonly=True, k='SE_kbps'), sg.Text('kbps'), 
+		 sg.Combo(values=(Hz_list), default_value='22050', readonly=True, k='SE_Hz'), sg.Text('Hz'),],
+	], size=(300, 106), pad=(0,0))
 
-			for i,textpath in enumerate(text_list):
-				text = open(textpath, 'r', errors="ignore").read()#テキストを読み込み
+	frame_3 = sg.Frame('その他', [
+		[sg.Checkbox('常にメモリ内にフォントを読み込んでおく', k='ram_font', default=True)],
+		[sg.Checkbox('nsaed.exeで出力ファイルを圧縮する', k='nsa_mode', default=True)],
+		[sg.Checkbox('表示が小さすぎる文章を強制拡大', k='sw_txtsize', default=False)],
+	], size=(300, 109), pad=(0,0))
 
-				if os.path.basename(textpath) == (r'0.txt'):#[関数]0.txt読み込み時(初回限定)処理
-					
-					#とりあえず変数作成(実際使う値の代入はfunc_txt_zeroで行う)
-					default_tmode = ""
-					resolution = 0
-					game_mode = 0
-					per = 1
+	frame_4 = sg.Frame('', [
+		[sg.Text(' PSPでの画面表示：'), 
+		 sg.Radio(text='拡大しない', group_id='B', k='size_normal', default=True),
+		 sg.Radio(text='拡大(比率維持)', group_id='B', k='size_aspect'),
+		 sg.Radio(text='拡大(フルサイズ)', group_id='B', k='size_full')],
+	], size=(530, 40))
 
-					text = func_txt_zero(text)
+	frame_5 = sg.Frame('', [
+		[sg.Button('convert', pad=(9,6), disabled=True)]
+	], size=(70, 40))
 
-				if err_flag == False:#[関数]全txtへ行う処理
-					text = func_txt_all(text)
-					text += ('\n\n;\tConverted by "' + window_title + '"\n;\thttps://github.com/Prince-of-sea/ONScripter_Multi_Converter\n')
-					open(textpath, mode='w').write(text)#全置換処理終了後書き込み
+	frame_in_2and3 = sg.Column([[frame_2],[frame_3]])
 
-				func_progbar_update(0, i, len(text_list))#左から順に{種類, 現在の順番, 最大数}
+	progressbar = sg.Frame('', [
+		[sg.ProgressBar(10000, orientation='h', size=(60, 5), key='progressbar')]
+	], size=(610, 15))
+	
+	layout = [
+		[col_1],
+		[frame_1,frame_in_2and3],
+		[frame_4,frame_5],
+		[progressbar]
+	]
+
+	window = sg.Window(window_title, layout, size=(640, 360), element_justification='c', margins=(0,0))#ウインドウを表示
+	return window
 
 
-		#-----ココから本処理(エラーメッセージなし)-----
-		if err_flag == False:
 
-			#---[関数]tempフォルダを作り展開&コピー---
-			func_arc_ext()
+def main():
+	window_title = 'ONScripter Multi Converter for PSP ver.1.4.0'
+	same_hierarchy = Path(sys.argv[0]).parent#同一階層のパスを変数へ代入
 
-			#-----txtから動画再生命令を検知し動画をPSP専用形式へ置換(&拡張子偽装)-----
-			if values['vid_flag']:
-				vid_res = (str(resolution) + r':' + str(int(resolution/4*3)))#引数用動画解像度代入
+	#起動用ファイルチェック～なかったら終了
+	sc = start_check(same_hierarchy)
+	if sc:
+		gui_msg(sc, '!')
+		return
+	
+	default_input = ''
+	default_output = ''
 
-				#---[関数]格納されたtxt内の動画の相対パスを処理---
-				for i,vid_rel in enumerate(set(vid_list_rel)):#set型で重複削除
-					vid = os.path.join(temp_dir, vid_rel)#格納された相対パスを絶対パスへ
-					vid_result = os.path.join(result_dir, vid_rel)#処理後の保存先
+	window = gui_main(window_title, default_input, default_output)
+
+	##### Event Loop #####
+	with tempfile.TemporaryDirectory() as temp_dir:#一時ディレクトリ作成
+		temp_dir = Path(temp_dir)
+		ex_dir = (temp_dir / 'extract')
+		
+		while True:
+			event, values = window.read()
+
+			### 終了時 ###
+			if event is None or event == 'Exit':
+				break
+
+			### 入力ディレクトリ指定時 ###
+			elif event == 'input_dir':
+				window['convert'].update(disabled=True)#とりあえず'convert'操作無効化
+				window.refresh()
+
+				text = scenario_check(Path(values['input_dir']))
+
+				if text:#txtの内容がある＝input_dirが問題ない場合のみ
+					window['convert'].update(disabled=False)#'convert'操作有効化
+					window.refresh()
 				
-					func_vid_conv(vid, vid_result)
-					func_progbar_update(2, i, len(set(vid_list_rel)))#左から順に{種類, 現在の順番, 最大数}
-
-
-			#-----画像/音源処理-----
-
-			#---画像分割用配列を作成&初期設定済みのものを代入---
-			tmode_img_list = [
-				['cur', (temp_dir + r'/cursor0.bmp').lower(), 'l', '3'],
-				['cur', (temp_dir + r'/cursor1.bmp').lower(), 'l', '3'],
-				['cur', (temp_dir + r'/doncur.bmp').lower(), 'l', '1'],
-				['cur', (temp_dir + r'/doffcur.bmp').lower(), 'l', '1'],
-				['cur', (temp_dir + r'/uoncur.bmp').lower(), 'l', '1'],
-				['cur', (temp_dir + r'/uoffcur.bmp').lower(), 'l', '1'],
-			]
-
-			#---txtから透過処理のあるスプライト表示命令を検知し分割/透明画像のパスを配列へ格納---
-			for t in set(immode_list_tup) :#set型で重複削除
-				func_tmode_img(t)
-
-			#---"tmode_img_list"内のパスのみを抽出したリストを作成---
-			TIL_path = [r[1] for r in tmode_img_list]#set型にするとindex使えないので
-
-
-			#---全ファイルのフルパスを配列に代入---
-			files_list = []
-			for rel_dir, sub_dirs, list_rel in os.walk(temp_dir): #サブフォルダ含めファイル検索
-				for name in list_rel:
-					files_list.append(os.path.join(rel_dir,name))#パスを代入
-					#print(os.path.relpath(os.path.join(rel_dir,name), temp_dir))
-
-
-			for i,file in enumerate(files_list):
-
-				#フルパスからまたディレクトリ部分切り出し
-				result_dir_ff = os.path.dirname(file)#さっきせっかく結合したのに無駄だなぁ
-				
-				file = str(file).replace('\\','/')#文字列として扱いづらいのでとりあえず\置換
-				file_format = format_check(file)
-
-				#-[関数]全画像変換処理部分-
-				if file_format in ['JPEG', 'BMP', 'PNG']:
-					func_image_conv(file, file_format)
-
-				#-[関数]全音源変換処理部分-
-				elif file_format in ['MP3', 'WAV', 'OGG']:
-					func_music_conv(file)
-
-				elif debug_mode:#Debug
-					print(file)
-				
-				func_progbar_update(3, i, len(files_list))#左から順に{種類, 現在の順番, 最大数}
-
-
-			#-----[関数]arc.nsa圧縮------
-			if values['nsa_mode']:
-				arc_num_list = ['arc', 'arc1', 'arc2']
-				for i,arc_num in enumerate(arc_num_list):		
-					func_arc_nsa(arc_num)
-					func_progbar_update(4, i, len(arc_num_list))
-
-			#-----[関数]ons.ini作成------
-			func_ons_ini()
-
-			#-----入出力先のパスが競合しそうなら勝手に消す-----
-			if os.path.exists(os.path.join(values['output_dir'],r'result')):
-				shutil.rmtree(os.path.join(values['output_dir'],r'result'))
-
-			#-----savedataフォルダ作成(無いとエラー出す作品向け)-----
-			if os.path.isdir(os.path.join(values['input_dir'], 'savedata')):
-				os.makedirs(os.path.join(result_dir, 'savedata'))
-
-			shutil.move(result_dir, values['output_dir'])#完成品を移動
-
-			if debug_mode and os.path.isdir(os.path.join(same_hierarchy, 'result_add')):#Debug
-				for f in glob.glob(os.path.join(same_hierarchy, 'result_add', '*')):
-					#result_add内のファイルを完成品へ移動
-					shutil.copy(f, (os.path.join(values['output_dir'],r'result')))#default.ttfとか入れとく
-
-			#-----tempを削除-----
-			shutil.rmtree(os.path.join(os.environ['temp'], '_NSC2ONS4PSP'))
+				else:#問題あるなら
+					gui_msg('シナリオファイルが見つかりません', '!')#エラー
 			
-			#-----終了メッセージ-----
-			sg.popup('処理が終了しました', title='!')
-			break
+			elif event == 'convert':
+				window['convert'].update(disabled=True)#とりあえず'convert'操作無効化
+				window.refresh()
+
+				#start_time = time.time()
+
+				#入出力ディレクトリ競合チェック
+				dc = in_out_dir_check(values['input_dir'], values['output_dir'])
+				if dc:#エラー時
+					gui_msg(dc, '!')#メッセージ
+
+				else:#正常動作時
+
+					#0.txt内容チェック
+					mode, zc, text = zero_txt_check(text)
+					if zc:#エラー時
+						gui_msg(zc, '!')#メッセージ
+					
+					else:
+						#ここから変換開始
+						
+						window['progressbar'].UpdateBar(100)#進捗 100/10000
+
+						if values['res_320']:#ラジオボタンから代入
+							res = 320
+						elif values['res_360']:
+							res = 360
+						
+						#画像縮小率=指定解像度/作品解像度
+						per = res / mode
+
+						#画像が初期設定でどのような透過指定で扱われるかを代入
+						try:
+							def_trans = (re.findall(r'\n[\t| ]*transmode[\t| ]+([leftup|rightup|copy|alpha])', text))[0]
+						except:
+							def_trans = 'l'#見つからないなら初期値leftup
+
+						#0.txtを編集&画像と動画の表示命令を抽出
+						text, immode_dict, vid_list, msc_list = zero_txt_conv(text, per, values, def_trans)
+						window['progressbar'].UpdateBar(200)#進捗 200/10000
+						
+						#その他ファイルをコピー
+						shutil.copytree(Path(values['input_dir']), ex_dir, ignore=shutil.ignore_patterns('*.sar', '*.nsa', '*.ns2', '*.exe', '*.dll', '*.txt', '*.ini', 'envdata', 'nscript.dat'))
+
+						#存在するarcをここで全てリスト化(もちろん上書き順は考慮)
+						temp_arc = []
+						temp_arc += sorted(list(Path(values['input_dir']).glob('*.ns2')))
+						temp_arc += reversed(list(Path(values['input_dir']).glob('*.nsa')))
+						temp_arc += reversed(list(Path(values['input_dir']).glob('*.sar')))
+
+						#↑のリスト順にarcを処理
+						lentmparc = len(temp_arc)
+						for i,p in enumerate(temp_arc):
+							arc_extract(Path(same_hierarchy / 'tools' / 'Garbro_console' / 'GARbro.Console.exe'), p, ex_dir)#nsaやsarを展開
+							window['progressbar'].UpdateBar(200 + int(float(i / lentmparc) * 300))#進捗 ~500/10000
+
+						#保存先辞書作成 - ここ将来的にもっと分割したいなぁ
+						if values['nsa_mode']:
+							nsa_save = {'image':'arc', 'music':'arc1', 'voice':'arc2', 'other':'arc'}
+						else:
+							nsa_save = {'image':'no_comp', 'music':'no_comp', 'voice':'no_comp', 'other':'no_comp'}
+
+						#展開したファイルを順番に変換
+						with concurrent.futures.ThreadPoolExecutor() as executor:
+							futures = []
+							for f in ex_dir.glob('**/*'):
+								if f.is_file():
+									fc = format_check(f)
+
+									#動画
+									if (f.relative_to(ex_dir) in vid_list) or ((f.suffix).lower() in ['.avi', '.mpg', '.mpeg']):
+										futures.append(executor.submit(func_video_conv, f, values, res, same_hierarchy, temp_dir, ex_dir))
+										#func_video_conv(f, values, res, same_hierarchy, temp_dir, ex_dir)
+							
+									#画像
+									elif fc in ['PNG', 'BMP', 'JPEG']:
+										futures.append(executor.submit(func_image_conv, f, fc, values, def_trans, immode_dict, per, temp_dir, ex_dir, nsa_save['image']))
+										#func_image_conv(f, fc, values, def_trans, immode_dict, per, temp_dir, ex_dir, nsa_save['image'])
+
+									#音源
+									elif fc in ['WAV', 'OGG', 'MP3']:
+										futures.append(executor.submit(func_music_conv, f, values, temp_dir, ex_dir, msc_list, nsa_save['music'], nsa_save['voice'] ))
+										#func_music_conv(f, values, temp_dir, ex_dir, nsa_save['music'], nsa_save['voice'] )
+
+									#その他
+									else:
+										futures.append(executor.submit(func_data_move, f, temp_dir, nsa_save, ex_dir))
+										#func_data_move(f, temp_dir, nsa_save, ex_dir)
+
+							lenex = len(list(ex_dir.glob('**/*')))						
+							for i,ft in enumerate(concurrent.futures.as_completed(futures)):
+								window['progressbar'].UpdateBar(500 + int(float(i / lenex) * 9000))#進捗 ~9500/10000
+
+						#nsa作成
+						for i,a in enumerate(['arc', 'arc1', 'arc2']):
+							func_arc_nsa(temp_dir, a, same_hierarchy)
+							window['progressbar'].UpdateBar(9500 + (i * 100))#進捗 ~9800/10000
+
+						#ons.ini作成
+						with open(Path( temp_dir / 'no_comp' / 'ons.ini' ), 'w') as n:
+							n.writelines( func_ons_ini(values, res) )
+						
+						#savedataフォルダ作成(無いとエラー出す作品向け)
+						if Path(Path(values['input_dir']) / 'savedata').exists():
+							Path(temp_dir / 'no_comp' / 'savedata').mkdir()
+						
+						#最後に0.txt作成(今更感)
+						with open(Path(temp_dir / 'no_comp' / '0.txt'), 'w') as s:
+							text += ('\n\n;\tConverted by "' + window_title + '"\n;\thttps://github.com/Prince-of-sea/ONScripter_Multi_Converter\n')
+							s.write(text)#もう少し早めでもいい気がする
+							window['progressbar'].UpdateBar(9900)#進捗 9900/10000
+
+						#arc2があってarc1がない場合
+						arc1_path = Path(temp_dir / 'no_comp' / 'arc1.nsa')
+						arc2_path = Path(temp_dir / 'no_comp' / 'arc2.nsa')
+						if (arc2_path.exists()) and (not arc1_path.exists()):
+							arc2_path.rename(arc1_path)#2を1に
+
+						#result
+						result_dir = Path( Path(values['output_dir']) / Path('PSP_' + str(Path(values['input_dir']).stem)))
+						if result_dir.exists():
+							os.chmod(path=result_dir, mode=stat.S_IWRITE)#読み取り専用を外す
+							shutil.rmtree(result_dir)#すでにディレクトリが存在する場合は削除
+						
+						Path(temp_dir / 'no_comp').rename(result_dir)#完成品を移動
+						window['progressbar'].UpdateBar(10000)#進捗 10000/10000
+
+						#print(f'かかった時間：{time.time()-start_time}s')
+
+						gui_msg('処理が終了しました', '!')#メッセージ
+						break
 
 
-		#-----特定の機能を利用しない場合プログレスバーの計算からはずしてたのを戻す-----
-		if values['vid_flag'] == False:
-			progbar_per[2] = progbar_per_2
-		if values['nsa_mode'] == False:
-			progbar_per[4] = progbar_per_4
-
-		#-----プログレスバーのリセット-----		
-		window['progressbar'].UpdateBar(0)
-
-		#-----ウインドウの操作再有効化-----
-		window['convert'].update(disabled=False)
-		window.enable()
+				window['convert'].update(disabled=False)#'convert'操作有効化
+				window.refresh()
 
 
-	else:
-		break
 
-window.Close()
+main()
