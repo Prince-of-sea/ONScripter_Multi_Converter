@@ -12,11 +12,12 @@ import shutil
 import base64
 import math
 import stat
+import time
 import json
 import sys
 import re
 import os
-#import time
+
 
 ####################################################################################################
 
@@ -27,16 +28,10 @@ import os
 # os.path.joinを使わないパスの結合をやめないとマズイ気がする - 済
 
 
-# -最新の更新履歴(v1.4.0)- 
-# 内部のソースコードを一新
-# すべてのJPGおよびPNGに対し自動的に可逆圧縮を行う機能を追加
-# JPEG品質について、画像と動画で別々に指定できるように
-# 画像/音声/動画変換時にマルチスレッド処理を有効化
-# PNGの減色にpngquantを利用するよう変更
-# BGM/SEの判定に再生命令検知機能を追加
-# '常にメモリ内にフォントを読み込んでおく'復活
-# 新たに'未指定時JPG/BMP横解像度'機能を追加
-# 上記に伴い内部の自動立ち絵判定機能削除
+# -最新の更新履歴(v1.4.1)- 
+# 前回更新でおかしくなってたカーソル周りの処理を若干修正
+# アーカイブ展開/nsa作成もマルチプロセスでの処理に対応
+# 隠し機能:新たなデバッグモード(的なもの)を実装
 
 
 # これを読んだあなた。
@@ -395,24 +390,9 @@ def zero_txt_conv(text, per, values, default_transmode):
 
 
 
-def arc_extract(GARbro_path, p, ex_dir):
-
-	#---展開時競合するファイルを先に削除(GARBroに上書きオプションがないため)---
-	#はじめは"input=a text=True"とかで上書き確認へ応答処理しようと思ってたけど
-	#どうもinputとpyinstraller -noconsoleって両立できないんだよね...
-		
-	txtline = subprocess.check_output([GARbro_path, 'l', str(p)]#展開予定のファイル一覧を取得
-				,shell=True, **subprocess_args(False))#check_output時はFalse 忘れずに
-
-	for txt in txtline.decode('cp932', 'ignore').splitlines():#一行ずつ処理 - なぜかtxtlineがbyteなのでデコード(エラー無視)
-		arc_path_rel = re.findall(r'\[.+?\] +[0-9]+? +(.+)',txt)#切り出し
-		if arc_path_rel:#切り出しに成功した場合
-			arc_path = Path(ex_dir / str(arc_path_rel[0]))#絶対パスに変換
-			if ( str(arc_path.suffix).lower() == r'.nbz' ):#nbzをwavに
-				arc_path = arc_path.with_suffix(r'.wav')
-			arc_path.unlink(missing_ok=True)#ファイルが存在する場合は削除
-
-	subprocess.run([GARbro_path, 'x', '-ca', '-o', ex_dir, p]#展開
+def arc_extract(GARbro_path, p, e):
+	e.mkdir()
+	subprocess.run([GARbro_path, 'x', '-ca', '-o', e, p]#展開
 		,shell=True, **subprocess_args(True))
 	
 	return
@@ -537,16 +517,16 @@ def func_image_conv(f, fc, values, def_trans, immode_dict, per, temp_dir, ex_dir
 
 	else:
 		#ない場合
-		cur_chk = False
-		for n in ['cursor', 'offcur', 'oncur']:#それっぽい名前の場合カーソル扱い - たまに「カーソルをsetcursorで呼ばない」作品とかあるのでそれ対策
-			if n in str(f.stem):
-				cur_chk = True
-
 		img_d = {
-			'cursor': cur_chk,
+			'cursor': False,
 			'trans': def_trans,
 			'part': int(values['img_multi']),
 		}
+
+	#それっぽい名前の場合カーソル扱い - たまに「カーソルをsetcursorで呼ばない」作品とかあるのでそれ対策
+	for n in ['cursor', 'offcur', 'oncur']:
+		if n in str(f.stem):
+			img_d['cursor'] = True
 	
 	#---カーソル専用処理---
 	if img_d['cursor']:
@@ -578,6 +558,7 @@ def func_image_conv(f, fc, values, def_trans, immode_dict, per, temp_dir, ex_dir
 			a_px = img.getpixel((img.width-1, 0))#右上の1pxを背景色に指定
 
 		img_mask = Image.new('L', img.size, 0)
+		print(f)
 
 		#-ピクセル代入用配列作成-
 		px_list = []
@@ -728,29 +709,35 @@ def func_data_move(f, temp_dir, nsa_save, ex_dir):
 
 
 def func_arc_nsa(temp_dir, a, same_hierarchy):
-	nsaed_path = Path(same_hierarchy / 'tools' / 'nsaed.exe')
-	nsaed_path_copy = Path(temp_dir / 'nsaed.exe')
+	with tempfile.TemporaryDirectory() as nsatmpdir:#一時ディレクトリ作成
+		nsatmpdir = Path(nsatmpdir)
 
-	#nsaed.exeは"自分と同階層にarc.nsaを作成する"仕様なので、
-	#exe自体をtempにコピーしてから使う
-	shutil.copy(nsaed_path, nsaed_path_copy)
+		nsaed_path = Path(same_hierarchy / 'tools' / 'nsaed.exe')
+		nsaed_path_copy = Path(nsatmpdir / 'nsaed.exe')
 
+		arc_dir = Path( temp_dir / a )
+		arc_dir2= Path( nsatmpdir / a )
+		arc_result = Path( temp_dir / 'no_comp' / str(a + '.nsa') ) 
 
-	arc_dir = Path( temp_dir / a )
-	arc_result = Path( temp_dir / 'no_comp' / str(a + '.nsa') ) 
+		if not arc_dir.exists():#なければ終了
+			return
 
-	#保存先作成
-	arc_result.parent.mkdir(parents=True,  exist_ok=True)
+		#nsaed.exeは"自分と同階層にarc.nsaを作成する"仕様なので、
+		#exe自体をnsatmpdirにコピーしてから使う
+		shutil.copy(nsaed_path, nsaed_path_copy)
 
-	if not arc_dir.exists():#なければ終了
-		return
+		#一時ディレクトリへ移動
+		shutil.move(arc_dir, nsatmpdir)
 
-	try:
-		subprocess.call([nsaed_path_copy, arc_dir], shell=True, **subprocess_args(True))
-	except:#異常終了時
-		pass#何もしない - 本当は再実行とかするべきなんだろうけど
-	else:#正常終了時
-		Path(temp_dir / 'arc.nsa').rename(arc_result)#nsa移動
+		#保存先作成 - 早い話'no_comp'のこと
+		arc_result.parent.mkdir(parents=True,  exist_ok=True)
+
+		try:
+			subprocess.call([nsaed_path_copy, arc_dir2], shell=True, **subprocess_args(True))
+		except:#異常終了時
+			pass#何もしない - 本当は再実行とかするべきなんだろうけど
+		else:#正常終了時
+			Path(nsatmpdir / 'arc.nsa').rename(arc_result)#nsa移動
 
 	return
 
@@ -907,7 +894,7 @@ def gui_main(window_title, default_input, default_output):
 
 
 def main():
-	window_title = 'ONScripter Multi Converter for PSP ver.1.4.0'
+	window_title = 'ONScripter Multi Converter for PSP ver.1.4.1'
 	same_hierarchy = Path(sys.argv[0]).parent#同一階層のパスを変数へ代入
 
 	#起動用ファイルチェック～なかったら終了
@@ -916,6 +903,13 @@ def main():
 		gui_msg(sc, '!')
 		return
 	
+	#Newデバッグモード(笑)設定
+	debug_dir = Path(same_hierarchy / 'debug')
+	debug_mode = debug_dir.is_dir()
+	if debug_mode:
+		window_title += ' - !DEBUG MODE!'
+	
+	#↓実は使ってないこいつら
 	default_input = ''
 	default_output = ''
 
@@ -924,6 +918,7 @@ def main():
 	##### Event Loop #####
 	with tempfile.TemporaryDirectory() as temp_dir:#一時ディレクトリ作成
 		temp_dir = Path(temp_dir)
+		ex_arc_dir = (temp_dir / 'extract_arc')
 		ex_dir = (temp_dir / 'extract')
 		
 		while True:
@@ -937,8 +932,11 @@ def main():
 			elif event == 'input_dir':
 				window['convert'].update(disabled=True)#とりあえず'convert'操作無効化
 				window.refresh()
+				window['progressbar'].UpdateBar(10000)#処理中ですアピール的な
+				
 
 				text = scenario_check(Path(values['input_dir']))
+				window['progressbar'].UpdateBar(0)#もどす
 
 				if text:#txtの内容がある＝input_dirが問題ない場合のみ
 					window['convert'].update(disabled=False)#'convert'操作有効化
@@ -951,7 +949,9 @@ def main():
 				window['convert'].update(disabled=True)#とりあえず'convert'操作無効化
 				window.refresh()
 
-				#start_time = time.time()
+				#デバッグモードだと時間測るので
+				if debug_mode:
+					start_time = time.time()
 
 				#入出力ディレクトリ競合チェック
 				dc = in_out_dir_check(values['input_dir'], values['output_dir'])
@@ -998,10 +998,30 @@ def main():
 						temp_arc += reversed(list(Path(values['input_dir']).glob('*.sar')))
 
 						#↑のリスト順にarcを処理
-						lentmparc = len(temp_arc)
-						for i,p in enumerate(temp_arc):
-							arc_extract(Path(same_hierarchy / 'tools' / 'Garbro_console' / 'GARbro.Console.exe'), p, ex_dir)#nsaやsarを展開
-							window['progressbar'].UpdateBar(200 + int(float(i / lentmparc) * 300))#進捗 ~500/10000
+						GARbro_path = Path(same_hierarchy / 'tools' / 'Garbro_console' / 'GARbro.Console.exe')
+						ex_arc_dir.mkdir()
+
+						#一度全て並列展開
+						with concurrent.futures.ThreadPoolExecutor() as executor:
+							futures = []
+							for p in temp_arc:
+								e = Path(ex_arc_dir / p.name)
+								futures.append(executor.submit(arc_extract, GARbro_path, p, e))#nsaやsarを展開
+							
+							lentmparc = len(temp_arc)
+							for i,ft in enumerate(concurrent.futures.as_completed(futures)):
+								window['progressbar'].UpdateBar(200 + int(float(i / lentmparc) * 300))#進捗 ~500/10000
+
+						
+						#展開したやつをnsa読み取り優先順に上書き移動
+						for p in temp_arc:
+							e = Path(ex_arc_dir / p.name)
+							for f in e.glob('**/*'):
+								if f.is_file():
+									f_ex = (ex_dir / f.relative_to(e))
+									f_ex.parent.mkdir(parents=True, exist_ok=True)
+									shutil.move(f, f_ex)
+							
 
 						#保存先辞書作成 - ここ将来的にもっと分割したいなぁ
 						if values['nsa_mode']:
@@ -1009,7 +1029,7 @@ def main():
 						else:
 							nsa_save = {'image':'no_comp', 'music':'no_comp', 'voice':'no_comp', 'other':'no_comp'}
 
-						#展開したファイルを順番に変換
+						#展開したファイルを並列変換
 						with concurrent.futures.ThreadPoolExecutor() as executor:
 							futures = []
 							for f in ex_dir.glob('**/*'):
@@ -1040,10 +1060,16 @@ def main():
 							for i,ft in enumerate(concurrent.futures.as_completed(futures)):
 								window['progressbar'].UpdateBar(500 + int(float(i / lenex) * 9000))#進捗 ~9500/10000
 
-						#nsa作成
-						for i,a in enumerate(['arc', 'arc1', 'arc2']):
-							func_arc_nsa(temp_dir, a, same_hierarchy)
-							window['progressbar'].UpdateBar(9500 + (i * 100))#進捗 ~9800/10000
+						#nsa並列作成
+						arcname = ['arc', 'arc1', 'arc2']
+						with concurrent.futures.ThreadPoolExecutor() as executor:
+							futures = []
+							for a in arcname:
+								futures.append(executor.submit(func_arc_nsa, temp_dir, a, same_hierarchy))
+
+							lenarcname = len(arcname)#一応他と書式合わせる感じで
+							for i,ft in enumerate(concurrent.futures.as_completed(futures)):
+								window['progressbar'].UpdateBar(9500 + (float(i / lenarcname) * 300))#進捗 ~9800/10000
 
 						#ons.ini作成
 						with open(Path( temp_dir / 'no_comp' / 'ons.ini' ), 'w') as n:
@@ -1064,8 +1090,15 @@ def main():
 						arc2_path = Path(temp_dir / 'no_comp' / 'arc2.nsa')
 						if (arc2_path.exists()) and (not arc1_path.exists()):
 							arc2_path.rename(arc1_path)#2を1に
+						
+						#debugフォルダ内のファイル全部ぶっこむ
+						if debug_mode:
+							for f in debug_dir.glob('**/*'):
+								if f.is_file():
+									f.parent.mkdir(parents=True, exist_ok=True)
+									shutil.copy(f, Path(temp_dir / 'no_comp'))
 
-						#result
+						#result移動前の準備
 						result_dir = Path( Path(values['output_dir']) / Path('PSP_' + str(Path(values['input_dir']).stem)))
 						if result_dir.exists():
 							os.chmod(path=result_dir, mode=stat.S_IWRITE)#読み取り専用を外す
@@ -1074,7 +1107,14 @@ def main():
 						Path(temp_dir / 'no_comp').rename(result_dir)#完成品を移動
 						window['progressbar'].UpdateBar(10000)#進捗 10000/10000
 
-						#print(f'かかった時間：{time.time()-start_time}s')
+						if debug_mode:
+							with open(Path(result_dir / 'debug.txt'), mode='w') as f:
+								s = '##################################################\n'+str(window_title)+'\n##################################################\n変換ファイル総数:\t'+str(lenex)+'\n処理時間:\t'+str(time.time()-start_time)+'s\n\n##################################################\n変数:\n\n'
+
+								for d in values.keys():
+									s += (str(d) + ':\t' + str(values[d]) + '\n')
+
+								f.write(s)
 
 						gui_msg('処理が終了しました', '!')#メッセージ
 						break
