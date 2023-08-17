@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from pathlib import Path
 from io import BytesIO
 from PIL import Image
@@ -28,11 +29,12 @@ import os
 # os.path.joinを使わないパスの結合をやめないとマズイ気がする - 済
 
 
-# -最新の更新履歴(v1.4.1)- 
-# 前回更新でおかしくなってたカーソル周りの処理を若干修正
-# アーカイブ展開/nsa作成もマルチプロセスでの処理に対応
-# 隠し機能:新たなデバッグモード(的なもの)を実装
-
+# -最新の更新履歴(v1.4.2)- 
+# 不要な操作が行われないよう状況に応じて操作を無効化するように変更
+# 機能追加により若干ウィンドウが大きくなった(640x360→640x400)
+# 検証用のprint残ってたのを修正
+# PNG減色時の色数指定機能を追加
+# 指定できる解像度を追加
 
 # これを読んだあなた。
 # どうかこんな可読性の欠片もないクソコードを書かないでください。
@@ -384,6 +386,7 @@ def zero_txt_conv(text, per, values, default_transmode):
 		vid_list.append(Path(a[0]))
 
 	#重複除去
+	msc_list = set(msc_list)
 	vid_list = set(vid_list)
 
 	return text, immode_dict, vid_list, msc_list
@@ -558,7 +561,6 @@ def func_image_conv(f, fc, values, def_trans, immode_dict, per, temp_dir, ex_dir
 			a_px = img.getpixel((img.width-1, 0))#右上の1pxを背景色に指定
 
 		img_mask = Image.new('L', img.size, 0)
-		print(f)
 
 		#-ピクセル代入用配列作成-
 		px_list = []
@@ -630,7 +632,7 @@ def func_image_conv(f, fc, values, def_trans, immode_dict, per, temp_dir, ex_dir
 		if values['PNGcolor_comp']:
 			#PNG減色→可逆
 			img_resize.save(img_result, format="PNG")
-			subprocess.run(['pngquant', '--floyd=1', '--speed=1', '--quality=0-100', '--force', '--ext', '.png', str(img_result)], shell=True, **subprocess_args(True))
+			subprocess.run(['pngquant', '--floyd=1', '--speed=1', '--quality=0-100', '--force', '--ext', '.png', str(values['PNGcolor_comp_num']), str(img_result)], shell=True, **subprocess_args(True))
 			with open(img_result, "rb") as im:
 				im_bin = im.read()
 			with open(img_result, "wb") as im:
@@ -684,8 +686,8 @@ def func_music_conv(f, values, temp_dir, ex_dir, msc_list, nsa_save_music, nsa_s
 				'-i', str(f),
 				'-ab', result_kbps,
 				'-ar', result_Hz,
-				'-ac', '2',	str(msc_temp_ogg),
-				], shell=True, **subprocess_args(True))
+				'-ac', '2', str(msc_temp_ogg),
+			], shell=True, **subprocess_args(True))	
 			
 			#一時ディレクトリ作成→そちらにogg保存→元の場所に移行 にすることによって、
 			#並列処理時の競合を防ぐ
@@ -843,26 +845,30 @@ def gui_main(window_title, default_input, default_output):
 		 sg.Text('の倍数')],
 		[sg.Text('JPG品質-画像：'), sg.Slider(range=(100,1), default_value=95, k='jpg_quality_1', pad=((0,0),(0,0)), orientation='h')],
 		[sg.Text('JPG品質-動画：'), sg.Slider(range=(100,1), default_value=92, k='jpg_quality_2', pad=((0,0),(0,0)), orientation='h')],
-		[sg.Text('解像度指定：'),
-		 sg.Radio(text='360x270', group_id='A', k='res_360', default=True),
-		 sg.Radio(text='320x240', group_id='A', k='res_320')],
+		[sg.Text('解像度指定(横)：')],
+		[sg.Radio(text='640', group_id='A', k='res_640'),
+		 sg.Radio(text='384', group_id='A', k='res_384'),
+		 sg.Radio(text='360', group_id='A', k='res_360', default=True),
+		 sg.Radio(text='320', group_id='A', k='res_320')],
 		[sg.Checkbox('BMPをJPGに変換&拡張子偽装', k='jpg_mode', default=True)],
-		[sg.Checkbox('PNGの色数を削減し圧縮', k='PNGcolor_comp', default=True)],
-	], size=(300, 215))
+		[sg.Checkbox('PNGの色数を削減し圧縮：', k='PNGcolor_comp', enable_events=True, default=True),
+		 sg.Combo(values=([2 ** i for i in range(8, 3, -1)]), default_value='256', readonly=True, k='PNGcolor_comp_num'),# [256, 128, 64, 32, 16]
+		 sg.Text('色')],
+	], size=(300, 250))
 
 	frame_2 = sg.Frame('音源', [
-		[sg.Checkbox('音源をOGGへ圧縮する', k='ogg_mode', default=True)],
+		[sg.Checkbox('音源をOGGへ圧縮する', k='ogg_mode', enable_events=True, default=True)],
 		[sg.Text('BGM：'), sg.Combo(values=(kbps_list), default_value='96', readonly=True, k='BGM_kbps'), sg.Text('kbps'), 
 		 sg.Combo(values=(Hz_list), default_value='44100', readonly=True, k='BGM_Hz'), sg.Text('Hz'),],
 		[sg.Text('SE：'), sg.Combo(values=(kbps_list), default_value='48', readonly=True, k='SE_kbps'), sg.Text('kbps'), 
 		 sg.Combo(values=(Hz_list), default_value='22050', readonly=True, k='SE_Hz'), sg.Text('Hz'),],
-	], size=(300, 106), pad=(0,0))
+	], size=(300, 132), pad=(0,0))
 
 	frame_3 = sg.Frame('その他', [
 		[sg.Checkbox('常にメモリ内にフォントを読み込んでおく', k='ram_font', default=True)],
 		[sg.Checkbox('nsaed.exeで出力ファイルを圧縮する', k='nsa_mode', default=True)],
 		[sg.Checkbox('表示が小さすぎる文章を強制拡大', k='sw_txtsize', default=False)],
-	], size=(300, 109), pad=(0,0))
+	], size=(300, 118), pad=(0,0))
 
 	frame_4 = sg.Frame('', [
 		[sg.Text(' PSPでの画面表示：'), 
@@ -888,13 +894,13 @@ def gui_main(window_title, default_input, default_output):
 		[progressbar]
 	]
 
-	window = sg.Window(window_title, layout, size=(640, 360), element_justification='c', margins=(0,0))#ウインドウを表示
+	window = sg.Window(window_title, layout, size=(640, 400), element_justification='c', margins=(0,0))#ウインドウを表示
 	return window
 
 
 
 def main():
-	window_title = 'ONScripter Multi Converter for PSP ver.1.4.1'
+	window_title = 'ONScripter Multi Converter for PSP ver.1.4.2'
 	same_hierarchy = Path(sys.argv[0]).parent#同一階層のパスを変数へ代入
 
 	#起動用ファイルチェック～なかったら終了
@@ -944,9 +950,23 @@ def main():
 				
 				else:#問題あるなら
 					gui_msg('シナリオファイルが見つかりません', '!')#エラー
+
+			### PNG減色チェック ###
+			elif event == 'PNGcolor_comp':
+				window['PNGcolor_comp_num'].update(disabled=(not values['PNGcolor_comp']))#チェックしたときのみ色数指定有効化
 			
+			### oggチェック ###
+			elif event == 'ogg_mode':
+				window['BGM_kbps'].update(disabled=(not values['ogg_mode']))
+				window['BGM_Hz'].update(disabled=(not values['ogg_mode']))
+				window['SE_kbps'].update(disabled=(not values['ogg_mode']))
+				window['SE_Hz'].update(disabled=(not values['ogg_mode']))
+			
+			### convert押されたとき ###
 			elif event == 'convert':
-				window['convert'].update(disabled=True)#とりあえず'convert'操作無効化
+				window['convert'].update(disabled=True)#'convert'操作無効化
+				for d in values.keys():#その他もまとめて
+					if not d == 'progressbar': window[str(d)].update(disabled=True)
 				window.refresh()
 
 				#デバッグモードだと時間測るので
@@ -970,10 +990,14 @@ def main():
 						
 						window['progressbar'].UpdateBar(100)#進捗 100/10000
 
-						if values['res_320']:#ラジオボタンから代入
-							res = 320
+						if values['res_640']:#ラジオボタンから代入
+							res = 640
+						elif values['res_384']:
+							res = 384
 						elif values['res_360']:
 							res = 360
+						elif values['res_320']:
+							res = 320
 						
 						#画像縮小率=指定解像度/作品解像度
 						per = res / mode
@@ -1109,10 +1133,10 @@ def main():
 
 						if debug_mode:
 							with open(Path(result_dir / 'debug.txt'), mode='w') as f:
-								s = '##################################################\n'+str(window_title)+'\n##################################################\n変換ファイル総数:\t'+str(lenex)+'\n処理時間:\t'+str(time.time()-start_time)+'s\n\n##################################################\n変数:\n\n'
+								s = '##################################################\n'+str(window_title)+'\n##################################################\n変換ファイル総数:\t\t'+str(lenex)+'\n処理時間:\t\t'+str(time.time()-start_time)+'s\n\n##################################################\n変数:\n\n'
 
 								for d in values.keys():
-									s += (str(d) + ':\t' + str(values[d]) + '\n')
+									s += (str(d) + ':\t\t' + str(values[d]) + '\n')
 
 								f.write(s)
 
@@ -1121,6 +1145,9 @@ def main():
 
 
 				window['convert'].update(disabled=False)#'convert'操作有効化
+				for d in values.keys():#その他もまとめて
+					if not d == 'progressbar': window[str(d)].update(disabled=False)
+
 				window.refresh()
 
 
