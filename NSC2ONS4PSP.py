@@ -29,12 +29,11 @@ import os
 # os.path.joinを使わないパスの結合をやめないとマズイ気がする - 済
 
 
-# -最新の更新履歴(v1.4.2)- 
-# 不要な操作が行われないよう状況に応じて操作を無効化するように変更
-# 機能追加により若干ウィンドウが大きくなった(640x360→640x400)
-# 検証用のprint残ってたのを修正
-# PNG減色時の色数指定機能を追加
-# 指定できる解像度を追加
+# -最新の更新履歴(v1.4.3)- 
+# 前回追加した操作無効化がconvert失敗時に機能しなくなっていたのを修正
+# 元がBMPではない画像も一部NEARESTで縮小されてた不具合を修正
+# 入力時自動で除外される拡張子に.ttfを追加
+
 
 # これを読んだあなた。
 # どうかこんな可読性の欠片もないクソコードを書かないでください。
@@ -606,7 +605,7 @@ def func_image_conv(f, fc, values, def_trans, immode_dict, per, temp_dir, ex_dir
 				img_mask_crop = img_mask_crop.resize((crop_result_width-1, result_height-1), Image.Resampling.NEAREST)#マスク画像はNEARESTで縮小
 				img_crop = Image.composite(img_crop, img_bg, img_mask_crop)#上記2枚を利用しimg_cropへマスク
 
-			elif (img_d['trans'] in ['l', 'r']):#背景がボケると困る画像(NEAREST)
+			elif (fc == 'BMP') and (img_d['trans'] in ['l', 'r']):#背景がボケると困る画像(NEAREST)
 				img_crop = img_crop.resize((crop_result_width, result_height), Image.Resampling.NEAREST)
 
 			else:#それ以外の画像(LANCZOS)
@@ -900,7 +899,7 @@ def gui_main(window_title, default_input, default_output):
 
 
 def main():
-	window_title = 'ONScripter Multi Converter for PSP ver.1.4.2'
+	window_title = 'ONScripter Multi Converter for PSP ver.1.4.3'
 	same_hierarchy = Path(sys.argv[0]).parent#同一階層のパスを変数へ代入
 
 	#起動用ファイルチェック～なかったら終了
@@ -926,6 +925,8 @@ def main():
 		temp_dir = Path(temp_dir)
 		ex_arc_dir = (temp_dir / 'extract_arc')
 		ex_dir = (temp_dir / 'extract')
+
+		disabled_list = ['progressbar']
 		
 		while True:
 			event, values = window.read()
@@ -952,21 +953,42 @@ def main():
 					gui_msg('シナリオファイルが見つかりません', '!')#エラー
 
 			### PNG減色チェック ###
-			elif event == 'PNGcolor_comp':
-				window['PNGcolor_comp_num'].update(disabled=(not values['PNGcolor_comp']))#チェックしたときのみ色数指定有効化
+			elif event == 'PNGcolor_comp':#チェックしたときのみ色数指定有効化
+				if values['PNGcolor_comp']:
+					window['PNGcolor_comp_num'].update(disabled=False)
+					disabled_list.remove('PNGcolor_comp_num')
+				
+				else:
+					window['PNGcolor_comp_num'].update(disabled=True)
+					disabled_list.append('PNGcolor_comp_num')
 			
 			### oggチェック ###
 			elif event == 'ogg_mode':
-				window['BGM_kbps'].update(disabled=(not values['ogg_mode']))
-				window['BGM_Hz'].update(disabled=(not values['ogg_mode']))
-				window['SE_kbps'].update(disabled=(not values['ogg_mode']))
-				window['SE_Hz'].update(disabled=(not values['ogg_mode']))
-			
+				if values['ogg_mode']:
+					window['BGM_kbps'].update(disabled=False)
+					window['BGM_Hz'].update(disabled=False)
+					window['SE_kbps'].update(disabled=False)
+					window['SE_Hz'].update(disabled=False)
+					disabled_list.remove('BGM_kbps')
+					disabled_list.remove('BGM_Hz')
+					disabled_list.remove('SE_kbps')
+					disabled_list.remove('SE_Hz')
+				
+				else:
+					window['BGM_kbps'].update(disabled=True)
+					window['BGM_Hz'].update(disabled=True)
+					window['SE_kbps'].update(disabled=True)
+					window['SE_Hz'].update(disabled=True)
+					disabled_list.append('BGM_kbps')
+					disabled_list.append('BGM_Hz')
+					disabled_list.append('SE_kbps')
+					disabled_list.append('SE_Hz')
+								
 			### convert押されたとき ###
 			elif event == 'convert':
 				window['convert'].update(disabled=True)#'convert'操作無効化
 				for d in values.keys():#その他もまとめて
-					if not d == 'progressbar': window[str(d)].update(disabled=True)
+					if not d in disabled_list: window[str(d)].update(disabled=True)
 				window.refresh()
 
 				#デバッグモードだと時間測るので
@@ -1013,7 +1035,7 @@ def main():
 						window['progressbar'].UpdateBar(200)#進捗 200/10000
 						
 						#その他ファイルをコピー
-						shutil.copytree(Path(values['input_dir']), ex_dir, ignore=shutil.ignore_patterns('*.sar', '*.nsa', '*.ns2', '*.exe', '*.dll', '*.txt', '*.ini', 'envdata', 'nscript.dat'))
+						shutil.copytree(Path(values['input_dir']), ex_dir, ignore=shutil.ignore_patterns('*.sar', '*.nsa', '*.ns2', '*.exe', '*.dll', '*.txt', '*.ini', '*.ttf', 'envdata', 'nscript.dat'))
 
 						#存在するarcをここで全てリスト化(もちろん上書き順は考慮)
 						temp_arc = []
@@ -1146,7 +1168,7 @@ def main():
 
 				window['convert'].update(disabled=False)#'convert'操作有効化
 				for d in values.keys():#その他もまとめて
-					if not d == 'progressbar': window[str(d)].update(disabled=False)
+					if not d in disabled_list: window[str(d)].update(disabled=False)
 
 				window.refresh()
 
