@@ -29,10 +29,9 @@ import os
 # os.path.joinを使わないパスの結合をやめないとマズイ気がする - 済
 
 
-# -最新の更新履歴(v1.4.3)- 
-# 前回追加した操作無効化がconvert失敗時に機能しなくなっていたのを修正
-# 元がBMPではない画像も一部NEARESTで縮小されてた不具合を修正
-# 入力時自動で除外される拡張子に.ttfを追加
+# -最新の更新履歴(v1.4.4)-
+# 入力元に拡張子が偽装されたpngがあると減色後に正常に保存されない問題を修正
+# 入力時自動で除外されるファイルにgloval.savを追加
 
 
 # これを読んだあなた。
@@ -629,13 +628,22 @@ def func_image_conv(f, fc, values, def_trans, immode_dict, per, temp_dir, ex_dir
 	elif (fc == 'PNG'):#元々PNG
 
 		if values['PNGcolor_comp']:
-			#PNG減色→可逆
-			img_resize.save(img_result, format="PNG")
-			subprocess.run(['pngquant', '--floyd=1', '--speed=1', '--quality=0-100', '--force', '--ext', '.png', str(values['PNGcolor_comp_num']), str(img_result)], shell=True, **subprocess_args(True))
-			with open(img_result, "rb") as im:
-				im_bin = im.read()
-			with open(img_result, "wb") as im:
-				im.write(zf.ZopfliPNG().optimize(im_bin))
+			with tempfile.TemporaryDirectory() as imgtmpdir:#一時ディレクトリ作成
+				imgtmpdir = Path(imgtmpdir)
+				img_result_tmp = Path(imgtmpdir / img_result.name)
+
+				#PNG減色→可逆
+				img_resize.save(img_result_tmp, format="PNG")
+				subprocess.run(['pngquant', '--floyd=1', '--speed=1', '--quality=0-100', '--force', '--ext', '.png', str(values['PNGcolor_comp_num']), str(img_result_tmp)], shell=True, **subprocess_args(True))
+				
+				#入力元が拡張子偽装だと出力結果が".jpg.png"みたいになるのでそっち指定
+				img_result_tmp2 = Path(img_result_tmp.parent / Path(str(img_result_tmp.name) + '.png'))
+				if img_result_tmp2.exists(): img_result_tmp = img_result_tmp2
+
+				with open(img_result_tmp, "rb") as im:
+					im_bin = im.read()
+				with open(img_result, "wb") as im:
+					im.write(zf.ZopfliPNG().optimize(im_bin))
 
 		else:
 			#PNG可逆
@@ -899,7 +907,7 @@ def gui_main(window_title, default_input, default_output):
 
 
 def main():
-	window_title = 'ONScripter Multi Converter for PSP ver.1.4.3'
+	window_title = 'ONScripter Multi Converter for PSP ver.1.4.4'
 	same_hierarchy = Path(sys.argv[0]).parent#同一階層のパスを変数へ代入
 
 	#起動用ファイルチェック～なかったら終了
@@ -1035,7 +1043,7 @@ def main():
 						window['progressbar'].UpdateBar(200)#進捗 200/10000
 						
 						#その他ファイルをコピー
-						shutil.copytree(Path(values['input_dir']), ex_dir, ignore=shutil.ignore_patterns('*.sar', '*.nsa', '*.ns2', '*.exe', '*.dll', '*.txt', '*.ini', '*.ttf', 'envdata', 'nscript.dat'))
+						shutil.copytree(Path(values['input_dir']), ex_dir, ignore=shutil.ignore_patterns('*.sar', '*.nsa', '*.ns2', '*.exe', '*.dll', '*.txt', '*.ini', '*.ttf', 'gloval.sav', 'envdata', 'nscript.dat'))
 
 						#存在するarcをここで全てリスト化(もちろん上書き順は考慮)
 						temp_arc = []
