@@ -29,9 +29,10 @@ import os
 # os.path.joinを使わないパスの結合をやめないとマズイ気がする - 済
 
 
-# -最新の更新履歴(v1.4.4)-
-# 入力元に拡張子が偽装されたpngがあると減色後に正常に保存されない問題を修正
-# 入力時自動で除外されるファイルにgloval.savを追加
+# -最新の更新履歴(v1.4.5)-
+# 変換元のシナリオファイルが新解像度表記&最初に空白行があった際、旧解像度表記が動作に反映されない不具合を修正
+# 非対応解像度の作品で強制終了していた(?)不具合を修正
+# 特殊解像度の作品の変換に対応(一部Prince-of-sea制作コンバータ産に限る)
 
 
 # これを読んだあなた。
@@ -235,24 +236,25 @@ def zero_txt_check(text):
 	errmsg = ''
 
 	##### 解像度抽出(&置換) #####
-	newnsc_mode = (r';\$V[0-9]{1,}G([0-9]{1,})S([0-9]{1,}),([0-9]{1,})L[0-9]{1,}')#ONS解像度新表記
+	newnsc_mode = (r'(\r|\n|\t|\s)*?;\$V[0-9]{1,}G([0-9]{1,})S([0-9]{1,}),([0-9]{1,})L[0-9]{1,}')#ONS解像度新表記
 	newnsc_search = re.search(newnsc_mode, text)
 	oldnsc_mode = (r';mode([0-9]{3})')#ONS解像度旧表記
 	oldnsc_search = re.search(oldnsc_mode, text)
 
+	noreschk = bool(r'<ONS_RESOLUTION_CHECK_DISABLED>' in text)#解像度無視変換
+
 	if newnsc_search:#ONS解像度新表記時
-		newnsc_width = int(newnsc_search.group(2))
-		newnsc_height = int(newnsc_search.group(3))
+		newnsc_width = int(newnsc_search.group(3))
+		newnsc_height = int(newnsc_search.group(4))
 
-		if newnsc_width == (800 or 640 or 400 or 320) and newnsc_width == newnsc_height/3*4:#解像度&比率判定
-			if newnsc_width == 640:#PSPでは新表記読めないのでついでに置換処理
-				text = re.sub(newnsc_mode, r';value\1', text, 1)#640x480時
-			else:
-				text = re.sub(newnsc_mode, r';mode\2,value\1', text, 1)#通常時
-
+		#解像度&比率判定 - PSPでは新表記読めないのでついでに置換処理
+		if (newnsc_width in [800, 640, 400, 320] and newnsc_width == newnsc_height/3*4) or (noreschk):
+			if (newnsc_width == 640) or (noreschk): text = re.sub(newnsc_mode, r';value\2', text, 1)#640x480 or 解像度無視変換時
+			else: text = re.sub(newnsc_mode, r';mode\3,value\2', text, 1)#通常時
 			game_mode = newnsc_width#作品解像度を代入
 
 		else:
+			game_mode = 0
 			errmsg = '解像度の関係上このソフトは変換できません'
 
 	elif oldnsc_search:#ONS解像度旧表記時
@@ -265,7 +267,7 @@ def zero_txt_check(text):
 	if not re.search(r'\*define', text):
 		errmsg = '0.txtの復号化に失敗しました'
 
-	return game_mode, errmsg, text
+	return noreschk, game_mode, errmsg, text
 
 
 
@@ -479,34 +481,33 @@ def func_video_conv(f, values, res, same_hierarchy, temp_dir, ex_dir):
 
 
 
-def func_image_conv(f, fc, values, def_trans, immode_dict, per, temp_dir, ex_dir, nsa_save_image):
+def func_image_conv(f, fc, values, def_trans, immode_dict, noreschk, per, temp_dir, ex_dir, nsa_save_image):
 	img_result = (temp_dir / nsa_save_image / f.relative_to(ex_dir))
 
 	#保存先作成
 	img_result.parent.mkdir(parents=True,  exist_ok=True)
 
-	try:
-		img = Image.open(f)#画像を開く
-	except:
-		return#失敗したら終了
+	try: img = Image.open(f)#画像を開く
+	except: return#失敗したら終了
 
-	if img.format == False:#画像ではない場合(=画像のフォーマットが存在しない場合)
-		return#終了 - 拡張子偽装対策
+	#画像ではない場合(=画像のフォーマットが存在しない場合)終了 - 拡張子偽装対策
+	if img.format == False: return
 
-	if ('transparency' in img.info):#αチャンネル付き&非RGBAな画像をRGBAへ変換
-		img = img.convert('RGBA')
+	#αチャンネル付き&非RGBAな画像をRGBAへ変換
+	if ('transparency' in img.info): img = img.convert('RGBA')
 	
-	elif (not img.mode == 'RGB') and (not img.mode == 'RGBA'):#その他RGBじゃない画像をRGB形式に(但しRGBAはそのまま)
-		img = img.convert('RGB')	
+	#その他RGBじゃない画像をRGB形式に(但しRGBAはそのまま)
+	elif (not img.mode == 'RGB') and (not img.mode == 'RGBA'): img = img.convert('RGB')	
 
 	result_width = round(img.width*per)#変換後サイズを指定 - 横
 	result_height = round(img.height*per)#変換後サイズを指定 - 縦
 
-	#---縦/横幅指定が0以下の時1に---
-	if result_width < 1:#流石に1切ると変換できないので
-		result_width = 1
-	if result_height < 1:
-		result_height = 1
+	#縦/横幅指定が0以下の時1に - 流石に1切ると変換できないので
+	if result_width < 1: result_width = 1
+	if result_height < 1: result_height = 1
+
+	#解像度無視変換時、縦270pxは強制的に272px判定
+	if (noreschk and result_height == 270): result_height = 272
 	
 	a_px = (0, 0, 0)#背景画素用仮変数
 	img_mask = False#マスク用仮変数
@@ -526,8 +527,7 @@ def func_image_conv(f, fc, values, def_trans, immode_dict, per, temp_dir, ex_dir
 
 	#それっぽい名前の場合カーソル扱い - たまに「カーソルをsetcursorで呼ばない」作品とかあるのでそれ対策
 	for n in ['cursor', 'offcur', 'oncur']:
-		if n in str(f.stem):
-			img_d['cursor'] = True
+		if n in str(f.stem): img_d['cursor'] = True
 	
 	#---カーソル専用処理---
 	if img_d['cursor']:
@@ -575,8 +575,7 @@ def func_image_conv(f, fc, values, def_trans, immode_dict, per, temp_dir, ex_dir
 			img_mask.putdata(mask_px_list)
 	
 	#アルファブレンド画像の場合は画像分割数2倍
-	if (img_d['trans'] == 'a'):
-		img_d['part'] *= 2
+	if (img_d['trans'] == 'a'): img_d['part'] *= 2
 
 	#-----処理分岐-----
 	if img_d.get('default_cursor'):#デフォルトの画像そのままのカーソル
@@ -752,7 +751,9 @@ def func_arc_nsa(temp_dir, a, same_hierarchy):
 
 
 
-def func_ons_ini(values, resolution):
+def func_ons_ini(noreschk, values, resolution):
+	reswstr = str(resolution)
+	reshstr = str(int(resolution/4*3)) if (not noreschk) else str(272)
 
 	#-メモリにフォントを読み込んでおくか-
 	if values['ram_font']:
@@ -761,14 +762,16 @@ def func_ons_ini(values, resolution):
 		ini_fm = 'OFF'
 
 	#-解像度拡大-
-	if values['size_normal']:#拡大しない
-		ini_sur = 'HARDWARE'
+	if values['size_full'] or noreschk:#フルor解像度無視変換
+		ini_sur = 'SOFTWARE'
 		ini_asp = 'OFF'
+
 	elif values['size_aspect']:#アス比維持
 		ini_sur = 'SOFTWARE'
 		ini_asp = 'ON'
-	elif values['size_full']:#フル
-		ini_sur = 'SOFTWARE'
+
+	elif values['size_normal']:#拡大しない
+		ini_sur = 'HARDWARE'
 		ini_asp = 'OFF'
 
 	#-サンプリングレート(Hz)-
@@ -780,8 +783,8 @@ def func_ons_ini(values, resolution):
 	#-ons.ini作成-
 	ons_ini= [
 		'SURFACE=' + ini_sur + '\n',
-		'WIDTH=' + str(resolution) + '\n',
-		'HEIGHT=' + str(int(resolution/4*3)) + '\n',
+		'WIDTH=' + reswstr + '\n',
+		'HEIGHT=' + reshstr + '\n',
 		'ASPECT=' + ini_asp + '\n',
 		'SCREENBPP=32\n',
 		'CPUCLOCK=333\n',
@@ -907,7 +910,7 @@ def gui_main(window_title, default_input, default_output):
 
 
 def main():
-	window_title = 'ONScripter Multi Converter for PSP ver.1.4.4'
+	window_title = 'ONScripter Multi Converter for PSP ver.1.4.5'
 	same_hierarchy = Path(sys.argv[0]).parent#同一階層のパスを変数へ代入
 
 	#起動用ファイルチェック～なかったら終了
@@ -919,8 +922,7 @@ def main():
 	#Newデバッグモード(笑)設定
 	debug_dir = Path(same_hierarchy / 'debug')
 	debug_mode = debug_dir.is_dir()
-	if debug_mode:
-		window_title += ' - !DEBUG MODE!'
+	if debug_mode: window_title += ' - !DEBUG MODE!'
 	
 	#↓実は使ってないこいつら
 	default_input = ''
@@ -940,15 +942,13 @@ def main():
 			event, values = window.read()
 
 			### 終了時 ###
-			if event is None or event == 'Exit':
-				break
+			if event is None or event == 'Exit': break
 
 			### 入力ディレクトリ指定時 ###
 			elif event == 'input_dir':
 				window['convert'].update(disabled=True)#とりあえず'convert'操作無効化
 				window.refresh()
 				window['progressbar'].UpdateBar(10000)#処理中ですアピール的な
-				
 
 				text = scenario_check(Path(values['input_dir']))
 				window['progressbar'].UpdateBar(0)#もどす
@@ -957,8 +957,7 @@ def main():
 					window['convert'].update(disabled=False)#'convert'操作有効化
 					window.refresh()
 				
-				else:#問題あるなら
-					gui_msg('シナリオファイルが見つかりません', '!')#エラー
+				else: gui_msg('シナリオファイルが見つかりません', '!')#問題あるならエラー
 
 			### PNG減色チェック ###
 			elif event == 'PNGcolor_comp':#チェックしたときのみ色数指定有効化
@@ -1000,43 +999,38 @@ def main():
 				window.refresh()
 
 				#デバッグモードだと時間測るので
-				if debug_mode:
-					start_time = time.time()
+				if debug_mode: start_time = time.time()
 
 				#入出力ディレクトリ競合チェック
 				dc = in_out_dir_check(values['input_dir'], values['output_dir'])
-				if dc:#エラー時
-					gui_msg(dc, '!')#メッセージ
+				if dc: gui_msg(dc, '!')#エラー時メッセージ
 
 				else:#正常動作時
 
 					#0.txt内容チェック
-					mode, zc, text = zero_txt_check(text)
-					if zc:#エラー時
-						gui_msg(zc, '!')#メッセージ
+					noreschk, game_mode, zc, text = zero_txt_check(text)
+					if zc: gui_msg(zc, '!')#エラー時メッセージ
 					
 					else:
 						#ここから変換開始
 						
 						window['progressbar'].UpdateBar(100)#進捗 100/10000
 
-						if values['res_640']:#ラジオボタンから代入
-							res = 640
-						elif values['res_384']:
-							res = 384
-						elif values['res_360']:
-							res = 360
-						elif values['res_320']:
-							res = 320
+						#解像度無視変換時横480
+						if noreschk: res = 480
+
+						#ラジオボタンから代入
+						elif values['res_640']: res = 640
+						elif values['res_384']: res = 384
+						elif values['res_360']: res = 360
+						elif values['res_320']: res = 320
 						
 						#画像縮小率=指定解像度/作品解像度
-						per = res / mode
+						per = res / game_mode
 
 						#画像が初期設定でどのような透過指定で扱われるかを代入
-						try:
-							def_trans = (re.findall(r'\n[\t| ]*transmode[\t| ]+([leftup|rightup|copy|alpha])', text))[0]
-						except:
-							def_trans = 'l'#見つからないなら初期値leftup
+						try: def_trans = (re.findall(r'\n[\t| ]*transmode[\t| ]+([leftup|rightup|copy|alpha])', text))[0]
+						except: def_trans = 'l'#見つからないなら初期値leftup
 
 						#0.txtを編集&画像と動画の表示命令を抽出
 						text, immode_dict, vid_list, msc_list = zero_txt_conv(text, per, values, def_trans)
@@ -1065,7 +1059,6 @@ def main():
 							lentmparc = len(temp_arc)
 							for i,ft in enumerate(concurrent.futures.as_completed(futures)):
 								window['progressbar'].UpdateBar(200 + int(float(i / lentmparc) * 300))#進捗 ~500/10000
-
 						
 						#展開したやつをnsa読み取り優先順に上書き移動
 						for p in temp_arc:
@@ -1076,12 +1069,9 @@ def main():
 									f_ex.parent.mkdir(parents=True, exist_ok=True)
 									shutil.move(f, f_ex)
 							
-
 						#保存先辞書作成 - ここ将来的にもっと分割したいなぁ
-						if values['nsa_mode']:
-							nsa_save = {'image':'arc', 'music':'arc1', 'voice':'arc2', 'other':'arc'}
-						else:
-							nsa_save = {'image':'no_comp', 'music':'no_comp', 'voice':'no_comp', 'other':'no_comp'}
+						if values['nsa_mode']: nsa_save = {'image':'arc', 'music':'arc1', 'voice':'arc2', 'other':'arc'}
+						else: nsa_save = {'image':'no_comp', 'music':'no_comp', 'voice':'no_comp', 'other':'no_comp'}
 
 						#展開したファイルを並列変換
 						with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -1097,7 +1087,7 @@ def main():
 							
 									#画像
 									elif fc in ['PNG', 'BMP', 'JPEG']:
-										futures.append(executor.submit(func_image_conv, f, fc, values, def_trans, immode_dict, per, temp_dir, ex_dir, nsa_save['image']))
+										futures.append(executor.submit(func_image_conv, f, fc, values, def_trans, immode_dict, noreschk, per, temp_dir, ex_dir, nsa_save['image']))
 										#func_image_conv(f, fc, values, def_trans, immode_dict, per, temp_dir, ex_dir, nsa_save['image'])
 
 									#音源
@@ -1126,12 +1116,10 @@ def main():
 								window['progressbar'].UpdateBar(9500 + (float(i / lenarcname) * 300))#進捗 ~9800/10000
 
 						#ons.ini作成
-						with open(Path( temp_dir / 'no_comp' / 'ons.ini' ), 'w') as n:
-							n.writelines( func_ons_ini(values, res) )
+						with open(Path( temp_dir / 'no_comp' / 'ons.ini' ), 'w') as n: n.writelines( func_ons_ini(noreschk, values, res) )
 						
 						#savedataフォルダ作成(無いとエラー出す作品向け)
-						if Path(Path(values['input_dir']) / 'savedata').exists():
-							Path(temp_dir / 'no_comp' / 'savedata').mkdir()
+						if Path(Path(values['input_dir']) / 'savedata').exists(): Path(temp_dir / 'no_comp' / 'savedata').mkdir()
 						
 						#最後に0.txt作成(今更感)
 						with open(Path(temp_dir / 'no_comp' / '0.txt'), 'w') as s:
@@ -1142,8 +1130,7 @@ def main():
 						#arc2があってarc1がない場合
 						arc1_path = Path(temp_dir / 'no_comp' / 'arc1.nsa')
 						arc2_path = Path(temp_dir / 'no_comp' / 'arc2.nsa')
-						if (arc2_path.exists()) and (not arc1_path.exists()):
-							arc2_path.rename(arc1_path)#2を1に
+						if (arc2_path.exists()) and (not arc1_path.exists()): arc2_path.rename(arc1_path)#2を1に
 						
 						#debugフォルダ内のファイル全部ぶっこむ
 						if debug_mode:
@@ -1164,10 +1151,7 @@ def main():
 						if debug_mode:
 							with open(Path(result_dir / 'debug.txt'), mode='w') as f:
 								s = '##################################################\n'+str(window_title)+'\n##################################################\n変換ファイル総数:\t\t'+str(lenex)+'\n処理時間:\t\t'+str(time.time()-start_time)+'s\n\n##################################################\n変数:\n\n'
-
-								for d in values.keys():
-									s += (str(d) + ':\t\t' + str(values[d]) + '\n')
-
+								for d in values.keys(): s += (str(d) + ':\t\t' + str(values[d]) + '\n')
 								f.write(s)
 
 						gui_msg('処理が終了しました', '!')#メッセージ
