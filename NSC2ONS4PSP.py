@@ -23,17 +23,13 @@ import os
 ####################################################################################################
 
 # -memo-
-# __file__だとexe化時subprocessの相対パス読み込みﾀﾋぬのでsys.argv[0]使う - 済
-# 同じような理由でexit()もsys.exit()にする - 済
 # jsonでの作品個別処理何も実装してねぇ... - v1.3.0で実装予定だった - 現在未実装orz
-# os.path.joinを使わないパスの結合をやめないとマズイ気がする - 済
 
-
-# -最新の更新履歴(v1.4.5)-
-# 変換元のシナリオファイルが新解像度表記&最初に空白行があった際、旧解像度表記が動作に反映されない不具合を修正
-# 非対応解像度の作品で強制終了していた(?)不具合を修正
-# 特殊解像度の作品の変換に対応(一部Prince-of-sea制作コンバータ産に限る)
-
+# -最新の更新履歴(v1.4.6)-
+# アーカイブの読み込みにns2/ns3命令を使っていた作品が、変換後正常にアーカイブが読めなくなる不具合を修正
+# Windows以外ではそもそも起動しないように変更(正常に動作しないと思われるため)
+# 文字拡大機能利用時、横に表示できる最大文字数を減らしていたのを廃止
+# base64で埋め込んでいたpngを大幅圧縮
 
 # これを読んだあなた。
 # どうかこんな可読性の欠片もないクソコードを書かないでください。
@@ -89,28 +85,28 @@ def get_cur_dictlist():
 		#-----カーソル画像(容量削減のためpng変換済)をbase64にしたものを入れた辞書作成-----
 	cur_dictlist = [
 		{#ONSforPSP向けカーソル(大)
-			'cursor0':r'iVBORw0KGgoAAAANSUhEUgAAAC0AAAAPCAIAAAD/HNHwAAAAj0lEQVQ4y82VyQ7AIAhExw7//8eYHtSm6SK0atTzE15YNMQQCSoUU88GQFUJEnTe8ZP+E2KIRy1IArBro26yeJtk9iCpJaydY4C3XMxTm8wcydtDZhOLlMc6Om06ekulq91tKqSYM3a+WSt+GynmiHnnsY2U6QbvHgMMPu5Lv7j3famT672nfeP++V9W+G93ESCa8D+TnaQAAAAASUVORK5CYII=',
-			'cursor1':r'iVBORw0KGgoAAAANSUhEUgAAAC0AAAAPCAIAAAD/HNHwAAAAzklEQVQ4y82VwQ6EMAhEB4b//2Oqh01atUrB3cMS06iY12FoqzRp+IMw+HOSv5ghxzcAJH3+3AG/k1LXneHr8a1u2sdgVpIgrlcsccXXXgpJEenjwoCK7gzfDo9+b7KD4JwlTlx3H1zeKo/4dvVHtbWxg1S1oT04XdG94tuxPgAX00Qk3gVZ3Sv+c1/iqOpe8U996cWdbpJ9SZwiAX/0RTf9JLrD33Bn/2L+6EvtgK/qXvENwNhylcjrzvCtr7hCr/3Nio5DXvxvM9zaKgZ2wdx/zNkKEJkAAAAASUVORK5CYII=',
-			'doffcur':r'iVBORw0KGgoAAAANSUhEUgAAAA8AAAAPCAIAAAC0tAIdAAAAWklEQVQoz6XOUQrAMAgD0KS9dkEmvXZlH4Vt6NgqDX6F8JBG60fHQkSkIJMCoElbgQdG3v7lJ3yvc/YHf8Eb9iv/hPdsxzs4bcNo8VSVZOxzNo0W24rqPp45AUToPSOLkQr8AAAAAElFTkSuQmCC',
-			'doncur':r'iVBORw0KGgoAAAANSUhEUgAAAA8AAAAPCAIAAAC0tAIdAAAAR0lEQVQoz63MSQoAIAzAwGj//+SKB1Fccak5h3HBBZSTRMRzkweQI1jRB3vHJ7i67+w1X2CLPeNr2Gi3fAfb7cyP8Bd7AQMRI24RSJT2NRMAAAAASUVORK5CYII=',
-			'uoffcur':r'iVBORw0KGgoAAAANSUhEUgAAAA8AAAAPCAIAAAC0tAIdAAAAVklEQVQoz6XSQQrAMAhE0Znm4GLIuaWLQCkd02L6cSXyViIYOr13kro/UCm5Hj4AuHtD+74u2BOeKf/DvsMpv2srrPyWvYIffM1mMN7hKzOr2wD0JdJOvKAx3W/Xg8MAAAAASUVORK5CYII=',
-			'uoncur':r'iVBORw0KGgoAAAANSUhEUgAAAA8AAAAPCAIAAAC0tAIdAAAAYUlEQVQoz63SwQ6AIAwD0Hbz//+4qwc9oBAVtUcCb00Gi4U+QmYKOh0HZhJDGICkRP5rN1V7/outbtKRf21rfKPl52xuu2TxpkOEoN22/dRm0TbJ6zeZOdd7AeBw/yWGWQE8NSgGtZLCjwAAAABJRU5ErkJggg==',
+			'cursor0' :r'iVBORw0KGgoAAAANSUhEUgAAAC0AAAAPAgMAAAANEK40AAAACVBMVEX+Af4BAQH+/v4EXGBQAAAAQ0lEQVR4AWMQYEACqkAMF9AKQBJQWQoVAHO4AqACIA7DUqgAmMMVABUAcRiWAAUcVBiWoMkg9KCZhrAHxQXobkNxNQDgyRHjcXthuQAAAABJRU5ErkJggg==',
+			'cursor1' :r'iVBORw0KGgoAAAANSUhEUgAAAC0AAAAPAgMAAAANEK40AAAADFBMVEX+Af7+/v4BAQEAAACZSqvyAAAAW0lEQVR4AWJAAaGhDgg6AdChHNsACMUwEDXrMA0FKX8Dygj0WYcsRMUoCDinuSfFWoCrvFeDausAlNlUgCqPUYD+79OgfgOqvIZBtb+PQT0DVBFhUM3dBhUH6AdM5TrA8UycDgAAAABJRU5ErkJggg==',
+			'doffcur' :r'iVBORw0KGgoAAAANSUhEUgAAAA8AAAAPCAIAAAC0tAIdAAAAOUlEQVR4Aa3KsRUAEADEULe6vSEdAJCX8hsvb/eSdK55h8KuNC/pg+YJfdY8oc+aW/pPc05/6y7lCCihdDnxHWpgAAAAAElFTkSuQmCC',
+			'doncur'  :r'iVBORw0KGgoAAAANSUhEUgAAAA8AAAAPCAIAAAC0tAIdAAAANklEQVR4AazKsQEAEAAAIP1/M+wAaC4kaRMutq2apLttXV+2RX3cZvV9a+rXrak/dxlEKSYCAGqKArAfIzK1AAAAAElFTkSuQmCC',
+			'uoffcur' :r'iVBORw0KGgoAAAANSUhEUgAAAA8AAAAPCAIAAAC0tAIdAAAAPUlEQVR4Aa3KhQ1CAQBDQW717g18d5eXxpr7/PyWS4Ll/1inC6/qTMNLOmvhsc52eKBzFG7pnAvXdTnnKgDBvFyBNGOuowAAAABJRU5ErkJggg==',
+			'uoncur'  :r'iVBORw0KGgoAAAANSUhEUgAAAA8AAAAPCAIAAAC0tAIdAAAAPklEQVR4Aa3KhQGAMADAMPL/zbj7tDBP0+me/xie9+V6C1X1LVTSr6FY/4QC3YfCocdi9XhYdPcb0vX4i2sANT3rNNe5to0AAAAASUVORK5CYII=',
 		},
 		{#ONSforPSP向けカーソル(小)
-			'cursor0':r'iVBORw0KGgoAAAANSUhEUgAAACcAAAANCAIAAACl9uAyAAAAgUlEQVQ4y8WUUQ6AIAxDi939bzziB2CMwpiguO+XtqNhIYZIUKFYOBsAVSVIsEt7GM+EGOKxJ0kA1t7qYEo+g8muJLVIWbov5ZNLwvTghm7KZzPZt81I9XW63pP5xGjmrFtfaJQRo5h+f6OMfOfn7nVO695ri/n7v85rPbtN6+/wDuhygvG0PdbKAAAAAElFTkSuQmCC',
-			'cursor1':r'iVBORw0KGgoAAAANSUhEUgAAACcAAAANCAIAAACl9uAyAAAAqElEQVQ4y8WU0QrDIAxFbxL//4+v28NKqyFelMEWpNAYj+Foa906fh6Of0QDAFYz8R1YMtv1GsGxkACrjU/6E0xPWX/5U8mahcAzVq1Ipo8tR4SZRcSY22eVGkpmm2mcpAkWLhbJO8dqQcls6czcvff+ecq7stffglkbTk6E4cmzNDwyF4Z1DIaTZ2Ulf6+AWLbPyjVrZrt7392PBz5Wk3b6Hxas3QMC3gQZVYcUrNnxAAAAAElFTkSuQmCC',
-			'doffcur':r'iVBORw0KGgoAAAANSUhEUgAAAA0AAAANCAIAAAD9iXMrAAAAU0lEQVQoz53OUQrAIAwD0ESvLZQVr23Yh7BJGVIX+hXCoxTVr45tzKwglwKgWdtjA+PE25ATe3dZ75N8sF9eIFfswIOocO5OMpRZj6JCVVHXz2ZuT8c0N4UKKogAAAAASUVORK5CYII=',
-			'doncur':r'iVBORw0KGgoAAAANSUhEUgAAAA0AAAANCAIAAAD9iXMrAAAAQUlEQVQoz6XMSQoAIAzAwNj+/8kVD6Ko1D3nMCGGiLFOVYWzBEA3mGFX3pzMWPOdeh5ZsTevJ1vs2SvkgP14HgYkIlcPPtx0t78AAAAASUVORK5CYII=',
-			'uoffcur':r'iVBORw0KGgoAAAANSUhEUgAAAA0AAAANCAIAAAD9iXMrAAAAT0lEQVQoz5XQQQrAQAhD0aRzcFHm3NLFQCmRFv24EnkLkUyZiCApywu99G77BuDuC+vvruUd7CTk3HtjlRx6FROy6zGZX9iTmU08APL92g2gESrNuMCtcwAAAABJRU5ErkJggg==',
-			'uoncur':r'iVBORw0KGgoAAAANSUhEUgAAAA0AAAANCAIAAAD9iXMrAAAAUklEQVQoz6XQQQrAMAhE0a/m/jce010JWkjazlLhOWhpSYmICKF15pzFOwZICuK/t1Qq5AdPrepCvvX0vL7JU8/S0tI2R90HMOfcegMgKN/vuQCdCxsLwTbFvwAAAABJRU5ErkJggg==',
+			'cursor0':r'iVBORw0KGgoAAAANSUhEUgAAACcAAAANCAIAAACl9uAyAAAAU0lEQVR4AcXU0QkAIQzAULP/zuEmkEAPLPj/UtQeERBfniOqQNqDvlC17VlfzCphz/tCxbCnfaGG/a/vqt5sMfvE7Nufde9eF97wyn9d2E0Le/gDfvymHqJYAJkAAAAASUVORK5CYII=',
+			'cursor1':r'iVBORw0KGgoAAAANSUhEUgAAACcAAAANCAIAAACl9uAyAAAAcElEQVR4AcWQAQbAQBADd///51NKIGKEo40oyk2ymbPne/+YGrV3jrLU3Q1vepYbmJb6amaI2PcDpt260pE8o++HTF+YL+v7MTMtrC+z+D8z08ISs7gfM28X5n68cNbNwiClqnsQsaAfM5Xau+2HfgDZDaj6N8Tv0wAAAABJRU5ErkJggg==',
+			'doffcur':r'iVBORw0KGgoAAAANSUhEUgAAAA0AAAANCAIAAAD9iXMrAAAAM0lEQVR4AaXKwRUAEACAUK1ub+gMQK/jD5kcdwE3ztdIcOl8gZ6cD9GH8x79Oe/Rn+uRV3DDFOu8xuq5AAAAAElFTkSuQmCC',
+			'doncur' :r'iVBORw0KGgoAAAANSUhEUgAAAA0AAAANCAIAAAD9iXMrAAAAL0lEQVR4AaXKsREAEAAEMNl/5z89AKlTIlu4ejYpcvus0tszTc9Pn36fLv2+PkUqsdF9i/bqJEIAAAAASUVORK5CYII=',
+			'uoffcur':r'iVBORw0KGgoAAAANSUhEUgAAAA0AAAANCAIAAAD9iXMrAAAANUlEQVR4AZXKuQ0AMADCwHh19s5fusOiQjcWS0sC6Gyc0M+0dEKmvTMy7ZyRaefiHNC4O5w7fgoBJ7Twmi8AAAAASUVORK5CYII=',
+			'uoncur' :r'iVBORw0KGgoAAAANSUhEUgAAAA0AAAANCAIAAAD9iXMrAAAANklEQVR4AaXKhQ3AQAADsXr/mctMz1ZE0XWD4bUZXmdtd0Jz94KG7hfqujAUdmMKli7p6AxSJjVLaeiYxu8vAAAAAElFTkSuQmCC',
 		},
 		{#NScripter付属 公式カーソル
-			'cursor0':r'iVBORw0KGgoAAAANSUhEUgAAAEgAAAAYCAMAAABuvUuCAAADAFBMVEUKMjwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAALCwsMDAwNDQ0ODg4PDw8QEBARERESEhITExMBAQFGAQGCAQG0AQHcAQH+AQEBRgFGRgGCRgG0RgHcRgH+RgEBggFGggGCggG0ggHcggH+ggEBtAFGtAGCtAG0tAHctAH+tAEB3AFG3AGC3AG03AHc3AH+3AEB/gFG/gGC/gG0/gHc/gH+/gEBAUZGAUaCAUa0AUbcAUb+AUYBRkZGRkaCRka0RkbcRkb+RkYBgkZGgkaCgka0gkbcgkb+gkYBtEZGtEaCtEa0tEbctEb+tEYB3EZG3EaC3Ea03Ebc3Eb+3EYB/kZG/kaC/ka0/kbc/kb+/kYBAYJGAYKCAYK0AYLcAYL+AYIBRoJGRoKCRoK0RoLcRoL+RoIBgoJGgoKCgoK0goLcgoL+goIBtIJGtIKCtIK0tILctIL+tIIB3IJG3IKC3IK03ILc3IL+3IIB/oJG/oKC/oK0/oLc/oL+/oIBAbRGAbSCAbS0AbTcAbT+AbQBRrRGRrSCRrS0RrTcRrT+RrQBgrRGgrSCgrS0grTcgrT+grQBtLRGtLSCtLS0tLTctLT+tLQB3LRG3LSC3LS03LTc3LT+3LQB/rRG/rSC/rS0/rTc/rT+/rQBAdxGAdyCAdy0AdzcAdz+AdwBRtxGRtyCRty0RtzcRtz+RtwBgtxGgtyCgty0gtzcgtz+gtwBtNxGtNyCtNy0tNzctNz+tNwB3NxG3NyC3Ny03Nzc3Nz+3NwB/txG/tyC/ty0/tzc/tz+/twBAf5GAf6CAf60Af7cAf7+Af4BRv5GRv6CRv60Rv7cRv7+Rv4Bgv5Ggv6Cgv60gv7cgv7+gv4BtP5GtP6CtP60tP7ctP7+tP4B3P5G3P6C3P603P7c3P7+3P4B/v5G/v6C/v60/v7c/v7+/v7s7Ozt7e3u7u7v7+/w8PDx8fHy8vLz8/P09PT///8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD1zcP1tjmEAAAArElEQVQ4y62VQRKDIBAEJ9a8wzsv8c08ImfuvCSHaCpxZxcIcMFqanpHy9LH80DGgkUUpBUqAq5qqCsBV+V2VRMIIOV9TKXwu1HFtIrnrlV+V4P5udIqp6udwGbIUd0xO0JdKkKeNsYLvJmnWCtQDkkjvGHRoiE7YG7tpAgwuwJNzV30t+ZXNKH5Fg1pisEMA0VrIDCjuf2a6ws5rbkaDWkgMYNAHnuz05rf0Qsvl2gb7WN46wAAAABJRU5ErkJggg==',
-			'cursor1':r'iVBORw0KGgoAAAANSUhEUgAAAEgAAAAYCAMAAABuvUuCAAADAFBMVEUKMjwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAALCwsMDAwNDQ0ODg4PDw8QEBARERESEhITExMBAQFGAQGCAQG0AQHcAQH+AQEBRgFGRgGCRgG0RgHcRgH+RgEBggFGggGCggG0ggHcggH+ggEBtAFGtAGCtAG0tAHctAH+tAEB3AFG3AGC3AG03AHc3AH+3AEB/gFG/gGC/gG0/gHc/gH+/gEBAUZGAUaCAUa0AUbcAUb+AUYBRkZGRkaCRka0RkbcRkb+RkYBgkZGgkaCgka0gkbcgkb+gkYBtEZGtEaCtEa0tEbctEb+tEYB3EZG3EaC3Ea03Ebc3Eb+3EYB/kZG/kaC/ka0/kbc/kb+/kYBAYJGAYKCAYK0AYLcAYL+AYIBRoJGRoKCRoK0RoLcRoL+RoIBgoJGgoKCgoK0goLcgoL+goIBtIJGtIKCtIK0tILctIL+tIIB3IJG3IKC3IK03ILc3IL+3IIB/oJG/oKC/oK0/oLc/oL+/oIBAbRGAbSCAbS0AbTcAbT+AbQBRrRGRrSCRrS0RrTcRrT+RrQBgrRGgrSCgrS0grTcgrT+grQBtLRGtLSCtLS0tLTctLT+tLQB3LRG3LSC3LS03LTc3LT+3LQB/rRG/rSC/rS0/rTc/rT+/rQBAdxGAdyCAdy0AdzcAdz+AdwBRtxGRtyCRty0RtzcRtz+RtwBgtxGgtyCgty0gtzcgtz+gtwBtNxGtNyCtNy0tNzctNz+tNwB3NxG3NyC3Ny03Nzc3Nz+3NwB/txG/tyC/ty0/tzc/tz+/twBAf5GAf6CAf60Af7cAf7+Af4BRv5GRv6CRv60Rv7cRv7+Rv4Bgv5Ggv6Cgv60gv7cgv7+gv4BtP5GtP6CtP60tP7ctP7+tP4B3P5G3P6C3P603P7c3P7+3P4B/v5G/v6C/v60/v7c/v7+/v7s7Ozt7e3u7u7v7+/w8PDx8fHy8vLz8/P09PT///8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD1zcP1tjmEAAAA10lEQVQ4y92VuxnDIAyEz/mYw/1NwswMkVo9k6SIeUoCilShM75fpzMYrjd+M17420IBuPvnfEQZSADA1BR3XsrL0EiYib6S52AhAQByLHMyVvIcDCQAABJswnXQSI1GAUVV8hw00qIRIL7zMXnysdcemaJlRDyvlg4aeaKxwULrS0wOGinRGk0s5H2vI2Ks2krurNq4IYt514TroJF+Q3Ivn3cYx45W0WwHPxqlOp5GG5EajZaz76CQfTTa2axo4p9gnoNYJ2T7xfdydSrUca2uo3jcIfABY9pmdCPNuuMAAAAASUVORK5CYII=',
-			'doffcur':r'iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAMAAADXqc3KAAADAFBMVEUKMjwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAALCwsMDAwNDQ0ODg4PDw8QEBARERESEhITExMBAQFGAQGCAQG0AQHcAQH+AQEBRgFGRgGCRgG0RgHcRgH+RgEBggFGggGCggG0ggHcggH+ggEBtAFGtAGCtAG0tAHctAH+tAEB3AFG3AGC3AG03AHc3AH+3AEB/gFG/gGC/gG0/gHc/gH+/gEBAUZGAUaCAUa0AUbcAUb+AUYBRkZGRkaCRka0RkbcRkb+RkYBgkZGgkaCgka0gkbcgkb+gkYBtEZGtEaCtEa0tEbctEb+tEYB3EZG3EaC3Ea03Ebc3Eb+3EYB/kZG/kaC/ka0/kbc/kb+/kYBAYJGAYKCAYK0AYLcAYL+AYIBRoJGRoKCRoK0RoLcRoL+RoIBgoJGgoKCgoK0goLcgoL+goIBtIJGtIKCtIK0tILctIL+tIIB3IJG3IKC3IK03ILc3IL+3IIB/oJG/oKC/oK0/oLc/oL+/oIBAbRGAbSCAbS0AbTcAbT+AbQBRrRGRrSCRrS0RrTcRrT+RrQBgrRGgrSCgrS0grTcgrT+grQBtLRGtLSCtLS0tLTctLT+tLQB3LRG3LSC3LS03LTc3LT+3LQB/rRG/rSC/rS0/rTc/rT+/rQBAdxGAdyCAdy0AdzcAdz+AdwBRtxGRtyCRty0RtzcRtz+RtwBgtxGgtyCgty0gtzcgtz+gtwBtNxGtNyCtNy0tNzctNz+tNwB3NxG3NyC3Ny03Nzc3Nz+3NwB/txG/tyC/ty0/tzc/tz+/twBAf5GAf6CAf60Af7cAf7+Af4BRv5GRv6CRv60Rv7cRv7+Rv4Bgv5Ggv6Cgv60gv7cgv7+gv4BtP5GtP6CtP60tP7ctP7+tP4B3P5G3P6C3P603P7c3P7+3P4B/v5G/v6C/v60/v7c/v7+/v7s7Ozt7e3u7u7v7+/w8PDx8fHy8vLz8/P09PT///8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD1zcP1tjmEAAAAXklEQVQoz43SwRGAIAxE0YWhNwuhLhvYDlKEPXlAJEpI2OOfebdNF+wVnGZnXgBkVBOIIyxCgSdmQoEv/oSCSHwJBbHQpIFQDPKAWHTSwYZo5AU7AlWDtUj6PscAuAGzRhXOUU3rogAAAABJRU5ErkJggg==',
-			'doncur':r'iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAMAAADXqc3KAAADAFBMVEUKMjwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAALCwsMDAwNDQ0ODg4PDw8QEBARERESEhITExMBAQFGAQGCAQG0AQHcAQH+AQEBRgFGRgGCRgG0RgHcRgH+RgEBggFGggGCggG0ggHcggH+ggEBtAFGtAGCtAG0tAHctAH+tAEB3AFG3AGC3AG03AHc3AH+3AEB/gFG/gGC/gG0/gHc/gH+/gEBAUZGAUaCAUa0AUbcAUb+AUYBRkZGRkaCRka0RkbcRkb+RkYBgkZGgkaCgka0gkbcgkb+gkYBtEZGtEaCtEa0tEbctEb+tEYB3EZG3EaC3Ea03Ebc3Eb+3EYB/kZG/kaC/ka0/kbc/kb+/kYBAYJGAYKCAYK0AYLcAYL+AYIBRoJGRoKCRoK0RoLcRoL+RoIBgoJGgoKCgoK0goLcgoL+goIBtIJGtIKCtIK0tILctIL+tIIB3IJG3IKC3IK03ILc3IL+3IIB/oJG/oKC/oK0/oLc/oL+/oIBAbRGAbSCAbS0AbTcAbT+AbQBRrRGRrSCRrS0RrTcRrT+RrQBgrRGgrSCgrS0grTcgrT+grQBtLRGtLSCtLS0tLTctLT+tLQB3LRG3LSC3LS03LTc3LT+3LQB/rRG/rSC/rS0/rTc/rT+/rQBAdxGAdyCAdy0AdzcAdz+AdwBRtxGRtyCRty0RtzcRtz+RtwBgtxGgtyCgty0gtzcgtz+gtwBtNxGtNyCtNy0tNzctNz+tNwB3NxG3NyC3Ny03Nzc3Nz+3NwB/txG/tyC/ty0/tzc/tz+/twBAf5GAf6CAf60Af7cAf7+Af4BRv5GRv6CRv60Rv7cRv7+Rv4Bgv5Ggv6Cgv60gv7cgv7+gv4BtP5GtP6CtP60tP7ctP7+tP4B3P5G3P6C3P603P7c3P7+3P4B/v5G/v6C/v60/v7c/v7+/v7s7Ozt7e3u7u7v7+/w8PDx8fHy8vLz8/P09PT///8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD1zcP1tjmEAAAAWElEQVQoz43LsQ2AMAwAwSdiDnrvX3kIlvAkFCFgwNj58qVbduJWtvBL+wE0LASaiIiIkokvESUXbyJKJZ5ElFp40kEpbnKCWgwywITo5AIzAvNgSmAOcACduxSyPiuMsgAAAABJRU5ErkJggg==',
-			'uoffcur':r'iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAMAAADXqc3KAAADAFBMVEUKMjwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAALCwsMDAwNDQ0ODg4PDw8QEBARERESEhITExMBAQFGAQGCAQG0AQHcAQH+AQEBRgFGRgGCRgG0RgHcRgH+RgEBggFGggGCggG0ggHcggH+ggEBtAFGtAGCtAG0tAHctAH+tAEB3AFG3AGC3AG03AHc3AH+3AEB/gFG/gGC/gG0/gHc/gH+/gEBAUZGAUaCAUa0AUbcAUb+AUYBRkZGRkaCRka0RkbcRkb+RkYBgkZGgkaCgka0gkbcgkb+gkYBtEZGtEaCtEa0tEbctEb+tEYB3EZG3EaC3Ea03Ebc3Eb+3EYB/kZG/kaC/ka0/kbc/kb+/kYBAYJGAYKCAYK0AYLcAYL+AYIBRoJGRoKCRoK0RoLcRoL+RoIBgoJGgoKCgoK0goLcgoL+goIBtIJGtIKCtIK0tILctIL+tIIB3IJG3IKC3IK03ILc3IL+3IIB/oJG/oKC/oK0/oLc/oL+/oIBAbRGAbSCAbS0AbTcAbT+AbQBRrRGRrSCRrS0RrTcRrT+RrQBgrRGgrSCgrS0grTcgrT+grQBtLRGtLSCtLS0tLTctLT+tLQB3LRG3LSC3LS03LTc3LT+3LQB/rRG/rSC/rS0/rTc/rT+/rQBAdxGAdyCAdy0AdzcAdz+AdwBRtxGRtyCRty0RtzcRtz+RtwBgtxGgtyCgty0gtzcgtz+gtwBtNxGtNyCtNy0tNzctNz+tNwB3NxG3NyC3Ny03Nzc3Nz+3NwB/txG/tyC/ty0/tzc/tz+/twBAf5GAf6CAf60Af7cAf7+Af4BRv5GRv6CRv60Rv7cRv7+Rv4Bgv5Ggv6Cgv60gv7cgv7+gv4BtP5GtP6CtP60tP7ctP7+tP4B3P5G3P6C3P603P7c3P7+3P4B/v5G/v6C/v60/v7c/v7+/v7s7Ozt7e3u7u7v7+/w8PDx8fHy8vLz8/P09PT///8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD1zcP1tjmEAAAAYElEQVQoz5XLwRGAMAhE0Y1jb3RAd9tAOrCI9OQhJqISGLmEfOaVBn92sxP1mJ9tAeyBgMofQcCSXLA/k6SCIwySCd7lIomgTZ3Egs+mkgm+o0os+K0qa1Ea3V4DAXEPJ5x3ES+KPfL8AAAAAElFTkSuQmCC',
-			'uoncur':r'iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAMAAADXqc3KAAADAFBMVEUKMjwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAALCwsMDAwNDQ0ODg4PDw8QEBARERESEhITExMBAQFGAQGCAQG0AQHcAQH+AQEBRgFGRgGCRgG0RgHcRgH+RgEBggFGggGCggG0ggHcggH+ggEBtAFGtAGCtAG0tAHctAH+tAEB3AFG3AGC3AG03AHc3AH+3AEB/gFG/gGC/gG0/gHc/gH+/gEBAUZGAUaCAUa0AUbcAUb+AUYBRkZGRkaCRka0RkbcRkb+RkYBgkZGgkaCgka0gkbcgkb+gkYBtEZGtEaCtEa0tEbctEb+tEYB3EZG3EaC3Ea03Ebc3Eb+3EYB/kZG/kaC/ka0/kbc/kb+/kYBAYJGAYKCAYK0AYLcAYL+AYIBRoJGRoKCRoK0RoLcRoL+RoIBgoJGgoKCgoK0goLcgoL+goIBtIJGtIKCtIK0tILctIL+tIIB3IJG3IKC3IK03ILc3IL+3IIB/oJG/oKC/oK0/oLc/oL+/oIBAbRGAbSCAbS0AbTcAbT+AbQBRrRGRrSCRrS0RrTcRrT+RrQBgrRGgrSCgrS0grTcgrT+grQBtLRGtLSCtLS0tLTctLT+tLQB3LRG3LSC3LS03LTc3LT+3LQB/rRG/rSC/rS0/rTc/rT+/rQBAdxGAdyCAdy0AdzcAdz+AdwBRtxGRtyCRty0RtzcRtz+RtwBgtxGgtyCgty0gtzcgtz+gtwBtNxGtNyCtNy0tNzctNz+tNwB3NxG3NyC3Ny03Nzc3Nz+3NwB/txG/tyC/ty0/tzc/tz+/twBAf5GAf6CAf60Af7cAf7+Af4BRv5GRv6CRv60Rv7cRv7+Rv4Bgv5Ggv6Cgv60gv7cgv7+gv4BtP5GtP6CtP60tP7ctP7+tP4B3P5G3P6C3P603P7c3P7+3P4B/v5G/v6C/v60/v7c/v7+/v7s7Ozt7e3u7u7v7+/w8PDx8fHy8vLz8/P09PT///8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD1zcP1tjmEAAAAXElEQVQoz5XLsRGAQAhE0dWxjs2tZKs3JrcSg/MUlYORBOYzb9oQz+xuUvFjJAiY/ggCntSCbV2kFOyhk0rwLicpBH1qJBd8NlMl+I6mXPBbTWOxRACwNRG7wscB7eQO5yBktpIAAAAASUVORK5CYII=',
+			'cursor0':r'iVBORw0KGgoAAAANSUhEUgAAAEgAAAAYCAIAAADWASznAAAAl0lEQVR4AWL4x/iPEQyAjOGEQB4DA6j3hp/HqOO9wRP/gHbsEAcAEIZi6P1vjcdUPLXkJ+hB+wnAPjDHgwrhCLaip8cVwFGA+eIkf3cUYFKX8ndHAQZ4nj85CjDA8/zJUYABnudvjgKs5otZPX9xFGAxfrZeTQpyRwM7tRV3eFw47ndBX3hS7RF84duyj+bd1sCaOYF0dDzSFWKiYdvwAQAAAABJRU5ErkJggg==',
+			'cursor1':r'iVBORw0KGgoAAAANSUhEUgAAAEgAAAAYCAIAAADWASznAAAAuUlEQVR4Ae2SAQbFQBQD/7v/nddHETCsEatqI2gVb5Lmt2Z90jfYu3yD7WqO24Il2Mxs3GijsBUYBOswlTqyYPDHhrWiIgrbg4kpRkUUtAfjKeaV6y+ikD2Ym2Ju9FDAFgymiM4BDlbqyIMl2Gav+QrB2h15sOEpsoim25EGc1OMOVinIw2GU4y4cqCpduTB+lP0KH6Kd4rwfHyKGqw/xXpHDHanKHRmikIJ9niUiigUe4QSrGnfUdF/OeND+SWrDuIAAAAASUVORK5CYII=',
+			'doffcur':r'iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAIAAABvFaqvAAAATUlEQVR4Aa3MORWAAADFML51fHMqyNK+zjnu3ck/dCK3LYVkWfmEFoJlpYZgUekhWFR6SJaVHqIFpYdoQekhWlB6iBaUHqIFpYcwle8XVsfRQJCtfnsAAAAASUVORK5CYII=',
+			'doncur' :r'iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAIAAABvFaqvAAAASElEQVR4Ab3MwQ0AMAjDQLz/zlFHiCgQy+8roZVLaB6wCzFVhNYhRsoRxKdyCtFWAhANJQbRUGIQXslDeCUP4ZU8hFfyEF4RehVZUP4nhUDMAAAAAElFTkSuQmCC',
+			'uoffcur':r'iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAIAAABvFaqvAAAATUlEQVR4Ab3MuQ3AMBDAsNzq3jv/AmwEC6p5XHMlG1p/M7MVgmKrh6jQ6iEosHoICqweggKrh6DA6iEotHpIiq0csmKrhpazlULv49ADQ7envrPgz34AAAAASUVORK5CYII=',
+			'uoncur' :r'iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAIAAABvFaqvAAAASElEQVR4Ac3MtRHAQADAsGj/mcNNGB99rtV0uii/gOZQCbQKxaFDKAhdhBLQfcgLvQm5oPchA/QxpIT+hTRQSIgNhYe4kE5wA44DJ3zWlVpmAAAAAElFTkSuQmCC',
 		},
 	]#すとーむ氏に怒られたら消します(爆)
 	return cur_dictlist
@@ -127,43 +123,29 @@ def start_check(same_hierarchy):
 	]
 
 	#ffmpeg/probe/pngquantは別で存在チェック
-	try:
-		subprocess.run('ffmpeg', **subprocess_args(True))
-	except:
-		ffmpeg_exist = False
-	else:
-		ffmpeg_exist = True
+	try: subprocess.run('ffmpeg', **subprocess_args(True))
+	except: ffmpeg_exist = False
+	else: ffmpeg_exist = True
 
-	try:
-		subprocess.run('ffprobe', **subprocess_args(True))
-	except:
-		ffprobe_exist = False
-	else:
-		ffprobe_exist = True
+	try: subprocess.run('ffprobe', **subprocess_args(True))
+	except: ffprobe_exist = False
+	else: ffprobe_exist = True
 
-	try:
-		subprocess.run('pngquant', **subprocess_args(True))
-	except:
-		pngquant_exist = False
-	else:
-		pngquant_exist = True
+	try: subprocess.run('pngquant', **subprocess_args(True))
+	except: pngquant_exist = False
+	else: pngquant_exist = True
 
 	#エラーメッセージ作成
 	errmsg = ''
 
-	if not ffmpeg_exist:
-		errmsg += 'ffmpeg.exeが見つかりません\n'
-
-	if not ffprobe_exist:
-		errmsg += 'ffprobe.exeが見つかりません\n'
-
-	if not pngquant_exist:
-		errmsg += 'pngquant.exeが見つかりません\n'
+	if not ffmpeg_exist: errmsg += 'ffmpeg.exeが見つかりません\n'
+	if not ffprobe_exist: errmsg += 'ffprobe.exeが見つかりません\n'
+	if not pngquant_exist: errmsg += 'pngquant.exeが見つかりません\n'
 		
 	for f in start_file_list:
-		if not f.exists():
-			errmsg += ( str(f.relative_to(same_hierarchy)) + 'が用意されていません\n')
+		if not f.exists(): errmsg += ( str(f.relative_to(same_hierarchy)) + 'が用意されていません\n')
 	
+	if (os.name != 'nt'): errmsg += 'Windows以外で起動しています'
 	return errmsg
 
 
@@ -213,20 +195,14 @@ def in_out_dir_check(input_dir, output_dir):
 	#エラーメッセージ作成
 	errmsg = ''
 	
-	if not input_dir:#output_dirと表記を合わせるためあえてtemp_dir未使用
-		errmsg = '入力先が指定されていません'
+	#output_dirと表記を合わせるためあえてtemp_dir未使用
+	if not input_dir: errmsg = '入力先が指定されていません'
+	elif Path(input_dir).exists() == False: errmsg = '入力先が存在しません'
 
-	elif Path(input_dir).exists() == False:
-		errmsg = '入力先が存在しません'
-  
-	if not output_dir:
-		errmsg = '出力先が指定されていません'
+	elif not output_dir: errmsg = '出力先が指定されていません'
+	elif Path(output_dir).exists() == False: errmsg = '出力先が存在しません'
 
-	elif Path(output_dir).exists() == False:
-		errmsg = '出力先が存在しません'
-
-	elif input_dir in output_dir:
-		errmsg = '入出力先が競合しています'
+	elif input_dir in output_dir: errmsg = '入出力先が競合しています'
 	
 	return errmsg
 
@@ -278,6 +254,7 @@ def zero_txt_conv(text, per, values, default_transmode):
 	text = re.sub(r'([\n|\t| |:])avi[\t\s]+"(.+?)",([0|1]|%[0-9]+)', r'\1mpegplay "\2",\3', text)#aviをmpegplayで再生(後に拡張子偽装)
 	text = re.sub(r'([\n|\t| |:])okcancelbox[\t\s]+%(.+?),', r'\1mov %\2,1 ;', text)#okcancelboxをmovで強制ok
 	text = re.sub(r'([\n|\t| |:])yesnobox[\t\s]+%(.+?),', r'\1mov %\2,1 ;', text)#yesnoboxをmovで強制yes
+	text = re.sub(r'\n[\t\s]*ns[2|3][\t\s]*\n', r'\nnsa\n', text)#ns2/ns3命令は全部nsaへ
 
 	#nbz
 	text = text.replace('.NBZ', '.wav')#大文字
@@ -301,10 +278,10 @@ def zero_txt_conv(text, per, values, default_transmode):
 				v7rp = str( int( int(v[7]) * ( nummin / int(v5rp) ) ) )#縦文字間隔(縮小)
 
 				#横に表示できる最大文字数を(文字を大きくした分)減らす - 見切れるのを防ぐため縦はそのまま
-				v2rp = str( int( int(v[2]) * ( int(v[4]) + int(v[6]) ) / ( int(v4rp) + int(v6rp) ) ) )
+				#v2rp = str( int( int(v[2]) * ( int(v[4]) + int(v[6]) ) / ( int(v4rp) + int(v6rp) ) ) )
 
 				sw = (v[0] + v[2] +','+ v[3] +','+ v[4] +','+ v[5] +','+ v[6] +','+ v[7] +','+ v[8])
-				sw_re = (v[0] + v2rp +','+ v[3] +','+ v4rp +','+ v5rp +','+ v6rp +','+ v7rp +','+ v[8])
+				sw_re = (v[0] + v[2] +','+ v[3] +','+ v4rp +','+ v5rp +','+ v6rp +','+ v7rp +','+ v[8])
 				
 				text = text.replace(sw, sw_re)
 
@@ -910,7 +887,7 @@ def gui_main(window_title, default_input, default_output):
 
 
 def main():
-	window_title = 'ONScripter Multi Converter for PSP ver.1.4.5'
+	window_title = 'ONScripter Multi Converter for PSP ver.1.4.6'
 	same_hierarchy = Path(sys.argv[0]).parent#同一階層のパスを変数へ代入
 
 	#起動用ファイルチェック～なかったら終了
