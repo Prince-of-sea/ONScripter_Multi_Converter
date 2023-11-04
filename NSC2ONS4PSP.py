@@ -25,11 +25,9 @@ import os
 # -memo-
 # jsonでの作品個別処理何も実装してねぇ... - v1.3.0で実装予定だった - 現在未実装orz
 
-# -最新の更新履歴(v1.4.6)-
-# アーカイブの読み込みにns2/ns3命令を使っていた作品が、変換後正常にアーカイブが読めなくなる不具合を修正
-# Windows以外ではそもそも起動しないように変更(正常に動作しないと思われるため)
-# 文字拡大機能利用時、横に表示できる最大文字数を減らしていたのを廃止
-# base64で埋め込んでいたpngを大幅圧縮
+# -最新の更新履歴(v1.4.7)-
+# 解像度強制指定時の動画変換に対応
+# 拡張子.mpgで対応できない動画の変換に失敗していた不具合を修正
 
 # これを読んだあなた。
 # どうかこんな可読性の欠片もないクソコードを書かないでください。
@@ -379,9 +377,11 @@ def arc_extract(GARbro_path, p, e):
 
 
 
-def func_video_conv(f, values, res, same_hierarchy, temp_dir, ex_dir):
+def func_video_conv(f, values, noreschk, res, same_hierarchy, temp_dir, ex_dir):
 	smjpeg_path = Path(same_hierarchy / 'tools' / 'smjpeg_encode.exe')
-	vid_res = (str(res) + r':' + str(int(res/4*3)))#引数用動画解像度代入
+	
+	vid_res = (str(res) + r':' + str(int(res/4*3))) if (not noreschk) else r'480:272'#引数用動画解像度代入
+	vid_tmp = (temp_dir / 'no_comp' / Path(str(f.relative_to(ex_dir))+'.mpg'))
 	vid_result = (temp_dir / 'no_comp' / f.relative_to(ex_dir))
 
 	#保存先作成
@@ -410,19 +410,19 @@ def func_video_conv(f, values, res, same_hierarchy, temp_dir, ex_dir):
 
 		#-展開前にPSPの再生可能形式(MPEG-1か2)へ-
 		if vid_codec == 'mpeg2video' or vid_codec == 'mpeg1video':#判定
-			shutil.copy(f,vid_result)#そのまま再生できそうならコピー
-			os.chmod(path=vid_result, mode=stat.S_IWRITE)#念の為読み取り専用を外す
+			shutil.copy(f,vid_tmp)#そのまま再生できそうならコピー
+			os.chmod(path=vid_tmp, mode=stat.S_IWRITE)#念の為読み取り専用を外す
 		else:
 			subprocess.run(['ffmpeg', '-y',#そのまま再生できなそうならエンコード
 				'-i', f,
 				'-vcodec', 'mpeg2video',
 				'-qscale', '0',
-				str(vid_result),
+				str(vid_tmp),
 			], shell=True, **subprocess_args(True))
 
 		#-連番画像展開-
 		subprocess.run(['ffmpeg', '-y',
-			'-i', str(vid_result),
+			'-i', str(vid_tmp),
 			'-s', str(vid_res),
 			'-r', str(vid_frame),
 			'-qscale', str(int(51-int(values['jpg_quality_2'])/2)),#JPEG品質指定を動画変換時にも適応
@@ -432,7 +432,7 @@ def func_video_conv(f, values, res, same_hierarchy, temp_dir, ex_dir):
 		#-音源抽出+16bitPCMへ変換-
 		try:
 			subprocess.run(['ffmpeg', '-y',
-				'-i', (vid_result),
+				'-i', (vid_tmp),
 				'-f', 's16le',#よく考えるとなんで16bitPCMなんだろう
 				'-vn',
 				'-ar', '44100',
@@ -442,7 +442,7 @@ def func_video_conv(f, values, res, same_hierarchy, temp_dir, ex_dir):
 		except:
 			pass#エラー時飛ばす(無音源動画対策)
 
-		vid_result.unlink(missing_ok=True)#変換前動画が変換後動画と競合しないようここで削除
+		vid_tmp.unlink(missing_ok=True)#変換前動画が変換後動画と競合しないようここで削除
 
 		#-抽出ファイルをsmjpeg_encode.exeで結合-
 		subprocess.run([str(smjpeg_path),
@@ -887,7 +887,7 @@ def gui_main(window_title, default_input, default_output):
 
 
 def main():
-	window_title = 'ONScripter Multi Converter for PSP ver.1.4.6'
+	window_title = 'ONScripter Multi Converter for PSP ver.1.4.7'
 	same_hierarchy = Path(sys.argv[0]).parent#同一階層のパスを変数へ代入
 
 	#起動用ファイルチェック～なかったら終了
@@ -1059,7 +1059,7 @@ def main():
 
 									#動画
 									if (f.relative_to(ex_dir) in vid_list) or ((f.suffix).lower() in ['.avi', '.mpg', '.mpeg']):
-										futures.append(executor.submit(func_video_conv, f, values, res, same_hierarchy, temp_dir, ex_dir))
+										futures.append(executor.submit(func_video_conv, f, values, noreschk, res, same_hierarchy, temp_dir, ex_dir))
 										#func_video_conv(f, values, res, same_hierarchy, temp_dir, ex_dir)
 							
 									#画像
