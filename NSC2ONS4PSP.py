@@ -1,25 +1,25 @@
 #!/usr/bin/env python3
 # windows only
-from pathlib import Path
-from io import BytesIO
-from PIL import Image
-import mozjpeg_lossless_optimization as mozj
-import zopfli as zf
-import PySimpleGUI as sg
-import subprocess as sp
-import numpy as np
-import concurrent.futures
-import tempfile
-import shutil
 import base64
-import math
-import stat
-import time
+import concurrent.futures
 import json
-import sys
-import re
+import math
 import os
+import re
+import shutil
+import stat
+import subprocess as sp
+import sys
+import tempfile
+import time
+from io import BytesIO
+from pathlib import Path
 
+import mozjpeg_lossless_optimization as mozj
+import numpy as np
+import PySimpleGUI as sg
+import zopfli as zf
+from PIL import Image
 
 ####################################################################################################
 
