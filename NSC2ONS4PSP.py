@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
+# windows only
 from pathlib import Path
 from io import BytesIO
 from PIL import Image
 import mozjpeg_lossless_optimization as mozj
 import zopfli as zf
 import PySimpleGUI as sg
+import subprocess as sp
 import numpy as np
 import concurrent.futures
-import subprocess
 import tempfile
 import shutil
 import base64
@@ -25,54 +26,30 @@ import os
 # -memo-
 # jsonでの作品個別処理何も実装してねぇ... - v1.3.0で実装予定だった - 現在未実装orz
 
-# -最新の更新履歴(v1.4.7)-
-# 解像度強制指定時の動画変換に対応
-# 拡張子.mpgで対応できない動画の変換に失敗していた不具合を修正
+# -最新の更新履歴(v1.4.8)-
+# まだ制作中 v1.4.8になってません
 
 # これを読んだあなた。
 # どうかこんな可読性の欠片もないクソコードを書かないでください。
 # それだけが私の望みです。
 
 ######################################## subprocessがexe化時正常に動かんときの対策 ########################################
-
-# 以下のサイトのものをありがたく使わせてもらってます...(メモ含めそのままコピペ)
+# 以下のサイトのものを使わせてもらってます
 # https://qiita.com/nonzu/pxs/b4cb0529a4fc65f45463
-
 def subprocess_args(include_stdout=True):
-	# The following is true only on Windows.
-	if hasattr(subprocess, 'STARTUPINFO'):
-		# Windowsでは、PyInstallerから「--noconsole」オプションを指定して実行すると、
-		# サブプロセス呼び出しはデフォルトでコマンドウィンドウをポップアップします。
-		# この動作を回避しましょう。
-		si = subprocess.STARTUPINFO()
-		si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-		# Windowsはデフォルトではパスを検索しません。環境変数を渡してください。
+	if hasattr(sp, 'STARTUPINFO'):
+		si = sp.STARTUPINFO()
+		si.dwFlags |= sp.STARTF_USESHOWWINDOW
 		env = os.environ
 	else:
 		si = None
 		env = None
 
-	# subprocess.check_output()では、「stdout」を指定できません。
-	#
-	#   Traceback (most recent call last):
-	#     File "test_subprocess.py", line 58, in <module>
-	#       **subprocess_args(stdout=None))
-	#     File "C:Python27libsubprocess.py", line 567, in check_output
-	#       raise ValueError('stdout argument not allowed, it will be overridden.')
-	#   ValueError: stdout argument not allowed, it will be overridden.
-	#
-	# したがって、必要な場合にのみ追加してください。
-	if include_stdout:
-		ret = {'stdout': subprocess.PIPE}
-	else:
-		ret = {}
+	if include_stdout: ret = {'stdout': sp.PIPE}
+	else: ret = {}
 
-	# Windowsでは、「--noconsole」オプションを使用してPyInstallerによって
-	# 生成されたバイナリからこれを実行するには、
-	# OSError例外「[エラー6]ハンドルが無効です」を回避するために
-	# すべて（stdin、stdout、stderr）をリダイレクトする必要があります。
-	ret.update({'stdin': subprocess.PIPE,
-				'stderr': subprocess.PIPE,
+	ret.update({'stdin': sp.PIPE,
+				'stderr': sp.PIPE,
 				'startupinfo': si,
 				'env': env })
 	return ret
@@ -121,15 +98,15 @@ def start_check(same_hierarchy):
 	]
 
 	#ffmpeg/probe/pngquantは別で存在チェック
-	try: subprocess.run('ffmpeg', **subprocess_args(True))
+	try: sp.run('ffmpeg', **subprocess_args(True))
 	except: ffmpeg_exist = False
 	else: ffmpeg_exist = True
 
-	try: subprocess.run('ffprobe', **subprocess_args(True))
+	try: sp.run('ffprobe', **subprocess_args(True))
 	except: ffprobe_exist = False
 	else: ffprobe_exist = True
 
-	try: subprocess.run('pngquant', **subprocess_args(True))
+	try: sp.run('pngquant', **subprocess_args(True))
 	except: pngquant_exist = False
 	else: pngquant_exist = True
 
@@ -370,9 +347,7 @@ def zero_txt_conv(text, per, values, default_transmode):
 
 def arc_extract(GARbro_path, p, e):
 	e.mkdir()
-	subprocess.run([GARbro_path, 'x', '-ca', '-o', e, p]#展開
-		,shell=True, **subprocess_args(True))
-	
+	sp.run([GARbro_path, 'x', '-ca', '-o', e, p] ,shell=True, **subprocess_args(True))#展開
 	return
 
 
@@ -393,7 +368,7 @@ def func_video_conv(f, values, noreschk, res, same_hierarchy, temp_dir, ex_dir):
 	with tempfile.TemporaryDirectory() as vidtmpdir:#一時ディレクトリ作成
 		vidtmpdir = Path(vidtmpdir)
 
-		vid_info_txt = subprocess.check_output([#動画情報を代入
+		vid_info_txt = sp.check_output([#動画情報を代入
 			'ffprobe', '-hide_banner',
 			'-v', 'error', '-print_format',
 			'json', '-show_streams',
@@ -413,7 +388,7 @@ def func_video_conv(f, values, noreschk, res, same_hierarchy, temp_dir, ex_dir):
 			shutil.copy(f,vid_tmp)#そのまま再生できそうならコピー
 			os.chmod(path=vid_tmp, mode=stat.S_IWRITE)#念の為読み取り専用を外す
 		else:
-			subprocess.run(['ffmpeg', '-y',#そのまま再生できなそうならエンコード
+			sp.run(['ffmpeg', '-y',#そのまま再生できなそうならエンコード
 				'-i', f,
 				'-vcodec', 'mpeg2video',
 				'-qscale', '0',
@@ -421,7 +396,7 @@ def func_video_conv(f, values, noreschk, res, same_hierarchy, temp_dir, ex_dir):
 			], shell=True, **subprocess_args(True))
 
 		#-連番画像展開-
-		subprocess.run(['ffmpeg', '-y',
+		sp.run(['ffmpeg', '-y',
 			'-i', str(vid_tmp),
 			'-s', str(vid_res),
 			'-r', str(vid_frame),
@@ -431,7 +406,7 @@ def func_video_conv(f, values, noreschk, res, same_hierarchy, temp_dir, ex_dir):
 
 		#-音源抽出+16bitPCMへ変換-
 		try:
-			subprocess.run(['ffmpeg', '-y',
+			sp.run(['ffmpeg', '-y',
 				'-i', (vid_tmp),
 				'-f', 's16le',#よく考えるとなんで16bitPCMなんだろう
 				'-vn',
@@ -445,7 +420,7 @@ def func_video_conv(f, values, noreschk, res, same_hierarchy, temp_dir, ex_dir):
 		vid_tmp.unlink(missing_ok=True)#変換前動画が変換後動画と競合しないようここで削除
 
 		#-抽出ファイルをsmjpeg_encode.exeで結合-
-		subprocess.run([str(smjpeg_path),
+		sp.run([str(smjpeg_path),
 		 '--video-fps', str(vid_frame),#小数点使用不可
 		 '--audio-rate', '44100',
 		 '--audio-bits', '16',
@@ -490,16 +465,14 @@ def func_image_conv(f, fc, values, def_trans, immode_dict, noreschk, per, temp_d
 	img_mask = False#マスク用仮変数
 
 	#---設定生成---
-	if f.relative_to(ex_dir) in immode_dict.keys():
-		#すでに辞書にある場合
-		img_d = immode_dict[f.relative_to(ex_dir)]#取ってくるだけ
+	if f.relative_to(ex_dir) in immode_dict.keys(): img_d = immode_dict[f.relative_to(ex_dir)]#すでに辞書にある場合 - 取ってくるだけ
 
 	else:
 		#ない場合
 		img_d = {
 			'cursor': False,
 			'trans': def_trans,
-			'part': int(values['img_multi']),
+			'part': int(values['img_multi'])
 		}
 
 	#それっぽい名前の場合カーソル扱い - たまに「カーソルをsetcursorで呼ばない」作品とかあるのでそれ対策
@@ -519,8 +492,7 @@ def func_image_conv(f, fc, values, def_trans, immode_dict, noreschk, per, temp_d
 			np_img_default = np.array(img_default.convert('RGB'))
 				
 			#カーソルが公式の画像と同一の時
-			if np.array_equal(np_img, np_img_default):
-				img_d['default_cursor'] = k
+			if np.array_equal(np_img, np_img_default): img_d['default_cursor'] = k
 	
 	#---(leftup/rightupのみ)背景色を抽出しそこからマスク画像を作成---
 	if (img_d['cursor']) and (img_d['trans'] in ['l', 'r']) and (not img_d.get('default_cursor')) and (not img.mode == 'RGBA'):
@@ -530,10 +502,8 @@ def func_image_conv(f, fc, values, def_trans, immode_dict, noreschk, per, temp_d
 		img = img.convert('RGB')#編集のためまず強制RGB化
 		img_datas = img.getdata()#画像データを取得
 
-		if img_d['trans'] == 'l':
-			a_px = img.getpixel((0, 0))#左上の1pxを背景色に指定
-		elif img_d['trans'] == 'r':
-			a_px = img.getpixel((img.width-1, 0))#右上の1pxを背景色に指定
+		if img_d['trans'] == 'l': a_px = img.getpixel((0, 0))#左上の1pxを背景色に指定
+		elif img_d['trans'] == 'r': a_px = img.getpixel((img.width-1, 0))#右上の1pxを背景色に指定
 
 		img_mask = Image.new('L', img.size, 0)
 
@@ -610,7 +580,7 @@ def func_image_conv(f, fc, values, def_trans, immode_dict, noreschk, per, temp_d
 
 				#PNG減色→可逆
 				img_resize.save(img_result_tmp, format="PNG")
-				subprocess.run(['pngquant', '--floyd=1', '--speed=1', '--quality=0-100', '--force', '--ext', '.png', str(values['PNGcolor_comp_num']), str(img_result_tmp)], shell=True, **subprocess_args(True))
+				sp.run(['pngquant', '--floyd=1', '--speed=1', '--quality=0-100', '--force', '--ext', '.png', str(values['PNGcolor_comp_num']), str(img_result_tmp)], shell=True, **subprocess_args(True))
 				
 				#入力元が拡張子偽装だと出力結果が".jpg.png"みたいになるのでそっち指定
 				img_result_tmp2 = Path(img_result_tmp.parent / Path(str(img_result_tmp.name) + '.png'))
@@ -665,7 +635,7 @@ def func_music_conv(f, values, temp_dir, ex_dir, msc_list, nsa_save_music, nsa_s
 			msctmpdir = Path(msctmpdir)
 			msc_temp_ogg = Path(msctmpdir / 'a.ogg')
 
-			subprocess.run(['ffmpeg', '-y',
+			sp.run(['ffmpeg', '-y',
 				'-i', str(f),
 				'-ab', result_kbps,
 				'-ar', result_Hz,
@@ -704,8 +674,7 @@ def func_arc_nsa(temp_dir, a, same_hierarchy):
 		arc_dir2= Path( nsatmpdir / a )
 		arc_result = Path( temp_dir / 'no_comp' / str(a + '.nsa') ) 
 
-		if not arc_dir.exists():#なければ終了
-			return
+		if not arc_dir.exists(): return#なければ終了
 
 		#nsaed.exeは"自分と同階層にarc.nsaを作成する"仕様なので、
 		#exe自体をnsatmpdirにコピーしてから使う
@@ -717,12 +686,9 @@ def func_arc_nsa(temp_dir, a, same_hierarchy):
 		#保存先作成 - 早い話'no_comp'のこと
 		arc_result.parent.mkdir(parents=True,  exist_ok=True)
 
-		try:
-			subprocess.call([nsaed_path_copy, arc_dir2], shell=True, **subprocess_args(True))
-		except:#異常終了時
-			pass#何もしない - 本当は再実行とかするべきなんだろうけど
-		else:#正常終了時
-			Path(nsatmpdir / 'arc.nsa').rename(arc_result)#nsa移動
+		try: sp.call([nsaed_path_copy, arc_dir2], shell=True, **subprocess_args(True))
+		except: pass#異常終了時 何もしない - 本当は再実行とかするべきなんだろうけど
+		else: Path(nsatmpdir / 'arc.nsa').rename(arc_result)#正常終了時 - nsa移動
 
 	return
 
@@ -733,10 +699,8 @@ def func_ons_ini(noreschk, values, resolution):
 	reshstr = str(int(resolution/4*3)) if (not noreschk) else str(272)
 
 	#-メモリにフォントを読み込んでおくか-
-	if values['ram_font']:
-		ini_fm = 'ON'
-	else:
-		ini_fm = 'OFF'
+	if values['ram_font']: ini_fm = 'ON'
+	else: ini_fm = 'OFF'
 
 	#-解像度拡大-
 	if values['size_full'] or noreschk:#フルor解像度無視変換
@@ -808,7 +772,7 @@ def format_check(file):
 def gui_msg(msg, msg_title):
 
 	sg.theme('DarkBlue12')#テーマ設定
-	sg.popup(msg, title=msg_title)
+	sg.popup(msg, title = msg_title)
 
 	return
 
@@ -887,7 +851,7 @@ def gui_main(window_title, default_input, default_output):
 
 
 def main():
-	window_title = 'ONScripter Multi Converter for PSP ver.1.4.7'
+	window_title = 'ONScripter Multi Converter for PSP ver.1.4.8'
 	same_hierarchy = Path(sys.argv[0]).parent#同一階層のパスを変数へ代入
 
 	#起動用ファイルチェック～なかったら終了
@@ -910,8 +874,8 @@ def main():
 	##### Event Loop #####
 	with tempfile.TemporaryDirectory() as temp_dir:#一時ディレクトリ作成
 		temp_dir = Path(temp_dir)
-		ex_arc_dir = (temp_dir / 'extract_arc')
-		ex_dir = (temp_dir / 'extract')
+		ex_arc_dir = Path(temp_dir / 'extract_arc')
+		ex_dir = Path(temp_dir / 'extract')
 
 		disabled_list = ['progressbar']
 		
@@ -983,14 +947,11 @@ def main():
 				if dc: gui_msg(dc, '!')#エラー時メッセージ
 
 				else:#正常動作時
-
-					#0.txt内容チェック
-					noreschk, game_mode, zc, text = zero_txt_check(text)
+					noreschk, game_mode, zc, text = zero_txt_check(text)#0.txt内容チェック
 					if zc: gui_msg(zc, '!')#エラー時メッセージ
 					
 					else:
 						#ここから変換開始
-						
 						window['progressbar'].UpdateBar(100)#進捗 100/10000
 
 						#解像度無視変換時横480
@@ -1060,22 +1021,18 @@ def main():
 									#動画
 									if (f.relative_to(ex_dir) in vid_list) or ((f.suffix).lower() in ['.avi', '.mpg', '.mpeg']):
 										futures.append(executor.submit(func_video_conv, f, values, noreschk, res, same_hierarchy, temp_dir, ex_dir))
-										#func_video_conv(f, values, res, same_hierarchy, temp_dir, ex_dir)
 							
 									#画像
 									elif fc in ['PNG', 'BMP', 'JPEG']:
 										futures.append(executor.submit(func_image_conv, f, fc, values, def_trans, immode_dict, noreschk, per, temp_dir, ex_dir, nsa_save['image']))
-										#func_image_conv(f, fc, values, def_trans, immode_dict, per, temp_dir, ex_dir, nsa_save['image'])
 
 									#音源
 									elif fc in ['WAV', 'OGG', 'MP3']:
 										futures.append(executor.submit(func_music_conv, f, values, temp_dir, ex_dir, msc_list, nsa_save['music'], nsa_save['voice'] ))
-										#func_music_conv(f, values, temp_dir, ex_dir, nsa_save['music'], nsa_save['voice'] )
 
 									#その他
 									else:
 										futures.append(executor.submit(func_data_move, f, temp_dir, nsa_save, ex_dir))
-										#func_data_move(f, temp_dir, nsa_save, ex_dir)
 
 							lenex = len(list(ex_dir.glob('**/*')))						
 							for i,ft in enumerate(concurrent.futures.as_completed(futures)):
