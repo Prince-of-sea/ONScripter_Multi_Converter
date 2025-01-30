@@ -16,7 +16,7 @@ from ui_cli import cli_main
 
 def main(use_cli, hardware, input_dir, output_dir):
 	"""ONS向け画像/音源/動画&シナリオ変換ツール"""
-	version = '2.0.0'
+	version = '2.0.1'
 
 	if use_cli: cli_main(version, hardware, input_dir, output_dir)
 	else: gui_main(version, hardware, input_dir, output_dir)

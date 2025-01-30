@@ -380,6 +380,9 @@ mov %5 ,%multiconverteralias5:mov %6 ,%multiconverteralias6:mov %7 ,%multiconver
 mov $10,$multiconverteralias0:mov $11,$multiconverteralias1:mov $12,$multiconverteralias2:mov $13,$multiconverteralias3:mov $14,$multiconverteralias4:mov $15,$multiconverteralias5
 saveon:return'''.format(bltx1 = bltx1, blty1 = blty1, bltx2 = bltx2, blty2 = blty2))
 
+	#nsa命令追記
+	ztxtscript = onsscript_check_txtmodify_adddefsub(ztxtscript, 'nsa', '')
+
 	return ztxtscript
 
 
