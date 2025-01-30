@@ -44,8 +44,8 @@ def convert_image(values: dict, values_ex: dict, f_dict: dict):
 
 	#ここでそもそも縮小が必要かどうかで分岐 - if文で囲っておき、不要の場合保存フェーズへ飛ばす
 	if scale != (1, 1):
-		#transがl、bmpかpng、解像度が既定値の場合 - カーソル比較モード
-		if (d_trans == 'l') and (d_format in ['BMP', 'PNG']) and (input_img.size in [(72, 24), (24, 24)]):
+		#解像度が既定値の場合 - カーソル比較モード
+		if (input_img.size in [(72, 24), (24, 24)]):
 			output_img_b64 = ''
 
 			#画素比較のためnumpyへ変換
