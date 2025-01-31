@@ -95,8 +95,8 @@ def convert_image(values: dict, values_ex: dict, f_dict: dict):
 		for di in range(d_part):#枚数分繰り返す
 			cropped_img = input_img.crop((crop_width * di, 0, crop_width * (di + 1), input_img.height))#画像切り出し
 
-			#lかrで呼び出し & BMPかJPG & 元の高さが32px以下 & 横が縦で割り切れる → カーソル切り出し処理 (この辺割と雰囲気で決めてる)
-			if (d_trans in ['l', 'r']) and (d_format in ['BMP', 'PNG']) and (input_img.height <= 32) and ((cropped_img.width / cropped_img.height) == int(cropped_img.width / cropped_img.height)):
+			#lかrで呼び出し & BMPかJPG & 元の高さが4px以上32px以下 & 横が縦で割り切れる → カーソル切り出し処理 (この辺割と雰囲気で決めてる)
+			if (d_trans in ['l', 'r']) and (d_format in ['BMP', 'PNG']) and (input_img.height >= 4) and (input_img.height <= 32) and ((cropped_img.width / cropped_img.height) == int(cropped_img.width / cropped_img.height)):
 
 				#numpy変換
 				cropped_img_np = np.array(cropped_img.convert('RGB'))
@@ -158,7 +158,7 @@ def convert_image(values: dict, values_ex: dict, f_dict: dict):
 			output_fix_width = math.ceil((input_resolution[0] - int(setwinpos[0])) * scale[0]) + 1
 			output_fix_height = math.ceil((input_resolution[1] - int(setwinpos[1])) * scale[1]) + 1
 
-			print(output_fix_width, output_fix_height)
+			# print(output_fix_width, output_fix_height)
 
 			output_fix_img = Image.new('RGBA', (output_fix_width, output_fix_height), (0, 0, 0, 0))
 			output_fix_img.paste(output_img, (0, 0))

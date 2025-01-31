@@ -108,7 +108,7 @@ def convert_video_mjpeg(values: dict, values_ex: dict, f_dict: dict):
 	#一時ディレクトリ作成
 	with tempfile.TemporaryDirectory() as vidtemp_dir:
 		vidtemp_dir = Path(vidtemp_dir)
-		vidtemppath = vidtemp_dir / extractedpath.name
+		vidtemppath = Path(vidtemp_dir / extractedpath.name)
 
 		#展開前にPSPの再生可能形式(MPEG-1か2)へ
 		if vid_codec == 'mpeg2video' or vid_codec == 'mpeg1video':#判定
@@ -120,6 +120,9 @@ def convert_video_mjpeg(values: dict, values_ex: dict, f_dict: dict):
 			os.chmod(path=vidtemppath, mode=stat.S_IWRITE)
 
 		else:
+			#拡張子偽装対策
+			vidtemppath = vidtemppath.with_suffix('.mpg')
+
 			#そのまま再生できなそうならエンコード
 			sp.run([ffmpeg_Path, '-y',
 				'-i', extractedpath,

@@ -20,6 +20,28 @@ def checknbz_nsa(p: Path):
 	return l
 
 
+def getnsasar_pathlist(input_dir: Path):
+	nsasar_pathlist = []
+	
+	if Path(input_dir / '00.ns2').exists():
+		for i in range(1, 100):
+			p = Path(input_dir / '{}.ns2'.format(str(i).zfill(2)))
+			if p.exists(): nsasar_pathlist.append(p)
+			else: break
+
+	elif Path(input_dir / 'arc.nsa').exists():
+		nsasar_pathlist.append( Path(input_dir / 'arc.nsa') )
+		for i in range(1, 10):
+			p = Path(input_dir / 'arc{}.nsa'.format(i))
+			if p.exists(): nsasar_pathlist.append(p)
+			else: break
+
+	elif Path(input_dir / 'arc.sar').exists():
+		nsasar_pathlist += reversed(list(input_dir.glob('*.sar')))
+
+	return nsasar_pathlist
+
+
 def extract_nsa(values: dict, values_ex: dict, extracted_dir: Path, useGUI: bool):
 	input_dir = Path(values['input_dir'])
 
@@ -34,10 +56,14 @@ def extract_nsa(values: dict, values_ex: dict, extracted_dir: Path, useGUI: bool
 			'*.sar', '*.nsa', '*.ns2', '*.exe', '*.txt', '*.ini', '*.ttf'))
 
 		#存在するarcのパスをここで全てリスト化(もちろん上書き順は考慮)
-		nsasar_pathlist = []
-		nsasar_pathlist += sorted(list(input_dir.glob('*.ns2')))
-		nsasar_pathlist += reversed(list(input_dir.glob('*.nsa')))
-		nsasar_pathlist += reversed(list(input_dir.glob('*.sar')))
+		nsasar_pathlist = getnsasar_pathlist(input_dir)
+
+		#arcな拡張子だけどarcとして使われてなさそうならno_archiveへコピー
+		for p in (list(input_dir.glob('**/*.ns2')) + list(input_dir.glob('**/*.nsa'))):
+			if (not p in nsasar_pathlist):	
+				pdir = (no_archive / p.parent.relative_to(input_dir))
+				pdir.mkdir(exist_ok=True)
+				shutil.copy(p, pdir)
 
 		#nbzリスト作成
 		values_ex['nbzlist'] = []
