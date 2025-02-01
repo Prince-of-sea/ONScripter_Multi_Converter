@@ -125,7 +125,7 @@ hardwarevalues_dict = {
 			'aud_wavbgm_hz': '22050', 'aud_wavse_hz': '22050',
 			'aud_bgmcodec_radio': 'pcm_u8', 'aud_secodec_radio': 'pcm_u8',
 
-			'vid_movfmt_radio': '連番画像',
+			'vid_movfmt_radio': '変換しない',
 			'vid_renbanfmt_radio': 'JPEG', 'vid_renbanres_radio': '33%(1/3)',
 			'vid_renbanpngquantize_chk': True, 'vid_renbanpngquantize_num': '256',
 			'vid_renbanjpgquality_bar': 85,

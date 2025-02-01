@@ -2,6 +2,7 @@ from pathlib import Path
 import subprocess as sp
 import tempfile, shutil
 
+from requiredfile_locations import location_env
 from utils import subprocess_args
 
 
@@ -9,13 +10,16 @@ def convert_music(f_dict: dict):
 	extractedpath = f_dict['extractedpath']
 	convertedpath = f_dict['convertedpath']
 
+	#ffmpegのパス取得
+	ffmpeg_Path = location_env('ffmpeg')
+
 	with tempfile.TemporaryDirectory() as mustemp_dir:
 		mustemp_dir = Path(mustemp_dir)
 	
 		match f_dict['format']:
 			case 'OGG':
 				mustemppath = (mustemp_dir / 'x.ogg')
-				sp.run(['ffmpeg', '-y',
+				sp.run([ffmpeg_Path, '-y',
 					'-i', extractedpath,
 					'-vn',
 					'-ab', str(f_dict['kbps']) + 'k',
@@ -26,7 +30,7 @@ def convert_music(f_dict: dict):
 
 			case 'MP3':
 				mustemppath = (mustemp_dir / 'x.mp3')
-				sp.run(['ffmpeg', '-y',
+				sp.run([ffmpeg_Path, '-y',
 					'-i', extractedpath,
 					'-vn',
 					'-ab', str(f_dict['kbps']) + 'k',
@@ -38,7 +42,7 @@ def convert_music(f_dict: dict):
 
 			case 'WAV':
 				mustemppath = (mustemp_dir / 'x.wav')
-				sp.run(['ffmpeg', '-y',
+				sp.run([ffmpeg_Path, '-y',
 					'-i', extractedpath,
 					'-vn',
 					'-ar', str(f_dict['hz']),
