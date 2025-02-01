@@ -520,6 +520,15 @@ def gui_main(version, hw_key, input_dir_param, output_dir_param):
 									tag="etc_filecompse_nsa",
 								)
 							with dpg.group(horizontal=True):
+								dpg.add_text("連番利用時動画圧縮先：")
+								dpg.add_combo(
+									label="",
+									items=("arc.nsa", "arc1.nsa", "arc2.nsa", "圧縮しない"),
+									default_value=values_default["etc_filecomprenban_nsa"],
+									fit_width=True,
+									tag="etc_filecomprenban_nsa",
+								)
+							with dpg.group(horizontal=True):
 								dpg.add_checkbox(
 									label="""拡張子".dll"のファイルを全て除外""",
 									default_value=values_default["etc_fileexdll_chk"],

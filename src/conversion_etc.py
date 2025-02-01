@@ -24,14 +24,14 @@ def create_cnvsetdict(values: dict, values_ex: dict, extracted_dir: Path):
 				#シナリオ命令検知or拡張子で推測 ヘッダ検知できないので仕方なくこの状態
 				cnvset_dict[f_path_re] = {'fileformat':'video'}
 
-				#連番のときのみbgmと同じnsaに突っ込む
+				#連番のときのみ設定先に
 				if (values['vid_movfmt_radio'] == '連番画像'):
-					match values['etc_filecompbgm_nsa']:
+					match values['etc_filecomprenban_nsa']:
 						case 'arc.nsa': cnvset_dict[f_path_re]['comp'] = 'arc'
 						case 'arc1.nsa': cnvset_dict[f_path_re]['comp'] = 'arc1'
 						case 'arc2.nsa': cnvset_dict[f_path_re]['comp'] = 'arc2'
 						case '圧縮しない': cnvset_dict[f_path_re]['comp'] = 'no_comp'
-						case _: raise ValueError('画像の圧縮設定が選択されていません')
+						case _: raise ValueError('連番画像の圧縮設定が選択されていません')
 
 				#通常時は(再生できなくなるので)非圧縮
 				else:		

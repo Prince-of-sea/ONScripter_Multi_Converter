@@ -33,7 +33,7 @@ hardwarevalues_dict = {
 			'vid_mjpegquality_bar': 8,
 			'vid_mp4quality_bar': 4, 'vid_mp4aud_kbps': '160', 'vid_mp4aud_hz': '44100',
 
-			'etc_filecompimg_nsa': 'arc.nsa', 'etc_filecompbgm_nsa': 'arc1.nsa', 'etc_filecompse_nsa': 'arc2.nsa',
+			'etc_filecompimg_nsa': 'arc.nsa', 'etc_filecompbgm_nsa': 'arc1.nsa', 'etc_filecompse_nsa': 'arc2.nsa', 'etc_filecomprenban_nsa': 'arc2.nsa',
 			'etc_fileexdll_chk': True, 'etc_fileexdb_chk': True,
 			'etc_iniscreen': '拡大しない', 'etc_iniramfont_chk': True, 'etc_inicursor_chk': True,
 
@@ -83,7 +83,7 @@ hardwarevalues_dict = {
 			'vid_mjpegquality_bar': 8,
 			'vid_mp4quality_bar': 4, 'vid_mp4aud_kbps': '160', 'vid_mp4aud_hz': '44100',
 
-			'etc_filecompimg_nsa': 'arc.nsa', 'etc_filecompbgm_nsa': 'arc1.nsa', 'etc_filecompse_nsa': 'arc2.nsa',
+			'etc_filecompimg_nsa': 'arc.nsa', 'etc_filecompbgm_nsa': 'arc1.nsa', 'etc_filecompse_nsa': 'arc2.nsa', 'etc_filecomprenban_nsa': 'arc2.nsa',
 			'etc_fileexdll_chk': True, 'etc_fileexdb_chk': True,
 			'etc_iniscreen': '拡大しない', 'etc_iniramfont_chk': True, 'etc_inicursor_chk': False,
 
@@ -133,7 +133,7 @@ hardwarevalues_dict = {
 			'vid_mjpegquality_bar': 8,
 			'vid_mp4quality_bar': 4, 'vid_mp4aud_kbps': '160', 'vid_mp4aud_hz': '44100',
 
-			'etc_filecompimg_nsa': 'arc.nsa', 'etc_filecompbgm_nsa': '圧縮しない', 'etc_filecompse_nsa': 'arc.nsa',
+			'etc_filecompimg_nsa': 'arc.nsa', 'etc_filecompbgm_nsa': '圧縮しない', 'etc_filecompse_nsa': 'arc.nsa', 'etc_filecomprenban_nsa': 'arc.nsa',
 			'etc_fileexdll_chk': True, 'etc_fileexdb_chk': True,
 			'etc_iniscreen': '拡大しない', 'etc_iniramfont_chk': True, 'etc_inicursor_chk': True,
 
@@ -183,7 +183,7 @@ hardwarevalues_dict = {
 	# 		'vid_mjpegquality_bar': 8,
 	# 		'vid_mp4quality_bar': 4, 'vid_mp4aud_kbps': '160', 'vid_mp4aud_hz': '44100',
 
-	# 		'etc_filecompimg_nsa': 'arc.nsa', 'etc_filecompbgm_nsa': 'arc1.nsa', 'etc_filecompse_nsa': 'arc2.nsa',
+	# 		'etc_filecompimg_nsa': 'arc.nsa', 'etc_filecompbgm_nsa': 'arc1.nsa', 'etc_filecompse_nsa': 'arc2.nsa', 'etc_filecomprenban_nsa': 'arc2.nsa',
 	# 		'etc_fileexdll_chk': True, 'etc_fileexdb_chk': True,
 	# 		'etc_iniscreen': '拡大しない', 'etc_iniramfont_chk': True, 'etc_inicursor_chk': True,
 
