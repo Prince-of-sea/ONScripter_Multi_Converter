@@ -133,7 +133,11 @@ def convert_start(arg):
 
 			#元valuesから計算処理かけて作った結果いれるところ+0.txt(&他)からすくい上げるもの
 			if useGUI: configure_progress_bar(0, '機種固有設定取得...')
-			values_ex = gethardwarevalues(values['hardware'], 'values_ex')		
+			values_ex = gethardwarevalues(values['hardware'], 'values_ex')
+
+			#選択不可の動画形式選んでたらエラー
+			if (values['vid_movfmt_radio'] in values_ex['disable_video']):
+				raise ValueError('{hw}は動画を{v}形式に変換できません'.format(hw = values['hardware'], v = values['vid_movfmt_radio']))
 
 			#連番変換時画像サイズ先に代入
 			if (values['vid_movfmt_radio'] == '連番画像'):

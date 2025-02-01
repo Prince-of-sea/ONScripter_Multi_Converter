@@ -39,8 +39,9 @@ def onsscript_decode(values: dict):
 	return text
 
 
-def onsscript_check_resolution(values: dict, ztxtscript: str, override_resolution: list):
+def onsscript_check_resolution(values: dict, values_ex: dict, ztxtscript: str, override_resolution: list):
 	hardware = values['hardware']
+	aspect_43only = values_ex['aspect_4:3only']
 
 	#解像度表記抽出
 	oldnsc_mode = (r';mode(320|400|800)')#ONS解像度旧表記
@@ -87,17 +88,18 @@ def onsscript_check_resolution(values: dict, ztxtscript: str, override_resolutio
 			if (output_w <= 480):
 				override_resolution = (output_w, output_h)
 
+	if (aspect_43only) and (newnsc_search):
 		#チェック&変換
 		if (script_resolution[0] in [320, 400, 640, 800]) and (script_resolution[1] == script_resolution[0] / 4 * 3):
 			if (script_resolution[0] == 640): ztxtscript = re.sub(newnsc_mode, r';value\2', ztxtscript, 1)#640x480
 			else: ztxtscript = re.sub(newnsc_mode, r';mode\3,value\2', ztxtscript, 1)#通常時
 		
-		elif override_resolution:
+		elif (hardware == 'PSP') and (override_resolution):
 			if   (alternative_w == 800): ztxtscript = re.sub(newnsc_mode, r';mode800,value\2', ztxtscript, 1)#ほぼ800変換時
 			elif (alternative_w == 640): ztxtscript = re.sub(newnsc_mode, r';value\2', ztxtscript, 1)#ほぼ640変換時
 			else: ztxtscript = re.sub(newnsc_mode, r';value\2', ztxtscript, 1)#解像度無視時
 		
-		else: raise ValueError('非対応解像度のため、このソフトはPSP用に変換できません')
+		else: raise ValueError('非対応解像度のため、このソフトは変換できません')
 	
 	return script_resolution, override_resolution, ztxtscript
 
@@ -422,7 +424,7 @@ def onsscript_check(values: dict, values_ex: dict):
 	else: override_resolution = ()
 
 	#解像度表記抽出&新表記が読めないPSP用変換
-	values_ex['script_resolution'], override_resolution, ztxtscript = onsscript_check_resolution(values, ztxtscript, override_resolution)
+	values_ex['script_resolution'], override_resolution, ztxtscript = onsscript_check_resolution(values, values_ex, ztxtscript, override_resolution)
 
 	#元作品解像度が存在しない場合(=別エンジンONSコンバータを事前に使用していない時)0.txtから抽出した解像度をvalues_exに格納
 	if values_ex.get('input_resolution') == None: values_ex['input_resolution'] = values_ex['script_resolution']
