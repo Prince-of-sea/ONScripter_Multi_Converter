@@ -10,7 +10,7 @@ from nsa_operations import extract_nsa, compressed_nsa
 from conversion_etc import tryconvert, create_cnvsetdict
 from ons_script import onsscript_decode, onsscript_check
 from utils import configure_progress_bar, message_box
-from misc import in_out_dir_check, remove_0txtcommentout, create_savedatadir, create_configfile, create_0txt, result_move
+from misc import in_out_dir_check, remove_0txtcommentout, create_savedatadir, create_configfile, create_0txt, debug_copy, result_move
 
 
 def convert_files(values: dict, values_ex: dict, cnvset_dict: dict, extracted_dir: Path, converted_dir: Path, useGUI: bool):
@@ -186,6 +186,7 @@ def convert_start(arg):
 
 			#完成品移動
 			if useGUI: configure_progress_bar(0.98, '全データ移動...')
+			debug_copy(values, compressed_dir)
 			result_move(values, compressed_dir)
 
 			#まもなく完了します
@@ -198,9 +199,12 @@ def convert_start(arg):
 	else:
 		if (useGUI):
 			end_time = time.perf_counter()
+			c_time = math.ceil(end_time-start_time)
+			m = str(c_time // 60).zfill(2)
+			s = str(c_time % 60).zfill(2)
 
 			configure_progress_bar(1, '変換完了')
-			message_box('変換完了', '変換処理が終了しました\n処理時間: {}s'.format(math.ceil(end_time-start_time)), 'info', useGUI)
+			message_box('変換完了', '変換処理が終了しました\n処理時間: {m}分{s}秒'.format(m = m, s = s), 'info', useGUI)
 
 			#入出力初期化
 			dpg.set_value('input_dir', '')

@@ -75,8 +75,8 @@ hardwarevalues_dict = {
 			'aud_wavbgm_hz': '44100', 'aud_wavse_hz': '22050',
 			'aud_bgmcodec_radio': 'pcm_s16le', 'aud_secodec_radio': 'pcm_s16le',
 
-			'vid_movfmt_radio': '連番画像',
-			'vid_renbanfmt_radio': 'PNG', 'vid_renbanres_radio': '66%(2/3)',
+			'vid_movfmt_radio': '変換しない',
+			'vid_renbanfmt_radio': 'JPEG', 'vid_renbanres_radio': '66%(2/3)',
 			'vid_renbanpngquantize_chk': True, 'vid_renbanpngquantize_num': '256',
 			'vid_renbanjpgquality_bar': 90,
 			'vid_renbanaudset_radio': 'SE/VOICEに合わせる',

@@ -647,7 +647,7 @@ def gui_main(version, hw_key, input_dir_param, output_dir_param):
 			dpg.add_text(default_value="", tag="progress_msg")
 
 			#!!!ここもっと良い書き方募集中!!!
-			dpg.add_text(default_value=" "*100)#↓を画面に見せないようにするための無意味スペース
+			dpg.add_text(default_value=" "*1000)#↓を画面に見せないようにするための無意味スペース
 			dpg.add_text(default_value=values_default["hardware"], tag="hardware")#関数convertにhardwareを飛ばすため仕方なくこんな感じに
 			dpg.add_text(default_value=version, tag="version")#同様
 

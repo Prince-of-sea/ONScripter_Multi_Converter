@@ -90,14 +90,14 @@ def onsscript_check_resolution(values: dict, values_ex: dict, ztxtscript: str, o
 
 	if (aspect_43only) and (newnsc_search):
 		#チェック&変換
-		if (script_resolution[0] in [320, 400, 640, 800]) and (script_resolution[1] == script_resolution[0] / 4 * 3):
-			if (script_resolution[0] == 640): ztxtscript = re.sub(newnsc_mode, r';value\2', ztxtscript, 1)#640x480
-			else: ztxtscript = re.sub(newnsc_mode, r';mode\3,value\2', ztxtscript, 1)#通常時
-		
-		elif (hardware == 'PSP') and (override_resolution):
+		if (hardware == 'PSP') and (override_resolution):
 			if   (alternative_w == 800): ztxtscript = re.sub(newnsc_mode, r';mode800,value\2', ztxtscript, 1)#ほぼ800変換時
 			elif (alternative_w == 640): ztxtscript = re.sub(newnsc_mode, r';value\2', ztxtscript, 1)#ほぼ640変換時
 			else: ztxtscript = re.sub(newnsc_mode, r';value\2', ztxtscript, 1)#解像度無視時
+
+		elif (script_resolution[0] in [320, 400, 640, 800]) and (script_resolution[1] == script_resolution[0] / 4 * 3):
+			if (script_resolution[0] == 640): ztxtscript = re.sub(newnsc_mode, r';value\2', ztxtscript, 1)#640x480
+			else: ztxtscript = re.sub(newnsc_mode, r';mode\3,value\2', ztxtscript, 1)#通常時
 		
 		else: raise ValueError('非対応解像度のため、このソフトは変換できません')
 	

@@ -1,5 +1,5 @@
 from pathlib import Path
-import shutil, re
+import shutil, sys, re
 
 
 def in_out_dir_check(values: dict):
@@ -144,6 +144,15 @@ def create_savedatadir(values_ex: dict, compressed_dir: dict):
 
 	if savedir_path:
 		Path(compressed_dir / savedir_path).mkdir()
+
+	return
+
+
+def debug_copy(values: dict, compressed_dir: Path):
+	d = Path( Path(sys.argv[0]).parent / 'debug' / values['hardware'] )
+
+	if d.is_dir():
+		for p in d.glob('*'): shutil.copy(p, compressed_dir)
 
 	return
 
