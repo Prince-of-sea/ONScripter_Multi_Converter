@@ -76,11 +76,12 @@ def gui_main(version, hw_key, input_dir_param, output_dir_param):
 	with dpg.window(label="Main Window", tag="Main Window", no_resize=True) as window:
 		with dpg.menu_bar():
 			with dpg.menu(label="設定"):
+				dpg.add_menu_item(label="CPU使用率低減モード", check=True, default_value=False, tag="lower_cpu_usage")
 				with dpg.menu(label="ハード変更"):
 					dpg.add_menu_item(label="SONY PlayStation Portable", callback=refresh_state, user_data=hardwarevalues_full['PSP']['values_default'])
 					dpg.add_menu_item(label="SONY PlayStation Vita", callback=refresh_state, user_data=hardwarevalues_full['PSVITA']['values_default'])
 					dpg.add_menu_item(label="SHARP Brain(Windows CE 6.0)", callback=refresh_state, user_data=hardwarevalues_full['BRAIN']['values_default'])
-					#dpg.add_menu_item(label="Android汎用", callback=refresh_state, user_data=hardwarevalues_full['ANDROID']['values_default'])
+					dpg.add_menu_item(label="Android OS汎用", callback=refresh_state, user_data=hardwarevalues_full['ANDROID']['values_default'])
 
 				dpg.add_menu_item(label="終了", callback=close)
 

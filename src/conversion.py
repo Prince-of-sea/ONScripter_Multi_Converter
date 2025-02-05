@@ -1,7 +1,7 @@
 from pathlib import Path
 import concurrent.futures
 import dearpygui.dearpygui as dpg
-import tempfile, time, math
+import tempfile, time, math, os
 
 from requiredfile_locations import exist_env, exist_all
 from hardwarevalues_config import gethardwarevalues
@@ -37,7 +37,8 @@ def convert_files(values: dict, values_ex: dict, cnvset_dict: dict, extracted_di
 		compchklist.append(f_dict['comp'])
 
 	#並列ファイル変換
-	with concurrent.futures.ThreadPoolExecutor() as executor:
+	num_workers = math.ceil(os.cpu_count() / 4) if (values.get('lower_cpu_usage')) else (os.cpu_count() + 4)#low時スレッド数/4繰り上げ、通常時スレッド数+4(初期値)
+	with concurrent.futures.ThreadPoolExecutor(max_workers=num_workers) as executor:
 		futures = []
 
 		for f_path_re, f_dict in cnvset_dict.items():
@@ -208,7 +209,7 @@ def convert_start(arg):
 
 			#入出力初期化
 			dpg.set_value('input_dir', '')
-			dpg.set_value('output_dir', '')
+			#dpg.set_value('output_dir', '')
 
 	#GUI時
 	if (useGUI):

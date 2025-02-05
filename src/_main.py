@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # windows only
-import click
+import click, os
 
 from hardwarevalues_config import gethardwarevalues_full
 from ui_gui import gui_main
@@ -16,9 +16,10 @@ from ui_cli import cli_main
 
 def main(use_cli, hardware, input_dir, output_dir):
 	"""ONS向け画像/音源/動画&シナリオ変換ツール"""
-	version = '2.1.3'
+	version = '2.2.0'
 
-	if use_cli: cli_main(version, hardware, input_dir, output_dir)
+	if os.name != 'nt': raise ValueError('Windows以外では起動できません')
+	elif use_cli: cli_main(version, hardware, input_dir, output_dir)#これ今うまく動いてなさそう?要修正
 	else: gui_main(version, hardware, input_dir, output_dir)
 
 

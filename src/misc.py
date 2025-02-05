@@ -159,7 +159,7 @@ def debug_copy(values: dict, compressed_dir: Path):
 
 def result_move(values: dict, compressed_dir: Path):
 	#保存先ディレクトリパス作成
-	result_dir = Path(values['output_dir'] / Path('result_' + str(values['input_dir'].name)))
+	result_dir = Path(values['output_dir'] / Path('result_{hw}_{n}'.format(hw = values['hardware'], n = str(values['input_dir'].name))))
 
 	#すでにあるなら削除
 	if result_dir.exists(): shutil.rmtree(result_dir)
