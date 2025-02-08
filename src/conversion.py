@@ -97,10 +97,12 @@ def convert_start(arg):
 
 	#ここから処理
 	try:
+		required_soft_list = ['GARBro', 'smjpeg_encode', 'nsaed']
+
 		#必要ソフトチェック
 		if not exist_env('ffmpeg'): raise ValueError('ffmpegが用意されていません')
 		if not exist_env('ffprobe'): raise ValueError('ffprobeが用意されていません')
-		if not exist_all(['GARBro', 'smjpeg_encode', 'nsaed']): raise ValueError('必要なソフトが用意されていません')
+		if not exist_all(required_soft_list): raise ValueError('必要なソフトが用意されていません')
 
 		#入出力ディレクトリチェック
 		in_out_dir_check(values)

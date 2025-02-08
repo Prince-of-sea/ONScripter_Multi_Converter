@@ -35,7 +35,7 @@ hardwarevalues_dict = {
 
 			'etc_filecompimg_nsa': 'arc.nsa', 'etc_filecompbgm_nsa': 'arc1.nsa', 'etc_filecompse_nsa': 'arc2.nsa', 'etc_filecomprenban_nsa': 'arc2.nsa',
 			'etc_fileexdll_chk': True, 'etc_fileexdb_chk': True,
-			'etc_iniscreen': '拡大しない', 'etc_iniramfont_chk': True, 'etc_inicursor_chk': True,
+			'etc_iniscreen': '拡大しない', 'etc_iniramfont_chk': True, 'etc_inicursor_chk': False,
 
 			'etc_0txtnbz_radio': '0.txtを".nbz"->".wav"で一括置換',
 			'etc_0txtavitompegplay': '利用する(関数上書き)',

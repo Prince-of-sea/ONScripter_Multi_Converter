@@ -4,19 +4,19 @@ import sys, os
 
 
 #同一階層のパスを変数へ代入
-same_hierarchy = Path(sys.argv[0]).parent
+__same_hierarchy = Path(sys.argv[0]).parent
 
 #ファイルパス辞書
 requiredfile_locations_dict = {
 	#必須
-	'GARbro_GUI' : Path(same_hierarchy / 'tools' / 'Garbro_console' / 'GARbro.GUI.exe'),
-	'GARBro' : Path(same_hierarchy / 'tools' / 'Garbro_console' / 'GARbro.Console.exe'),
-	'smjpeg_encode' : Path(same_hierarchy / 'tools' / 'smjpeg_encode.exe'),
-	'nsaed' : Path(same_hierarchy / 'tools' / 'nsaed.exe'),
+	'GARbro_GUI' : Path(__same_hierarchy / 'tools' / 'Garbro_console' / 'GARbro.GUI.exe'),
+	'GARBro' : Path(__same_hierarchy / 'tools' / 'Garbro_console' / 'GARbro.Console.exe'),
+	'smjpeg_encode' : Path(__same_hierarchy / 'tools' / 'smjpeg_encode.exe'),
+	'nsaed' : Path(__same_hierarchy / 'tools' / 'nsaed.exe'),
 
 	#'PATH'でもおｋ
-	'ffmpeg' : Path(same_hierarchy / 'tools' / 'ffmpeg.exe'),
-	'ffprobe' : Path(same_hierarchy / 'tools' / 'ffprobe.exe'),
+	'ffmpeg' : Path(__same_hierarchy / 'tools' / 'ffmpeg.exe'),
+	'ffprobe' : Path(__same_hierarchy / 'tools' / 'ffprobe.exe'),
 }
 
 

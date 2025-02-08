@@ -9,10 +9,10 @@
  多分windows10以降なら普通に動くと思います<br>
  <br>
  [制作/検証に使用した作者のPC環境]<br>
- PCスペック:<br>
+ PCスペック: <br>
  [![CPU-Z](https://valid.x86.fr/cache/banner/izbfap-2.png)](https://valid.x86.fr/izbfap)<br>
- FFmpeg-version:version 7.1-full_build<br>
- Python-version:Python 3.11.9<br>
+ FFmpeg-version: version 7.1-full_build<br>
+ Python-version: Python 3.11.9<br>
 
 
 ## 動作に必要なもの
@@ -48,6 +48,8 @@
         │
         └─  {その他いくつかのディレクトリ}
 ```
+ ※ffmpeg、ffprobeはtools直下(nsaedやsmjpeg_encodeと同じところ)に入れても認識します<br>
+ また、パスの通る場所とtools直下両方に存在する場合はtools直下が優先されます<br>
 
 ### ツールの設定
  ![インターフェース](./md_ui_full.png)<br>
@@ -63,10 +65,11 @@
     - PSP: onscripter-20110111_psp
     - PSVITA: ONScripter-jh-PSVita (yuri) v0.5.1.3 ※日本語で確認
     - Brain: onscripter-20100510-424x318 / onscripter-20100510-qvga
+    - Android: ONScripter v20240906
 
  - 自由な解像度指定に対応していないハードでは、対応しているゲームの解像度は基本的には4種類のみです<br>
  以下の解像度以外は変換が行えないと思ってください<br>
- ※一応v2.0.0以降は__PSPのみ__横解像度が640または800から+-10の場合に強制変換できるようになっています<br>
+ ※一応v2.0.0以降は**PSPのみ**横解像度が640または800から+-10の場合に強制変換できるようになっています<br>
     - 800x600
     - 640x480
     - 400x300 ~~←正直怪しい~~
