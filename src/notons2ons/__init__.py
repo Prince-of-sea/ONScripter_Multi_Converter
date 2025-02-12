@@ -1,0 +1,15 @@
+from .KIRIKIRI2ONS_ST_miku import title_info, main
+from .KIRIKIRI2ONS_Moviendo_otomec import title_info, main
+from .KIRIKIRI2ONS_COMP_mama2 import title_info, main
+from .KIRIKIRI2ONS_unclesheep_mgirlm import title_info, main
+from .TYRANO2ONS_Rubisama_seilove import title_info, main
+from .TYRANO2ONS_CHARON_Pachi import title_info, main
+from .KIRIKIRI2ONS_CUFFS_wankor import title_info, main
+from .MJO2ONS_NANA_Polaris import title_info, main
+from .DIR2ONS_KeroQ_FinalSky import title_info, main
+from .KIRIKIRI2ONS_APTIT_sobo import title_info, main
+from .KIRIKIRI2ONS_yorunohitsuji_kodoyuri import title_info, main
+from .ACTGS2ONS_Actress_Nijimite import title_info, main
+from .RSC2ONS_Liar_SB import title_info, main
+from .RSC2ONS_raiL_kagerou import title_info, main
+from .IGS2ONS_Noesis_loveesm import title_info, main

@@ -381,11 +381,11 @@ def convert_video_renban2_main(values: dict, imgpath: Path):
 	return
 
 
-def convert_video_renban2(values: dict, f_dict: dict):
+def convert_video_renban2(values: dict, values_ex: dict, f_dict: dict):
+	num_workers = values_ex['num_workers']
 	convertedpath = f_dict['convertedpath']
 	
 	#並列ファイル変換
-	num_workers = math.ceil(os.cpu_count() / 4) if (values.get('lower_cpu_usage')) else (os.cpu_count() + 4)#low時スレッド数/4繰り上げ、通常時スレッド数+4(初期値)
 	with concurrent.futures.ThreadPoolExecutor(max_workers=num_workers) as executor:
 		futures = []
 

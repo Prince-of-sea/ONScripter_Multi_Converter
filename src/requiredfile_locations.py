@@ -17,6 +17,13 @@ requiredfile_locations_dict = {
 	#'PATH'でもおｋ
 	'ffmpeg' : Path(__same_hierarchy / 'tools' / 'ffmpeg.exe'),
 	'ffprobe' : Path(__same_hierarchy / 'tools' / 'ffprobe.exe'),
+
+	#個別変換時に必要
+	'gscScriptCompAndDecompiler-cli': Path(__same_hierarchy / 'tools' / 'gscScriptCompAndDecompiler.exe'),
+	'DirectorCastRipper_D10': Path(__same_hierarchy / 'tools' / 'DirectorCastRipper_D10' / 'DirectorCastRipper.exe'),
+	'igscriptD': Path(__same_hierarchy / 'tools' / 'igscriptD.exe'),
+	'Kikiriki': Path(__same_hierarchy / 'tools' / 'Kikiriki' / 'Kikiriki.exe'),
+	'mjdisasm': Path(__same_hierarchy / 'tools' / 'mjdisasm.exe'),
 }
 
 

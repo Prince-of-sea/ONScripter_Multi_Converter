@@ -151,12 +151,16 @@ def convert_image(values: dict, values_ex: dict, f_dict: dict):
 				cropped_img = cropped_img.resize((output_crop_width, output_height), Image.Resampling.LANCZOS)#縮小
 				output_img.paste(cropped_img, (output_crop_width * di, 0))#結合用画像へ貼り付け
 		
-		#setwindow命令で表示した画像(透過PNGのみ?)の右と下に描画不具合が出るやつを修正
+		#一部端末(PSPとか)でsetwindow命令で表示した画像(透過PNGのみ?)の右と下に描画不具合が出るやつを修正
 		if (setwinimgbug) and (setwinpos) and (output_img.mode == 'RGBA'):
 			
-			#右&下を透明で埋めたあとの解像度 - 念の為+1
-			output_fix_width = math.ceil((input_resolution[0] - int(setwinpos[0])) * scale[0]) + 1
-			output_fix_height = math.ceil((input_resolution[1] - int(setwinpos[1])) * scale[1]) + 1
+			#右&下を透明で埋めたあとの解像度 - 念の為+1 ←ここたまにバグって盛大に破綻するので一旦削除
+			# output_fix_width = math.ceil((input_resolution[0] - int(setwinpos[0])) * scale[0]) + 1
+			# output_fix_height = math.ceil((input_resolution[1] - int(setwinpos[1])) * scale[1]) + 1
+
+			#右&下を透明で埋めたあとの解像度 - とりあえず縦2倍横1.5倍くらいにしておけば大丈夫でしょ(雑)
+			output_fix_width = int(output_width * 1.5)
+			output_fix_height = int(output_height * 2)
 
 			# print(output_fix_width, output_fix_height)
 

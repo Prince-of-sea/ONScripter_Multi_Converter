@@ -423,11 +423,14 @@ def onsscript_check(values: dict, values_ex: dict):
 	if (hardware == 'PSP') and (r'<ONS_RESOLUTION_CHECK_DISABLED>' in ztxtscript): override_resolution = (480, 272)
 	else: override_resolution = ()
 
+	#解像度無視変換時setwindow画像描画バグ対策無効化(そのままだと解像度取得ミスって見切れる)
+	if override_resolution: values_ex['setwinimgbug'] = False
+
 	#解像度表記抽出&新表記が読めないPSP用変換
 	values_ex['script_resolution'], override_resolution, ztxtscript = onsscript_check_resolution(values, values_ex, ztxtscript, override_resolution)
 
 	#元作品解像度が存在しない場合(=別エンジンONSコンバータを事前に使用していない時)0.txtから抽出した解像度をvalues_exに格納
-	if values_ex.get('input_resolution') == None: values_ex['input_resolution'] = values_ex['script_resolution']
+	if not values_ex.get('input_resolution'): values_ex['input_resolution'] = values_ex['script_resolution']
 
 	#最終解像度取得
 	values_ex['output_resolution'] = set_output_resolution(values, values_ex, override_resolution)

@@ -8,12 +8,14 @@ from hardwarevalues_config import gethardwarevalues
 from conversion_video import getvidrenbanres, convert_video_renban2
 from nsa_operations import extract_nsa, compressed_nsa
 from conversion_etc import tryconvert, create_cnvsetdict
+from process_notons import get_titledict, pre_convert
 from ons_script import onsscript_decode, onsscript_check
-from utils import configure_progress_bar, message_box
+from utils import configure_progress_bar, message_box, convert_askmsg
 from misc import in_out_dir_check, remove_0txtcommentout, create_savedatadir, create_configfile, create_0txt, debug_copy, result_move
 
 
 def convert_files(values: dict, values_ex: dict, cnvset_dict: dict, extracted_dir: Path, converted_dir: Path, useGUI: bool):
+	num_workers = values_ex['num_workers']
 
 	#圧縮先チェック用リスト
 	compchklist = []
@@ -37,7 +39,6 @@ def convert_files(values: dict, values_ex: dict, cnvset_dict: dict, extracted_di
 		compchklist.append(f_dict['comp'])
 
 	#並列ファイル変換
-	num_workers = math.ceil(os.cpu_count() / 4) if (values.get('lower_cpu_usage')) else (os.cpu_count() + 4)#low時スレッド数/4繰り上げ、通常時スレッド数+4(初期値)
 	with concurrent.futures.ThreadPoolExecutor(max_workers=num_workers) as executor:
 		futures = []
 
@@ -64,7 +65,7 @@ def convert_files(values: dict, values_ex: dict, cnvset_dict: dict, extracted_di
 		for f_dict in cnvset_dict.values():
 			if (f_dict['fileformat'] == 'video'):
 				#convert_video内で実装するとThreadPoolExecutorが競合しそうなのでこっちで処理
-				convert_video_renban2(values, f_dict)
+				convert_video_renban2(values, values_ex, f_dict)
 	
 	#エラーログ収集
 	allerrlog = ''
@@ -99,11 +100,25 @@ def convert_start(arg):
 	try:
 		required_soft_list = ['GARBro', 'smjpeg_encode', 'nsaed']
 
+		#タイトル個別処理辞書取得
+		titledict = get_titledict()
+
+		#個別選択時
+		if values['title_setting'] in titledict.keys():
+			title_info = titledict[ values['title_setting'] ]
+
+			#確認
+			if useGUI: configure_progress_bar(0, '個別設定変換確認...')
+			if not convert_askmsg(useGUI, title_info): raise ValueError('変換がキャンセルされました')
+
+			#必要ソフトを配列に代入
+			required_soft_list += title_info['requiredsoft']
+
 		#必要ソフトチェック
 		if not exist_env('ffmpeg'): raise ValueError('ffmpegが用意されていません')
 		if not exist_env('ffprobe'): raise ValueError('ffprobeが用意されていません')
 		if not exist_all(required_soft_list): raise ValueError('必要なソフトが用意されていません')
-
+		
 		#入出力ディレクトリチェック
 		in_out_dir_check(values)
 
@@ -121,13 +136,11 @@ def convert_start(arg):
 			#変換済データ置き場(この時点でnsa再圧縮用に分けとく)
 			converted_dir = Path(temp_dir / 'converted')
 
-			#圧縮済データ置き場(nsaに再圧縮、0.txtもここ) → 最終的な出力はこれ
+			#圧縮済データ置き場(nsaに再圧縮、0.txtもここ)
 			compressed_dir = Path(temp_dir / 'compressed')
 
-			# #データ置き場事前削除(テスト用、本番環境時なくても可)
-			# if extracted_dir.exists(): shutil.rmtree(extracted_dir)
-			# if converted_dir.exists(): shutil.rmtree(converted_dir)
-			# if compressed_dir.exists(): shutil.rmtree(compressed_dir)
+			#最終的な出力はこれ
+			result_dir = Path(values['output_dir'] / Path('result_{hw}_{n}'.format(hw = values['hardware'], n = str(values['input_dir'].name))))
 
 			#データ置き場作成
 			extracted_dir.mkdir()
@@ -137,6 +150,34 @@ def convert_start(arg):
 			#元valuesから計算処理かけて作った結果いれるところ+0.txt(&他)からすくい上げるもの
 			if useGUI: configure_progress_bar(0, '機種固有設定取得...')
 			values_ex = gethardwarevalues(values['hardware'], 'values_ex')
+			
+			#並列処理用スレッド設定
+			values_ex['num_workers'] = math.ceil(os.cpu_count() / 4) if (values.get('lower_cpu_usage')) else (os.cpu_count() + 4)#low時スレッド数/4繰り上げ、通常時スレッド数+4(初期値)
+
+			#個別選択時
+			if values['title_setting'] in titledict.keys():
+
+				#個別タイトルが非4:3&変換先ハードが4:3限定(PSP除く)の場合
+				if (not title_info['is_4:3']) and (values_ex['aspect_4:3only']) and (values['hardware'] != 'PSP'):
+
+					#非対応解像度エラー
+					raise ValueError('非対応解像度のため、このソフトは変換できません')
+
+				#事前変換用ディレクトリパス
+				pre_converted_dir = Path(temp_dir / 'pre_converted')
+
+				#事前変換用ディレクトリ作成
+				pre_converted_dir.mkdir()
+
+				#個別変換用事前変換
+				if useGUI: configure_progress_bar(0, '個別設定を元に事前変換...')
+				pre_convert(values, values_ex, pre_converted_dir)
+
+				#画像解像度がスクリプト側と一致しない時用
+				values_ex['input_resolution'] = title_info.get('input_resolution')
+
+				#inputを変換済みのファイルが入ったディレクトリで上書き - 以下元のinput参照不可になるので注意
+				values['input_dir'] = pre_converted_dir
 
 			#選択不可の動画形式選んでたらエラー
 			if (values['vid_movfmt_radio'] in values_ex['disable_video']):
@@ -190,7 +231,7 @@ def convert_start(arg):
 			#完成品移動
 			if useGUI: configure_progress_bar(0.98, '全データ移動...')
 			debug_copy(values, compressed_dir)
-			result_move(values, compressed_dir)
+			result_move(result_dir, compressed_dir)
 
 			#まもなく完了します
 			if useGUI: configure_progress_bar(0.99, 'まもなく完了します...')
@@ -211,7 +252,7 @@ def convert_start(arg):
 
 			#入出力初期化
 			dpg.set_value('input_dir', '')
-			#dpg.set_value('output_dir', '')
+			dpg.set_value('title_setting', '未指定')
 
 	#GUI時
 	if (useGUI):

@@ -16,12 +16,20 @@
 
 
 ## 動作に必要なもの
- - "ONScripter_Multi_Converter" exe本体 [[DL]](https://github.com/Prince-of-sea/ONScripter_Multi_Converter/releases/latest)
- - smjpeg_encode.exe(すとーむ様作成) [[DL]](http://web.archive.org/web/20130203074100/http://www.geocities.jp/stm_torm/ons/smjpeg4.zip)
- - nsaed.exe(すとーむ様作成) [[DL]](https://web.archive.org/web/20130328141650/http://www.geocities.jp/stm_torm/nsaed2.zip)
- - GARBro.Console(게지네様作成) [[DL]](https://drive.google.com/file/d/1gH9nNRxaz8GexN0B1hWyUc3o692bkWXX/view)
- - FFmpeg / FFprobe [[DL]](https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-full.7z)
+### 必須
+ - "ONScripter_Multi_Converter" exe本体 [[DL (Assetsから)]](https://github.com/Prince-of-sea/ONScripter_Multi_Converter/releases/latest)
+ - GARBro.Console [[DL (Googleドライブ)]](https://drive.google.com/file/d/1gH9nNRxaz8GexN0B1hWyUc3o692bkWXX/view)
+ - FFmpeg / FFprobe [[DL (gyan.dev)]](https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-full.7z)
+ - smjpeg_encode [[DL (魚拓)]](http://web.archive.org/web/20130203074100/http://www.geocities.jp/stm_torm/ons/smjpeg4.zip)
+ - nsaed [[DL (魚拓)]](https://web.archive.org/web/20130328141650/http://www.geocities.jp/stm_torm/nsaed2.zip)
  - NScripterで制作された、またはONScripter用に変換されたゲーム
+
+### 任意
+ - gscScriptCompAndDecompiler-cli [[DL (Assetsから)]](https://github.com/PC-CNT/gscScriptCompAndDecompiler-cli/releases/tag/pr12)
+ - DirectorCastRipper_D10 [[DL (Assetsから)]](https://github.com/n0samu/DirectorCastRipper/releases/tag/v2.5)
+ - mjdisasm [[DL (View rawから)]](https://github.com/Inori/FuckGalEngine/blob/master/Majiro/mjdev/mjdisasm.exe)
+ - igscriptD [[DL (Assetsのigtools.zipの中)]](https://github.com/lennylxx/IG_tools/releases/tag/v1.0.0)
+ - Kikiriki [[DL (魚拓)]](https://web.archive.org/web/20140714111942/http://tlwiki.org/images/7/7d/Kikiriki.rar)
 
 
 ## 使い方
@@ -39,17 +47,34 @@
 │  ONScripter_Multi_Converter.exe
 │  
 └─tools
+    │  gscScriptCompAndDecompiler.exe (任意)
+    │  igscriptD.exe (任意)
+    │  mjdisasm.exe (任意)
     │  nsaed.exe
     │  smjpeg_encode.exe
-    │
-    └─Garbro_console
-        │  GARbro.Console.exe
-        │  {その他大量のファイル}
-        │
-        └─  {その他いくつかのディレクトリ}
+    │  
+    ├─DirectorCastRipper_D10 (任意)
+    │  │  DirectorCastRipper.exe
+    │  │  {その他いくつかのファイル}
+    │  │  
+    │  └─{その他いくつかのディレクトリ}
+    │                  
+    ├─Garbro_console
+    │  │  GARbro.Console.exe
+    │  │  {その他大量のファイル}
+    │  │  
+    │  └─{その他いくつかのディレクトリ}
+    │          
+    └─Kikiriki (任意)
+            kikiriki.exe
+            madCHook.dll
 ```
  ※ffmpeg、ffprobeはtools直下(nsaedやsmjpeg_encodeと同じところ)に入れても認識します<br>
  また、パスの通る場所とtools直下両方に存在する場合はtools直下が優先されます<br>
+
+ ※(任意)と書いてあるものは一部の個別設定で使用します<br>
+ 個別設定を利用しない場合必要ありません<br>
+
 
 ### ツールの設定
  ![インターフェース](./md_ui_full.png)<br>
@@ -82,6 +107,9 @@
  - 動画を連番に指定すると進捗バーが89%で長時間止まることがあります<br>
  そのまま待っていれば終わると思います<br>
 
+ - Cドライブの空き容量に余裕をもった状態でご使用ください<br>
+ 特に個別設定を使う作品は変換方法次第で一時的に最大20GB程度消費する可能性があります<br>
+
  - 本ツールは日本語専用です<br>
 
 ### CD-DAを使っているソフトについて
@@ -92,6 +120,9 @@ oggなどへの変換は本ツールが行うため事前の変換は不要で�
 ### 既知の不具合
  - avi、mpegplay、rnd2など一部関数を元々defsubで上書きしていた場合、本ツールの機能と競合する
  - nsa/sar/ns2アーカイブの外にあるnbzは処理不能
+ - "個別設定："欄のいくつかの文字が"?"になっている(動作には影響なし)
+ - パス内に文字列"&"が入っている音源や動画の変換に失敗する
+
 
 ### お約束
  - 本ツールの使用において生じた問題や不利益などについて、<br>

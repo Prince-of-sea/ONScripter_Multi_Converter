@@ -6,6 +6,7 @@ import webbrowser
 
 from requiredfile_locations import location, exist
 from hardwarevalues_config import gethardwarevalues_full
+from process_notons import get_titledict
 from conversion import convert_start
 from utils import message_box
 
@@ -63,6 +64,9 @@ def gui_main(version, hw_key, input_dir_param, output_dir_param):
 		hardwarevalues_full[k]['values_default']['window_title'] = "ONScripter Multi Converter for {k} ver.{version}".format(k = k, version = version)
 		hardwarevalues_full[k]['values_default']['hardware'] = str(k)
 
+	#個別
+	title_list = (["未指定"] + list(get_titledict().keys()))
+	
 	dpg.create_context()
 
 	with dpg.font_registry():
@@ -107,7 +111,7 @@ def gui_main(version, hw_key, input_dir_param, output_dir_param):
 			dpg.add_combo(
 				tag="title_setting",
 				default_value="未指定",
-				items=["未指定"],
+				items=title_list,
 			)
 
 		# with dpg.child_window(height=220, border=False):

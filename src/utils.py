@@ -7,15 +7,44 @@ import shutil, os
 from requiredfile_locations import location
 
 
-def message_box(msg_title: str, msg: str, msg_type: str, useGUI: bool):
+def message_box(msg_title: str, msg: str, msg_type: str, useGUI: bool):#将来的にはtk使わない方向で
+	if not useGUI: return
 
-	if useGUI:
-		match msg_type:
-			case 'warning': tkinter.messagebox.showwarning(msg_title, msg)
-			case 'error': tkinter.messagebox.showerror(msg_title, msg)
-			case 'info': tkinter.messagebox.showinfo(msg_title, msg)
+	match msg_type:
+		case 'warning': tkinter.messagebox.showwarning(msg_title, msg)
+		case 'error': tkinter.messagebox.showerror(msg_title, msg)
+		case 'info': tkinter.messagebox.showinfo(msg_title, msg)
 
 	return
+
+
+def convert_askmsg(useGUI, title_info):#将来的にはtk使わない方向で
+	if not useGUI: return True
+
+	title = title_info['title']
+	requiredsoft = title_info['requiredsoft']
+	version = title_info['version']
+	notes = title_info['notes']
+
+	r_txt = '\n・'.join(['']+requiredsoft) if requiredsoft else '\n・なし'
+	v_txt = '\n・'.join(['']+version)
+	n_txt = '\n・'.join(['']+notes)
+
+	s = '''=====================================================
+[追加で用意するソフト]{r}
+
+=====================================================
+[確認済み対応タイトル]{v}
+
+=====================================================
+[注意事項]{n}
+
+=====================================================
+以上を確認したうえで、変換を開始しますか？
+'''.format(r = r_txt, v = v_txt, n = n_txt)
+
+	res = tkinter.messagebox.askokcancel('個別設定変換確認 - {t}'.format(t = title), s)
+	return res
 
 
 def configure_progress_bar(bar, msg):
@@ -26,10 +55,12 @@ def configure_progress_bar(bar, msg):
 	return
 
 
-def extract_archive_garbro(p: Path, e: Path):
+def extract_archive_garbro(p: Path, e: Path, f: str = ''):
 	GARBro_Path = location('GARBro')
 	e.mkdir()
-	sp.run([GARBro_Path, 'x', '-ca', '-o', e, p] ,shell=True, **subprocess_args(True))#展開
+	if f: l = [GARBro_Path, 'x', '-if', f.lower(), '-ca', '-o', e, p]
+	else: l = [GARBro_Path, 'x', '-ca', '-o', e, p]
+	sp.run(l ,shell=True, **subprocess_args(True))#展開
 	return
 
 
