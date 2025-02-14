@@ -5,3 +5,5 @@ imagequant==1.1.3
 mozjpeg_lossless_optimization==1.1.5
 numpy==2.2.2
 zopflipy==1.11
+soundfile==0.13.1
+asarPy==1.0.1

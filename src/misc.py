@@ -50,7 +50,7 @@ def open_repositorieslink():
 
 
 def copyrights():
-	message_box('copyrights', 'ONScripter Multi Converter ver.{}\n(C) 2021-2025 Prince-of-sea / PC-CNT'.format(dpg.get_value('version')), 'info', True)
+	message_box('copyrights', 'ONScripter Multi Converter ver.{}\n(C) 2021-2025 Prince-of-sea / PC-CNT / RightHand'.format(dpg.get_value('version')), 'info', True)
 	return
 
 

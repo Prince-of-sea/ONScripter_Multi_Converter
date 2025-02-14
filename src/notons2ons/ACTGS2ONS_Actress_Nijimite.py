@@ -872,7 +872,7 @@ def text_cnv(DIR_SCR, debug, same_hierarchy, str2var_cnt, define_dict, cfg_dict,
 						if (not s[:5] == 'flash'):
 							fl_time = str( int( float(s)*1000 ) )
 							ef,effect_list,effect_startnum = effect_edit(fl_time, 'fade',effect_list,effect_startnum)
-							line += 'lsp 11,"cg\_White.png",0,0:print 1:csp 11:print ' + ef + '\n'
+							line += 'lsp 11,"cg\\_White.png",0,0:print 1:csp 11:print ' + ef + '\n'
 
 				elif goto_line:
 					line = 'goto *SCR_' + name.replace('.', '_') + '_' + goto_line[1] + '\n'
