@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from PIL import Image
 from io import BytesIO
 import mozjpeg_lossless_optimization as mozj
@@ -195,7 +196,7 @@ def convert_image(values: dict, values_ex: dict, f_dict: dict):
 			io_img.seek(0)
 			with open(convertedpath, 'wb') as c: c.write(zf.ZopfliPNG().optimize(io_img.read()))
 
-		case _: raise ValueError('画像保存フォーマット未選択エラー(たぶんこれ出ないと思うんだけど)')
+		case _: raise ValueError('画像保存フォーマットが選択されていません')
 
 	#元nbz用コビー
 	if (f_dict['nbz']) and (convertedpath.suffix != '.nbz'): shutil.copy(convertedpath, convertedpath.with_suffix('.nbz'))

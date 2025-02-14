@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from pathlib import Path
 import subprocess as sp
 import tempfile, shutil
@@ -26,7 +27,7 @@ def convert_music(f_dict: dict):
 					'-ar', str(f_dict['hz']),
 					'-ac', str(f_dict['ch']), 
 					mustemppath,
-				], shell=True, **subprocess_args(True))
+				], shell=True, **subprocess_args())
 
 			case 'MP3':
 				mustemppath = (mustemp_dir / 'x.mp3')
@@ -38,7 +39,7 @@ def convert_music(f_dict: dict):
 					'-ac', str(f_dict['ch']), 
 					'-cutoff', str(f_dict['cutoff']),
 					mustemppath,
-				], shell=True, **subprocess_args(True))	
+				], shell=True, **subprocess_args())	
 
 			case 'WAV':
 				mustemppath = (mustemp_dir / 'x.wav')
@@ -49,7 +50,7 @@ def convert_music(f_dict: dict):
 					'-ac', str(f_dict['ch']), 
 					'-acodec', f_dict['acodec'],
 					mustemppath,
-				], shell=True, **subprocess_args(True))	
+				], shell=True, **subprocess_args())	
 
 			case _: raise ValueError('音声の変換フォーマットが選択されていません')
 		

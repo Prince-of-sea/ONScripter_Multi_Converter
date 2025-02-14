@@ -1,10 +1,12 @@
+#!/usr/bin/env python3
 from pathlib import Path
 import tkinter.messagebox
 import dearpygui.dearpygui as dpg
 import subprocess as sp
-import shutil, os
+import shutil
 
 from requiredfile_locations import location
+from utils2 import subprocess_args#これ書いとけば他から"from utils import subprocess_args"されても普通に動く
 
 
 def message_box(msg_title: str, msg: str, msg_type: str, useGUI: bool):#将来的にはtk使わない方向で
@@ -16,35 +18,6 @@ def message_box(msg_title: str, msg: str, msg_type: str, useGUI: bool):#将来�
 		case 'info': tkinter.messagebox.showinfo(msg_title, msg)
 
 	return
-
-
-def convert_askmsg(useGUI, title_info):#将来的にはtk使わない方向で
-	if not useGUI: return True
-
-	title = title_info['title']
-	requiredsoft = title_info['requiredsoft']
-	version = title_info['version']
-	notes = title_info['notes']
-
-	r_txt = '\n・'.join(['']+requiredsoft) if requiredsoft else '\n・なし'
-	v_txt = '\n・'.join(['']+version)
-	n_txt = '\n・'.join(['']+notes)
-
-	s = '''=====================================================
-[追加で用意するソフト]{r}
-
-=====================================================
-[確認済み対応タイトル]{v}
-
-=====================================================
-[注意事項]{n}
-
-=====================================================
-以上を確認したうえで、変換を開始しますか？
-'''.format(r = r_txt, v = v_txt, n = n_txt)
-
-	res = tkinter.messagebox.askokcancel('個別設定変換確認 - {t}'.format(t = title), s)
-	return res
 
 
 def configure_progress_bar(bar, msg):
@@ -60,7 +33,7 @@ def extract_archive_garbro(p: Path, e: Path, f: str = ''):
 	e.mkdir()
 	if f: l = [GARBro_Path, 'x', '-if', f.lower(), '-ca', '-o', e, p]
 	else: l = [GARBro_Path, 'x', '-ca', '-o', e, p]
-	sp.run(l ,shell=True, **subprocess_args(True))#展開
+	sp.run(l ,shell=True, **subprocess_args())#展開
 	return
 
 
@@ -128,24 +101,6 @@ def format_check(filepath: Path):
 			else: ff = False
 
 	return ff
-
-
-def subprocess_args(include_stdout=True):
-	#subprocessがexe化時正常に動かないときの対策
-
-	if hasattr(sp, 'STARTUPINFO'):
-		si = sp.STARTUPINFO()
-		si.dwFlags |= sp.STARTF_USESHOWWINDOW
-		env = os.environ
-	else:
-		si = None
-		env = None
-
-	if include_stdout: ret = {'stdout': sp.PIPE}
-	else: ret = {}
-
-	ret.update({'stdin': sp.PIPE, 'stderr': sp.PIPE, 'startupinfo': si, 'env': env})
-	return ret
 
 
 def dir_allmove(input_dir, output_dir):

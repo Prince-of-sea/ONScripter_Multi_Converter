@@ -44,7 +44,7 @@ def extract_resource(values: dict, values_ex: dict, pre_converted_dir: Path):
 		p = Path(input_dir / 'mov' / file_name)
 		
 		#なければ強制エラー
-		if not p.exists(): raise ValueError(str(p)+' not found.')
+		if not p.exists(): raise FileNotFoundError('{}が見つかりません'.format(str(p.name)))
 		
 		shutil.copy(p, movout_dir)
 
@@ -56,7 +56,7 @@ def extract_resource(values: dict, values_ex: dict, pre_converted_dir: Path):
 			e = Path(pre_converted_dir / xfl_name)
 
 			#なければ強制エラー
-			if not p.exists(): raise ValueError(str(p)+' not found.')
+			if not p.exists(): raise FileNotFoundError('{}が見つかりません'.format(str(p.name)))
 
 			futures.append(executor.submit(extract_archive_garbro, p, e, 'png'))
 		
@@ -603,7 +603,7 @@ def text_dec_main(p, gsc_exe, ex_gsc, scr_dec, values_ex):
 	#不要gscはここで除外
 	if not (str(p.stem) in ex_gsc):
 		#デコード処理(ライセンスとか面倒なのでsubprocessで、ネイティブで動かしたい人は勝手に作って)
-		if values_ex: sp.run([str(gsc_exe), '-m', 'decompile', '-i', str(p)], shell=True, cwd=scr_dec , **subprocess_args(True))
+		if values_ex: sp.run([str(gsc_exe), '-m', 'decompile', '-i', str(p)], shell=True, cwd=scr_dec , **subprocess_args())
 		else: sp.run([str(gsc_exe), '-m', 'decompile', '-i', str(p)], shell=True, cwd=scr_dec )
 	return
 

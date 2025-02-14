@@ -46,7 +46,7 @@ def extract_resource(values: dict, values_ex: dict, pre_converted_dir: Path):
 			e = Path(pre_converted_dir / xp3_name)
 
 			#なければ強制エラー
-			if not p.exists(): raise ValueError(str(p)+' not found.')
+			if not p.exists(): raise FileNotFoundError('{}が見つかりません'.format(str(p.name)))
 
 			futures.append(executor.submit(extract_archive_garbro, p, e))
 		

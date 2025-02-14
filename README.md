@@ -18,10 +18,10 @@
 ## 動作に必要なもの
 ### 必須
  - "ONScripter_Multi_Converter" exe本体 [[DL (Assetsから)]](https://github.com/Prince-of-sea/ONScripter_Multi_Converter/releases/latest)
- - GARBro.Console [[DL (Googleドライブ)]](https://drive.google.com/file/d/1gH9nNRxaz8GexN0B1hWyUc3o692bkWXX/view)
+ - GARBro.Console [[DL (Googleドライブ)]](https://drive.usercontent.google.com/u/0/uc?id=1gH9nNRxaz8GexN0B1hWyUc3o692bkWXX&export=download)
  - FFmpeg / FFprobe [[DL (gyan.dev)]](https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-full.7z)
- - smjpeg_encode [[DL (魚拓)]](http://web.archive.org/web/20130203074100/http://www.geocities.jp/stm_torm/ons/smjpeg4.zip)
- - nsaed [[DL (魚拓)]](https://web.archive.org/web/20130328141650/http://www.geocities.jp/stm_torm/nsaed2.zip)
+ - smjpeg_encode [[DL (archive.org)]](http://web.archive.org/web/20130203074100/http://www.geocities.jp/stm_torm/ons/smjpeg4.zip)
+ - nsaed [[DL (archive.org)]](https://web.archive.org/web/20130328141650/http://www.geocities.jp/stm_torm/nsaed2.zip)
  - NScripterで制作された、またはONScripter用に変換されたゲーム
 
 ### 任意
@@ -29,7 +29,7 @@
  - DirectorCastRipper_D10 [[DL (Assetsから)]](https://github.com/n0samu/DirectorCastRipper/releases/tag/v2.5)
  - mjdisasm [[DL (View rawから)]](https://github.com/Inori/FuckGalEngine/blob/master/Majiro/mjdev/mjdisasm.exe)
  - igscriptD [[DL (Assetsのigtools.zipの中)]](https://github.com/lennylxx/IG_tools/releases/tag/v1.0.0)
- - Kikiriki [[DL (魚拓)]](https://web.archive.org/web/20140714111942/http://tlwiki.org/images/7/7d/Kikiriki.rar)
+ - Kikiriki [[DL (archive.org)]](https://web.archive.org/web/20140714111942/http://tlwiki.org/images/7/7d/Kikiriki.rar)
 
 
 ## 使い方
@@ -120,7 +120,7 @@ oggなどへの変換は本ツールが行うため事前の変換は不要で�
 ### 既知の不具合
  - avi、mpegplay、rnd2など一部関数を元々defsubで上書きしていた場合、本ツールの機能と競合する
  - nsa/sar/ns2アーカイブの外にあるnbzは処理不能
- - "個別設定："欄のいくつかの文字が"?"になっている(動作には影響なし)
+ - 個別設定欄のいくつかの文字が"?"になっている(動作には影響なし)
  - パス内に文字列"&"が入っている音源や動画の変換に失敗する
 
 

@@ -1,5 +1,7 @@
+#!/usr/bin/env python3
 from hardwarevalues_config import gethardwarevalues
 from conversion import convert_start
+
 
 def cli_main(version: str, hardware: str, input_dir: str, output_dir: str):
 	#とりあえずタイトル

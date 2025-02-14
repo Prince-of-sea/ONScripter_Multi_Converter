@@ -62,7 +62,7 @@ def extract_resource(values: dict, values_ex: dict, pre_converted_dir: Path):
 
 	#存在チェック
 	for dxr_path in dxr_list:
-		if not dxr_path.is_file(): raise ValueError(str(dxr_path)+' not found.')
+		if not dxr_path.is_file(): raise FileNotFoundError('{}が見つかりません'.format(str(dxr_path.name)))
 	
 	#展開先ディレクトリの名前が既にあったら消す
 	if Exports_Path.is_dir(): shutil.rmtree(Exports_Path)
@@ -74,7 +74,7 @@ def extract_resource(values: dict, values_ex: dict, pre_converted_dir: Path):
 		ctypes.windll.kernel32.SetDllDirectoryA(None)
 
 	#一括展開(上記展開物パスをコマンドに引数として全部突っ込む)
-	sp.run([DirectorCastRipper_Path]+dxr_list, text=True, shell=True, cwd=DirectorCastRipper_Path.parent, **subprocess_args(True))
+	sp.run([DirectorCastRipper_Path]+dxr_list, shell=True, cwd=DirectorCastRipper_Path.parent, **subprocess_args())
 
 	#展開物移動
 	shutil.move(Exports_Path, pre_converted_dir)
@@ -1239,7 +1239,7 @@ def main(values: dict = {}, values_ex: dict = {}, pre_converted_dir: Path = Path
 	dir_check_result = dir_check(PATH_DICT.values())
 
 	#存在しない場合終了
-	if not dir_check_result: raise ValueError('終ノ空の展開ファイルが不足しています')
+	if not dir_check_result: raise FileNotFoundError('終ノ空の展開ファイルが不足しています')
 
 	#名前変更だったもの - 実際は辞書作成
 	name_dict = file_rename(PATH_DICT.values())

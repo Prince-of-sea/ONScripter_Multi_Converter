@@ -35,7 +35,7 @@ def extract_resource(values: dict, values_ex: dict, pre_converted_dir: Path):
 	data_xp3 = Path(input_dir / 'data.xp3')
 
 	#なければ強制エラー
-	if not data_xp3.exists(): raise ValueError(str(data_xp3)+' not found.')
+	if not data_xp3.exists(): raise FileNotFoundError('data.xp3が見つかりません')
 
 	#変換
 	extract_archive_garbro(data_xp3, Path(pre_converted_dir / 'data'))

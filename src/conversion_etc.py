@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from pathlib import Path
 import datetime
 
@@ -190,7 +191,7 @@ def tryconvert(values: dict, values_ex: dict, f_dict: dict, f_path_re: Path, con
 			case 'image': convert_image(values, values_ex, f_dict)
 			case 'music': convert_music(f_dict)
 			case 'other': convert_other(f_dict)
-			case _: raise ValueError('Unknown format. (messages from converter)')#多分出ない
+			case _: raise Exception('Unknown format. (messages from converter.)')#csvに書く用、多分出ない
 
 	except Exception as e:
 		dt_now = datetime.datetime.now()
@@ -198,4 +199,3 @@ def tryconvert(values: dict, values_ex: dict, f_dict: dict, f_path_re: Path, con
 		with open(Path(converted_dir / ('ERROR' + dt_now.strftime('%Y%m%d%H%M%S%f') + str(f_path_re.stem).upper()[:20]) ), 'w') as s: s.write(errmsg)
 
 	return
-

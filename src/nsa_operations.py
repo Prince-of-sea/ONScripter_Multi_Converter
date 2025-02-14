@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from pathlib import Path
 import subprocess as sp
 import concurrent.futures
@@ -110,7 +111,7 @@ def compressed_nsa_main(arc_dir: Path, compressed_dir: Path):
 	shutil.copy(nsaed_Path, nsaedcopy_Path)
 
 	#コピーしたnsaedを走らせる
-	try: sp.call([nsaedcopy_Path, (arc_dir / 'arc_')], shell=True, **subprocess_args(True))
+	try: sp.call([nsaedcopy_Path, (arc_dir / 'arc_')], shell=True, **subprocess_args())
 	except: dir_allmove((arc_dir / 'arc_'), compressed_dir)#異常終了時  - そのまま移動
 	else: shutil.move((arc_dir / 'arc.nsa'), (compressed_dir / (str(arc_dir.name) + '.nsa')))#正常終了時 - nsa移動
 

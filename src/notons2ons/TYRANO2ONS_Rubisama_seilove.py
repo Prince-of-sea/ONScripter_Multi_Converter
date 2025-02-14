@@ -39,7 +39,7 @@ def extract_resource(values: dict, values_ex: dict, pre_converted_dir: Path):
 	p = Path(input_dir / Path('resources') / Path('app.asar'))
 
 	#なければ強制エラー
-	if not p.exists(): raise ValueError(str(p)+' not found.')
+	if not p.exists(): raise FileNotFoundError('{}が見つかりません'.format(str(p.name)))
 	
 	with tempfile.TemporaryDirectory() as td:
 		e = Path(td / Path('dst'))
@@ -325,9 +325,9 @@ def bgm_cnv_main(f, s2v_d, s2v_n, same_hierarchy, values):
 		
 		ffmpeg_Path = location_env('ffmpeg')
 
-		try: subprocess.run([ffmpeg_Path, '-y', '-i', f, fwav, ], shell=True, **subprocess_args(True))
+		try: subprocess.run([ffmpeg_Path, '-y', '-i', f, fwav, ], shell=True, **subprocess_args())
 		except: pass
-		try: subprocess.run([ffmpeg_Path, '-y', '-i', fwav, '-ar', '44100', '-ac', '2',	 fogg], shell=True, **subprocess_args(True))
+		try: subprocess.run([ffmpeg_Path, '-y', '-i', fwav, '-ar', '44100', '-ac', '2',	 fogg], shell=True, **subprocess_args())
 		except: pass
 
 	else:

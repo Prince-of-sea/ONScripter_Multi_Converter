@@ -1,6 +1,8 @@
+#!/usr/bin/env python3
 from pathlib import Path
 
 import notons2ons
+
 
 def get_titledict():
 	d = {}

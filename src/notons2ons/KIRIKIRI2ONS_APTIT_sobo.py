@@ -50,7 +50,7 @@ def extract_resource_main(Kikiriki_Path, input_dir, xp3_name, pre_converted_dir)
 	xp3_outdir = Path(pre_converted_dir / xp3_name)
 	
 	#展開
-	sp.run([Kikiriki_Path, '-i', xp3_path, '-o', xp3_outdir], text=True, shell=True, **subprocess_args(True))
+	sp.run([Kikiriki_Path, '-i', xp3_path, '-o', xp3_outdir], shell=True, **subprocess_args())
 
 	#(tlgをGARBroに変換させるため)zipに圧縮
 	if xp3_name in ['data', 'evecg', 'syscg']:
@@ -95,7 +95,7 @@ def extract_resource(values: dict, values_ex: dict, pre_converted_dir: Path):
 		with concurrent.futures.ThreadPoolExecutor(max_workers=num_workers) as executor:
 			futures = []
 			for xp3_name in ['bgm', 'cv', 'data', 'evecg', 'se', 'syscg']:
-				if not Path(input_dir / '{}.xp3'.format(xp3_name)).is_file(): raise ValueError(str(xp3_name)+'.xp3 not found.')#チェック
+				if not Path(input_dir / '{}.xp3'.format(xp3_name)).is_file(): raise FileNotFoundError('{}.xp3が見つかりません'.format(str(xp3_name)))#チェック
 				futures.append(executor.submit(extract_resource_main, Kikiriki_Path, input_dir, xp3_name, pre_converted_dir))
 			
 			concurrent.futures.as_completed(futures)

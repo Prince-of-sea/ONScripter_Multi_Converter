@@ -1,6 +1,9 @@
+#!/usr/bin/env python3
 from pathlib import Path
 import subprocess as sp
-import sys, os
+import sys
+
+from utils2 import subprocess_args#utils呼ぶと相互importエラー出るので
 
 
 #同一階層のパスを変数へ代入
@@ -25,27 +28,6 @@ requiredfile_locations_dict = {
 	'Kikiriki': Path(__same_hierarchy / 'tools' / 'Kikiriki' / 'Kikiriki.exe'),
 	'mjdisasm': Path(__same_hierarchy / 'tools' / 'mjdisasm.exe'),
 }
-
-
-################################################################################
-def subprocess_args_for_locations(include_stdout=True):
-	#subprocessがexe化時正常に動かないときの対策
-	# 'utils'から取ってこようとすると相互importになって(?)エラー吐くので仕方なく置いてる
-	# なんかいい方法見つけ次第修正予定
-
-	if hasattr(sp, 'STARTUPINFO'):
-		si = sp.STARTUPINFO()
-		si.dwFlags |= sp.STARTF_USESHOWWINDOW
-		env = os.environ
-	else:
-		si = None
-		env = None
-
-	if include_stdout: ret = {'stdout': sp.PIPE}
-	else: ret = {}
-
-	ret.update({'stdin': sp.PIPE, 'stderr': sp.PIPE, 'startupinfo': si, 'env': env})
-	return ret
 ################################################################################
 
 
@@ -72,7 +54,7 @@ def exist(key: str) -> bool:
 def exist_env(key: str) -> bool:
 	if (requiredfile_locations_dict[key]).exists(): return True
 	else:
-		try: sp.run(key, **subprocess_args_for_locations(True))
+		try: sp.run(key, **subprocess_args())
 		except: return False
 		else: return True
 

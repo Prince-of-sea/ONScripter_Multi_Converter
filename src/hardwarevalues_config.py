@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # 対応機種はここに書き足す
 hardwarevalues_dict = {
 	'PSP': {
@@ -75,7 +77,7 @@ hardwarevalues_dict = {
 			'aud_wavbgm_hz': '44100', 'aud_wavse_hz': '22050',
 			'aud_bgmcodec_radio': 'pcm_s16le', 'aud_secodec_radio': 'pcm_s16le',
 
-			'vid_movfmt_radio': '変換しない',
+			'vid_movfmt_radio': '連番画像',
 			'vid_renbanfmt_radio': 'JPEG', 'vid_renbanres_radio': '66%(2/3)',
 			'vid_renbanpngquantize_chk': True, 'vid_renbanpngquantize_num': '256',
 			'vid_renbanjpgquality_bar': 90,
@@ -100,7 +102,7 @@ hardwarevalues_dict = {
 		}
 	},
 
-	'BRAIN': {
+	'Brain': {
 		'values_ex': {
 			'hardware_full': 'SHARP Brain(Windows CE 6.0)',
 			'select_resolution': ((424, 318), (320, 240)),
@@ -125,8 +127,8 @@ hardwarevalues_dict = {
 			'aud_wavbgm_hz': '22050', 'aud_wavse_hz': '22050',
 			'aud_bgmcodec_radio': 'pcm_u8', 'aud_secodec_radio': 'pcm_u8',
 
-			'vid_movfmt_radio': '変換しない',
-			'vid_renbanfmt_radio': 'JPEG', 'vid_renbanres_radio': '33%(1/3)',
+			'vid_movfmt_radio': '連番画像',
+			'vid_renbanfmt_radio': 'JPEG', 'vid_renbanres_radio': '50%(1/2)',
 			'vid_renbanpngquantize_chk': True, 'vid_renbanpngquantize_num': '256',
 			'vid_renbanjpgquality_bar': 85,
 			'vid_renbanaudset_radio': 'BGMに合わせる',
@@ -150,7 +152,7 @@ hardwarevalues_dict = {
 		}
 	},
 
-	'ANDROID': {
+	'Android': {
 		'values_ex': {
 			'hardware_full': 'Android OS汎用',
 			'select_resolution': (),
@@ -166,7 +168,7 @@ hardwarevalues_dict = {
 			'img_bmptojpg_chk': True, 'img_multi_chk': False, 'img_multi_num': '1',
 
 			'aud_bgmfmt_radio': 'OGG', 'aud_sefmt_radio': 'OGG',
-			'aud_bgmch_radio': 'ステレオ', 'aud_sech_radio': 'モノラル',
+			'aud_bgmch_radio': 'ステレオ', 'aud_sech_radio': 'ステレオ',
 			'aud_oggbgm_kbps': '192', 'aud_oggbgm_hz': '44100',
 			'aud_oggse_kbps': '96', 'aud_oggse_hz': '44100',
 			'aud_mp3bgm_kbps': '192', 'aud_mp3bgm_hz': '44100',

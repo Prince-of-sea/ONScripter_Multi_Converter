@@ -39,7 +39,7 @@ def extract_resource(values: dict, values_ex: dict, pre_converted_dir: Path):
 	p = Path(input_dir / 'パチンカスロード.exe')
 
 	#なければ強制エラー
-	if not p.exists(): raise ValueError(str(p)+' not found.')
+	if not p.exists(): raise FileNotFoundError('{}が見つかりません'.format(str(p.name)))
 	
 	with tempfile.TemporaryDirectory() as td:
 		e = Path(td / Path('dst'))
@@ -353,10 +353,10 @@ def mov2PNG(p, x, y, values):
 		from requiredfile_locations import location_env
 		from utils import subprocess_args
 		ffmpeg_Path = location_env('ffmpeg')
-		sp.run([ffmpeg_Path, '-i', p, '-s', (str(x)+'x'+str(y)), '-frames:v', '1', '-y', p_tmp], text=True, shell=True, **subprocess_args(True))
+		sp.run([ffmpeg_Path, '-i', p, '-s', (str(x)+'x'+str(y)), '-frames:v', '1', '-y', p_tmp], shell=True, **subprocess_args())
 
 	else:
-		sp.run(['ffmpeg', '-i', p, '-s', (str(x)+'x'+str(y)), '-frames:v', '1', '-y', p_tmp], text=True, shell=True)
+		sp.run(['ffmpeg', '-i', p, '-s', (str(x)+'x'+str(y)), '-frames:v', '1', '-y', p_tmp], shell=True)
 
 	im = Image.open(p_tmp)
 	im.putalpha(im.convert('L'))

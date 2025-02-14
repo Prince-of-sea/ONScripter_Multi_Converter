@@ -48,7 +48,7 @@ def extract_resource(values: dict, values_ex: dict, pre_converted_dir: Path):
 			e = Path(pre_converted_dir / iga_name)
 
 			#なければ強制エラー
-			if not p.exists(): raise ValueError(str(p)+' not found.')
+			if not p.exists(): raise FileNotFoundError('{}が見つかりません'.format(str(p.name)))
 
 			futures.append(executor.submit(extract_archive_garbro, p, e, 'png'))
 		
@@ -516,7 +516,7 @@ def img_resize(DIR_BG, DIR_FG, DIR_SYS, DIR_IMG, values_ex):
 def text_dec_main(p, DIR_SCR, EXE_IGS, values_ex):
 	if values_ex: from utils import subprocess_args
 	n = (os.path.splitext(os.path.basename(p))[0])
-	if values_ex: sp.run([EXE_IGS, '-p', p, n+'.txt'], shell=True, cwd=DIR_SCR, **subprocess_args(True))
+	if values_ex: sp.run([EXE_IGS, '-p', p, n+'.txt'], shell=True, cwd=DIR_SCR, **subprocess_args())
 	else: sp.run([EXE_IGS, '-p', p, n+'.txt'], shell=True, cwd=DIR_SCR)
 
 

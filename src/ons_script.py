@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from pathlib import Path
 import math, re
 
@@ -349,6 +350,8 @@ mov %multiconverteralias0,%0 :mov %multiconverteralias1,%1 :mov %multiconvertera
 mov %multiconverteralias5,%5 :mov %multiconverteralias6,%6 :mov %multiconverteralias7,%7 :mov %multiconverteralias8,%8 :mov %multiconverteralias9,%9 
 mov $multiconverteralias0,$10:mov $multiconverteralias1,$11:mov $multiconverteralias2,$12:mov $multiconverteralias3,$13:mov $multiconverteralias4,$14:mov $multiconverteralias5,$15
 getparam $13,%9:fileexist %0,$13+"/00000.jpg"
+fileexist %1,"_DISABLED_VIDEO"
+if %1==1 return
 if %0==1 mov $14,".jpg"
 if %0!=1 mov $14,".png"
 mov $11,$13:add $11,"/":mov %6,5:mov $15,""
@@ -414,10 +417,10 @@ def onsscript_check(values: dict, values_ex: dict):
 	ztxtscript = values_ex['0txtscript']
 
 	#*defineがない時
-	if not re.search(r'\*define', ztxtscript): raise ValueError('0.txtの復号化に失敗しました')
+	if not re.search(r'\*define', ztxtscript): raise Exception('0.txtの復号化に失敗しました')
 
 	#変換済み簡易チェック
-	if re.search(r'Converted by "ONScripter Multi Converter', ztxtscript): raise ValueError('既に変換済みです')
+	if re.search(r'Converted by "ONScripter Multi Converter', ztxtscript): raise Exception('このファイルは既に変換済みです')
 	
 	#PSP用解像度無視変換フラグ
 	if (hardware == 'PSP') and (r'<ONS_RESOLUTION_CHECK_DISABLED>' in ztxtscript): override_resolution = (480, 272)

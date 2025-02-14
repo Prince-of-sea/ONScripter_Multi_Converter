@@ -39,7 +39,7 @@ def extract_resource(values: dict, values_ex: dict, pre_converted_dir: Path):
 		p = Path(input_dir / file_name)
 		
 		#なければ強制エラー
-		if not p.exists(): raise ValueError(str(p)+' not found.')
+		if not p.exists(): raise FileNotFoundError('{}が見つかりません'.format(str(p.name)))
 		
 		shutil.copy(p, pre_converted_dir)
 
@@ -51,7 +51,7 @@ def extract_resource(values: dict, values_ex: dict, pre_converted_dir: Path):
 			e = Path(pre_converted_dir / arc_name[4:])#"Arc."消す
 
 			#なければ強制エラー
-			if not p.exists(): raise ValueError(str(p)+' not found.')
+			if not p.exists(): raise FileNotFoundError('{}が見つかりません'.format(str(p.name)))
 
 			futures.append(executor.submit(extract_archive_garbro, p, e))
 		

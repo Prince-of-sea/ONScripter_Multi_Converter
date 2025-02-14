@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 #カーソル画像(容量削減のためpng変換済)をbase64にしたものを入れた辞書作成
 cur_dict = {
 	#ONSforPSP向けカーソル(大) - 元: https://web.archive.org/web/20070126135923fw_/http://www.geocities.jp:80/stm_torm/ons/onscripter-default_icon.zip

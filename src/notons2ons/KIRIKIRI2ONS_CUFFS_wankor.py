@@ -68,12 +68,12 @@ def extract_resource(values: dict, values_ex: dict, pre_converted_dir: Path):
 	parts_outdir = Path(pre_converted_dir / 'parts')
 
 	#存在チェック
-	if not data_Path.is_file(): raise ValueError('data.xp3 not found.')
-	if not parts_Path.is_file(): raise ValueError('parts.xp3 not found.')
+	if not data_Path.is_file(): raise FileNotFoundError('data.xp3が見つかりません')
+	if not parts_Path.is_file(): raise FileNotFoundError('parts.xp3が見つかりません')
 	
 	#展開
-	sp.run([Kikiriki_Path, '-i', data_Path, '-o', data_outdir], text=True, shell=True, **subprocess_args(True))
-	sp.run([Kikiriki_Path, '-i', parts_Path, '-o', parts_outdir], text=True, shell=True, **subprocess_args(True))
+	sp.run([Kikiriki_Path, '-i', data_Path, '-o', data_outdir], shell=True, **subprocess_args())
+	sp.run([Kikiriki_Path, '-i', parts_Path, '-o', parts_outdir], shell=True, **subprocess_args())
 	tc.unlink()#tpm消さないと別作品と競合するかもなので
 
 	#(tlgをGARBroに変換させるため)dataをzipに圧縮
@@ -1037,7 +1037,7 @@ def main(values: dict = {}, values_ex: dict = {}, pre_converted_dir: Path = Path
 	dir_check_result = dir_check(PATH_DICT.values())
 
 	#存在しない場合終了
-	if not dir_check_result: raise ValueError('ワンコとリリーの展開ファイルが不足しています')
+	if not dir_check_result: raise FileNotFoundError('ワンコとリリーの展開ファイルが不足しています')
 
 	#一部画像変換
 	image_convert(PATH_DICT)

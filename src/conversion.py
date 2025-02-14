@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from pathlib import Path
 import concurrent.futures
 import dearpygui.dearpygui as dpg
@@ -10,8 +11,8 @@ from nsa_operations import extract_nsa, compressed_nsa
 from conversion_etc import tryconvert, create_cnvsetdict
 from process_notons import get_titledict, pre_convert
 from ons_script import onsscript_decode, onsscript_check
-from utils import configure_progress_bar, message_box, convert_askmsg
-from misc import in_out_dir_check, remove_0txtcommentout, create_savedatadir, create_configfile, create_0txt, debug_copy, result_move
+from utils import configure_progress_bar, message_box
+from misc import convert_askmsg, in_out_dir_check, remove_0txtcommentout, create_savedatadir, create_configfile, create_0txt, debug_copy, result_move
 
 
 def convert_files(values: dict, values_ex: dict, cnvset_dict: dict, extracted_dir: Path, converted_dir: Path, useGUI: bool):
@@ -109,15 +110,15 @@ def convert_start(arg):
 
 			#確認
 			if useGUI: configure_progress_bar(0, '個別設定変換確認...')
-			if not convert_askmsg(useGUI, title_info): raise ValueError('変換がキャンセルされました')
+			if not convert_askmsg(useGUI, title_info): raise Exception('変換がキャンセルされました')
 
 			#必要ソフトを配列に代入
 			required_soft_list += title_info['requiredsoft']
 
 		#必要ソフトチェック
-		if not exist_env('ffmpeg'): raise ValueError('ffmpegが用意されていません')
-		if not exist_env('ffprobe'): raise ValueError('ffprobeが用意されていません')
-		if not exist_all(required_soft_list): raise ValueError('必要なソフトが用意されていません')
+		if not exist_env('ffmpeg'): raise FileNotFoundError('ffmpegが用意されていません')
+		if not exist_env('ffprobe'): raise FileNotFoundError('ffprobeが用意されていません')
+		if not exist_all(required_soft_list): raise FileNotFoundError('必要なソフトが用意されていません')
 		
 		#入出力ディレクトリチェック
 		in_out_dir_check(values)
@@ -161,7 +162,7 @@ def convert_start(arg):
 				if (not title_info['is_4:3']) and (values_ex['aspect_4:3only']) and (values['hardware'] != 'PSP'):
 
 					#非対応解像度エラー
-					raise ValueError('非対応解像度のため、このソフトは変換できません')
+					raise Exception('非対応解像度のため、このソフトは変換できません')
 
 				#事前変換用ディレクトリパス
 				pre_converted_dir = Path(temp_dir / 'pre_converted')
@@ -181,7 +182,7 @@ def convert_start(arg):
 
 			#選択不可の動画形式選んでたらエラー
 			if (values['vid_movfmt_radio'] in values_ex['disable_video']):
-				raise ValueError('{hw}は動画を{v}形式に変換できません'.format(hw = values['hardware'], v = values['vid_movfmt_radio']))
+				raise Exception('{hw}は動画を{v}形式に変換できません'.format(hw = values['hardware'], v = values['vid_movfmt_radio']))
 
 			#連番変換時画像サイズ先に代入
 			if (values['vid_movfmt_radio'] == '連番画像'):

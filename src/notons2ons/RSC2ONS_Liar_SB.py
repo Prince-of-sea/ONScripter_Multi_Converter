@@ -47,7 +47,7 @@ def extract_resource(values: dict, values_ex: dict, pre_converted_dir: Path):
 		p = Path(input_dir / 'mov' / file_name)
 		
 		#なければ強制エラー
-		if not p.exists(): raise ValueError(str(p)+' not found.')
+		if not p.exists(): raise FileNotFoundError('{}が見つかりません'.format(str(p.name)))
 		
 		shutil.copy(p, movout_dir)
 
@@ -59,7 +59,7 @@ def extract_resource(values: dict, values_ex: dict, pre_converted_dir: Path):
 			e = Path(pre_converted_dir / xfl_name)
 
 			#なければ強制エラー
-			if not p.exists(): raise ValueError(str(p)+' not found.')
+			if not p.exists(): raise FileNotFoundError('{}が見つかりません'.format(str(p.name)))
 
 			futures.append(executor.submit(extract_archive_garbro, p, e, 'png'))
 		
@@ -740,7 +740,7 @@ def text_dec_main(p, PATH_D, values_ex):
 	if values_ex: from utils import subprocess_args
 	n = (os.path.splitext(os.path.basename(p))[0])
 	if int(n) >= 2000:
-		if values_ex: sp.run([PATH_D['EXE_GSC'], '-m', 'decompile', '-i', p], shell=True, cwd=PATH_D['DIR_SCR'], **subprocess_args(True))
+		if values_ex: sp.run([PATH_D['EXE_GSC'], '-m', 'decompile', '-i', p], shell=True, cwd=PATH_D['DIR_SCR'], **subprocess_args())
 		else: sp.run([PATH_D['EXE_GSC'], '-m', 'decompile', '-i', p], shell=True, cwd=PATH_D['DIR_SCR'])
 	return
 

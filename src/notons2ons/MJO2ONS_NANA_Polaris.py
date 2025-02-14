@@ -46,7 +46,7 @@ def extract_resource(values: dict, values_ex: dict, pre_converted_dir: Path):
 			e = Path(pre_converted_dir / arc_name)
 
 			#なければ強制エラー
-			if not p.exists(): raise ValueError(str(p)+' not found.')
+			if not p.exists(): raise FileNotFoundError('{}が見つかりません'.format(str(p.name)))
 
 			futures.append(executor.submit(extract_archive_garbro, p, e, 'png'))
 		
@@ -841,7 +841,7 @@ def text_dec(PATH_DICT, values):
 
 	for n in l:
 		p = (PATH_DICT['scenario'] / (n + '.mjo') )
-		if values: sp.run([PATH_DICT['mjdisasm_exe'], p], shell=True, cwd=PATH_DICT['scenario'], **subprocess_args(True))
+		if values: sp.run([PATH_DICT['mjdisasm_exe'], p], shell=True, cwd=PATH_DICT['scenario'], **subprocess_args())
 		else: sp.run([PATH_DICT['mjdisasm_exe'], p], shell=True, cwd=PATH_DICT['scenario'])
 
 
