@@ -3,7 +3,7 @@ from PIL import Image
 from pathlib import Path
 import concurrent.futures
 import subprocess as sp
-import shutil, math, wave, sys, re
+import tempfile, shutil, math, wave, sys, re
 
 # めんどいので昔作ったソースできるだけ使いまわしてます
 # 記法滅茶苦茶だけど多分動くからゆるして
@@ -42,7 +42,7 @@ def extract_resource(values: dict, values_ex: dict, pre_converted_dir: Path):
 	input_dir = values['input_dir']
 
 	DirectorCastRipper_Path = location('DirectorCastRipper_D10')
-	Exports_Path = Path(DirectorCastRipper_Path.parent / 'Exports')
+	Xtras_dir = Path(DirectorCastRipper_Path.parent / 'Xtras')
 	
 	#展開物パス
 	dxr_list = [
@@ -63,21 +63,30 @@ def extract_resource(values: dict, values_ex: dict, pre_converted_dir: Path):
 	#存在チェック
 	for dxr_path in dxr_list:
 		if not dxr_path.is_file(): raise FileNotFoundError('{}が見つかりません'.format(str(dxr_path.name)))
-	
-	#展開先ディレクトリの名前が既にあったら消す
-	if Exports_Path.is_dir(): shutil.rmtree(Exports_Path)
-	elif Exports_Path.is_file(): Exports_Path.unlink()
 
 	#PyInstallerエラー回避 - https://github.com/pyinstaller/pyinstaller/wiki/Recipe-subprocess#windows-dll-loading-order
 	if sys.platform == "win32":
 		import ctypes
 		ctypes.windll.kernel32.SetDllDirectoryA(None)
 
-	#一括展開(上記展開物パスをコマンドに引数として全部突っ込む)
-	sp.run([DirectorCastRipper_Path]+dxr_list, shell=True, cwd=DirectorCastRipper_Path.parent, **subprocess_args())
+	#展開ツール環境用一時ディレクトリ作成
+	with tempfile.TemporaryDirectory() as temp_dir:
+		temp_dir = Path(temp_dir)
 
-	#展開物移動
-	shutil.move(Exports_Path, pre_converted_dir)
+		#コピー先パス
+		DirectorCastRipper_copy_Path = Path(temp_dir / 'DirectorCastRipper.exe')
+		Xtras_copy_dir = Path(temp_dir / 'Xtras')
+
+		#全部コピー
+		shutil.copy(DirectorCastRipper_Path, DirectorCastRipper_copy_Path)
+		shutil.copytree(Xtras_dir, Xtras_copy_dir)
+
+		#一括展開(上記展開物パスをコマンドに引数として全部突っ込む)
+		sp.run([DirectorCastRipper_copy_Path]+dxr_list, shell=True, **subprocess_args())
+
+		#展開物移動
+		Exports_Path = Path(temp_dir / 'Exports')
+		shutil.move(Exports_Path, pre_converted_dir)
 
 	return
 

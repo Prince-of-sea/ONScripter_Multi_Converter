@@ -11,7 +11,7 @@ import tempfile, shutil, stat, math, os
 
 from requiredfile_locations import location, location_env
 from conversion_music import convert_music
-from utils import subprocess_args
+from utils import configure_progress_bar, subprocess_args
 
 
 def getvidrenbanres(values: dict):
@@ -382,7 +382,7 @@ def convert_video_renban2_main(values: dict, imgpath: Path):
 	return
 
 
-def convert_video_renban2(values: dict, values_ex: dict, f_dict: dict):
+def convert_video_renban2(values: dict, values_ex: dict, f_dict: dict, startbarnum: int, addbarnum: int,  useGUI: bool):
 	num_workers = values_ex['num_workers']
 	convertedpath = f_dict['convertedpath']
 	
@@ -390,10 +390,14 @@ def convert_video_renban2(values: dict, values_ex: dict, f_dict: dict):
 	with concurrent.futures.ThreadPoolExecutor(max_workers=num_workers) as executor:
 		futures = []
 
-		for imgpath in convertedpath.glob(r'_*.png'):
+		convertedpath_glob_png = convertedpath.glob(r'_*.png')
+		convertedpath_glob_png_num = (len(list(convertedpath.glob(r'_*.png'))))
+
+		for imgpath in convertedpath_glob_png:
 			futures.append(executor.submit(convert_video_renban2_main, values, imgpath))
 	
-		concurrent.futures.as_completed(futures)
+		for i,ft in enumerate(concurrent.futures.as_completed(futures)):
+			if useGUI: configure_progress_bar(startbarnum + (float(i / convertedpath_glob_png_num) * addbarnum),'')#進捗 0.35→0.95(繰り返しの合計)
 		
 	#00000ないと動画再生できないのでコピー
 	match values['vid_renbanfmt_radio']:

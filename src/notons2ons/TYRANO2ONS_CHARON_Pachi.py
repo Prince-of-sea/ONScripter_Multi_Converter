@@ -495,7 +495,7 @@ def text_cnv(DEBUG_MODE, zero_txt, scenario):
 					line = 'name_set "' + name_line[1] + '","' + jname + '"'
 
 				#jump
-				elif re.match('*', line):
+				elif re.match(r'\*', line):
 					line = ('*SCR_'+ line[1:])
 
 				#命令文 - []内

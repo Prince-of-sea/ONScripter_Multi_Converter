@@ -12,7 +12,7 @@
  PCスペック: <br>
  [![CPU-Z](https://valid.x86.fr/cache/banner/izbfap-2.png)](https://valid.x86.fr/izbfap)<br>
  FFmpeg-version: version 7.1-full_build<br>
- Python-version: Python 3.11.9<br>
+ Python-version: Python 3.13.2<br>
 
 
 ## 動作に必要なもの
@@ -104,11 +104,8 @@
  そのソフトが正常に動作するとは限りません<br>
  (ONSの仕様上、DLLとかlua依存の作品は無理)<br>
 
- - 動画を連番に指定すると進捗バーが89%で長時間止まることがあります<br>
- そのまま待っていれば終わると思います<br>
-
  - Cドライブの空き容量に余裕をもった状態でご使用ください<br>
- 特に個別設定を使う作品は変換方法次第で一時的に最大20GB程度消費する可能性があります<br>
+ 特に個別設定を使う作品は変換方法次第で一時的に最大25GB程度消費する可能性があります<br>
 
  - 本ツールは日本語専用です<br>
 

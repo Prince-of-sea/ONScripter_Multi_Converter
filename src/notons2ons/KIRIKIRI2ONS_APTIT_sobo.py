@@ -2,7 +2,7 @@
 from pathlib import Path
 import concurrent.futures
 import subprocess as sp
-import chardet, shutil, glob, os, re
+import tempfile, chardet, shutil, glob, os, re
 
 # めんどいので昔作ったソースできるだけ使いまわしてます
 # 記法滅茶苦茶だけど多分動くからゆるして
@@ -43,14 +43,14 @@ def title_info():
 	}
 
 
-def extract_resource_main(Kikiriki_Path, input_dir, xp3_name, pre_converted_dir):
+def extract_resource_main(Kikiriki_copy_Path, input_dir, xp3_name, pre_converted_dir):
 	from utils import extract_archive_garbro, subprocess_args
 
 	xp3_path = Path(input_dir / '{}.xp3'.format(xp3_name))
 	xp3_outdir = Path(pre_converted_dir / xp3_name)
 	
 	#展開
-	sp.run([Kikiriki_Path, '-i', xp3_path, '-o', xp3_outdir], shell=True, **subprocess_args())
+	sp.run([Kikiriki_copy_Path, '-i', xp3_path, '-o', xp3_outdir], shell=True, **subprocess_args())
 
 	#(tlgをGARBroに変換させるため)zipに圧縮
 	if xp3_name in ['data', 'evecg', 'syscg']:
@@ -77,30 +77,31 @@ def extract_resource(values: dict, values_ex: dict, pre_converted_dir: Path):
 
 		#kikirikiパス取得
 		Kikiriki_Path = location('Kikiriki')
+		madCHook_Path = Path( Kikiriki_Path.parent / 'madCHook.dll')
+		tpm_Path = Path(input_dir / 'xp3dec.tpm')
 
-		#プラグイン置き場作成
-		Kikiriki_plugin_dir = Path(Kikiriki_Path.parent / 'plugin')
-		Kikiriki_plugin_dir.mkdir(exist_ok=True)
+		#展開ツール環境用一時ディレクトリ作成
+		with tempfile.TemporaryDirectory() as temp_dir:
+			temp_dir = Path(temp_dir)
 
-		#tpmパス
-		t  = Path(input_dir / 'xp3dec.tpm')
-		tc = Path(Kikiriki_plugin_dir / 'xp3dec.tpm')
+			#コピー先パス
+			Kikiriki_copy_Path = Path(temp_dir / 'kikiriki.exe')
+			madCHook_copy_Path = Path(temp_dir / 'madCHook.dll')
+			tpm_copy_Path = Path(temp_dir / 'xp3dec.tpm')
 
-		#コピー(これでkikirikiで復号化ができるようになる)
-		if not tc.is_file():
-			if tc.is_dir(): shutil.rmtree(tc)#何故かフォルダ出来てた時用対策(多分無い)
-			shutil.copy(t, Kikiriki_plugin_dir)
+			#全部コピー
+			shutil.copy(Kikiriki_Path, Kikiriki_copy_Path)
+			shutil.copy(madCHook_Path, madCHook_copy_Path)
+			shutil.copy(tpm_Path, tpm_copy_Path)
 
-		#kikiriki全展開
-		with concurrent.futures.ThreadPoolExecutor(max_workers=num_workers) as executor:
-			futures = []
-			for xp3_name in ['bgm', 'cv', 'data', 'evecg', 'se', 'syscg']:
-				if not Path(input_dir / '{}.xp3'.format(xp3_name)).is_file(): raise FileNotFoundError('{}.xp3が見つかりません'.format(str(xp3_name)))#チェック
-				futures.append(executor.submit(extract_resource_main, Kikiriki_Path, input_dir, xp3_name, pre_converted_dir))
-			
-			concurrent.futures.as_completed(futures)
-		
-		tc.unlink()#tpm消さないと別作品と競合するかもなので
+			#kikiriki全展開
+			with concurrent.futures.ThreadPoolExecutor(max_workers=num_workers) as executor:
+				futures = []
+				for xp3_name in ['bgm', 'cv', 'data', 'evecg', 'se', 'syscg']:
+					if not Path(input_dir / '{}.xp3'.format(xp3_name)).is_file(): raise FileNotFoundError('{}.xp3が見つかりません'.format(str(xp3_name)))#チェック
+					futures.append(executor.submit(extract_resource_main, Kikiriki_copy_Path, input_dir, xp3_name, pre_converted_dir))
+				
+				concurrent.futures.as_completed(futures)
 	
 	#xp3ないやつ(soboku用)
 	else:

@@ -3,7 +3,7 @@ from PIL import Image
 from pathlib import Path
 import subprocess as sp
 import concurrent.futures
-import shutil, re
+import tempfile, shutil, re
 
 # めんどいので昔作ったソースできるだけ使いまわしてます
 # 記法滅茶苦茶だけど多分動くからゆるして
@@ -43,22 +43,6 @@ def extract_resource(values: dict, values_ex: dict, pre_converted_dir: Path):
 
 	#"xp3群をkikirikiで展開→展開した'parts'をzip圧縮→parts.zipをGARBroへ→再度展開しながら変換"
 
-	#kikirikiパス取得
-	Kikiriki_Path = location('Kikiriki')
-
-	#プラグイン置き場作成
-	Kikiriki_plugin_dir = Path(Kikiriki_Path.parent / 'plugin')
-	Kikiriki_plugin_dir.mkdir(exist_ok=True)
-
-	#tpmパス
-	t  = Path(input_dir / 'plugin' / 'wankor.tpm')
-	tc = Path(Kikiriki_plugin_dir / 'wankor.tpm')
-
-	#コピー(これでkikirikiで復号化ができるようになる)
-	if not tc.is_file():
-		if tc.is_dir(): shutil.rmtree(tc)#何故かフォルダ出来てた時用対策(多分無い)
-		shutil.copy(t, Kikiriki_plugin_dir)
-
 	#入力パス
 	data_Path = Path(input_dir / 'data.xp3')
 	parts_Path = Path(input_dir / 'parts.xp3')
@@ -70,11 +54,29 @@ def extract_resource(values: dict, values_ex: dict, pre_converted_dir: Path):
 	#存在チェック
 	if not data_Path.is_file(): raise FileNotFoundError('data.xp3が見つかりません')
 	if not parts_Path.is_file(): raise FileNotFoundError('parts.xp3が見つかりません')
-	
-	#展開
-	sp.run([Kikiriki_Path, '-i', data_Path, '-o', data_outdir], shell=True, **subprocess_args())
-	sp.run([Kikiriki_Path, '-i', parts_Path, '-o', parts_outdir], shell=True, **subprocess_args())
-	tc.unlink()#tpm消さないと別作品と競合するかもなので
+
+	#パス取得
+	Kikiriki_Path = location('Kikiriki')
+	madCHook_Path = Path( Kikiriki_Path.parent / 'madCHook.dll')
+	tpm_Path = Path(input_dir / 'plugin' / 'wankor.tpm')
+
+	#展開ツール環境用一時ディレクトリ作成
+	with tempfile.TemporaryDirectory() as temp_dir:
+		temp_dir = Path(temp_dir)
+
+		#コピー先パス
+		Kikiriki_copy_Path = Path(temp_dir / 'kikiriki.exe')
+		madCHook_copy_Path = Path(temp_dir / 'madCHook.dll')
+		tpm_copy_Path = Path(temp_dir / 'wankor.tpm')
+
+		#全部コピー
+		shutil.copy(Kikiriki_Path, Kikiriki_copy_Path)
+		shutil.copy(madCHook_Path, madCHook_copy_Path)
+		shutil.copy(tpm_Path, tpm_copy_Path)
+
+		#展開
+		sp.run([Kikiriki_copy_Path, '-i', data_Path, '-o', data_outdir], shell=True, **subprocess_args())
+		sp.run([Kikiriki_copy_Path, '-i', parts_Path, '-o', parts_outdir], shell=True, **subprocess_args())
 
 	#(tlgをGARBroに変換させるため)dataをzipに圧縮
 	shutil.make_archive(parts_outdir, format='zip', root_dir=parts_outdir)

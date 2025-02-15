@@ -2,7 +2,7 @@
 from pathlib import Path
 import concurrent.futures
 import dearpygui.dearpygui as dpg
-import tempfile, time, math, os
+import tempfile, shutil, time, math, os
 
 from requiredfile_locations import exist_env, exist_all
 from hardwarevalues_config import gethardwarevalues
@@ -11,7 +11,7 @@ from nsa_operations import extract_nsa, compressed_nsa
 from conversion_etc import tryconvert, create_cnvsetdict
 from process_notons import get_titledict, pre_convert
 from ons_script import onsscript_decode, onsscript_check
-from utils import configure_progress_bar, message_box
+from utils import configure_progress_bar, message_box, get_dir_size
 from misc import convert_askmsg, in_out_dir_check, remove_0txtcommentout, create_savedatadir, create_configfile, create_0txt, debug_copy, result_move
 
 
@@ -39,6 +39,12 @@ def convert_files(values: dict, values_ex: dict, cnvset_dict: dict, extracted_di
 		#圧縮先チェック用リスト追加
 		compchklist.append(f_dict['comp'])
 
+	#圧縮先チェック用リスト重複削除
+	compchklist = set(compchklist)
+	
+	#並列ファイル変換時プログレスバー最大数設定
+	cnvbarnum = 0.90 if (not isrenban) else 0.30
+
 	#並列ファイル変換
 	with concurrent.futures.ThreadPoolExecutor(max_workers=num_workers) as executor:
 		futures = []
@@ -47,26 +53,48 @@ def convert_files(values: dict, values_ex: dict, cnvset_dict: dict, extracted_di
 			futures.append(executor.submit(tryconvert, values, values_ex, f_dict, f_path_re, converted_dir))
 		
 		for i,ft in enumerate(concurrent.futures.as_completed(futures)):
-			if useGUI: configure_progress_bar(0.12 + (float(i / len(list(cnvset_dict))) * 0.78),'')#進捗 0.12→0.90
+			if useGUI: configure_progress_bar(0.05 + (float(i / len(list(cnvset_dict))) * cnvbarnum),'')#進捗 0.05→0.95(連番時0.35)
+
+	#2GB超えてるやつはnsa化させない
+	for arc_dir_name in compchklist:
+		arc_dir = Path(converted_dir / arc_dir_name / 'arc_' )
+		dir_size_MB = math.ceil(get_dir_size(Path(arc_dir)) / 1024 / 1024)
+	
+		if (dir_size_MB >= 2000):#2000MB(≒2GB)以上なら
+			compchklist.remove(arc_dir_name)#圧縮先チェック配列から削除
+
+			for p in arc_dir.glob('**/*'):#中身全部移動
+				if p.is_file():
+					p_moved = Path(converted_dir / 'no_comp' / 'arc_' / p.relative_to(arc_dir))#移動先パス
+					p_moved.parent.mkdir(parents=True, exist_ok=True)#移動先ディレクトリ作成
+					shutil.move(p, p_moved)
+			
+			shutil.rmtree(arc_dir)#ディレクトリ削除			
 
 	#圧縮先チェック1 - arc1かarc2があるのにarcが無いなら
 	if (not 'arc' in compchklist) and ( ('arc1' in compchklist) or ('arc2' in compchklist)):
 		dummy_dir = Path(converted_dir / 'arc' / 'arc_' )
-		dummy_dir.mkdir(parents=True, exist_ok=True)#とりあえずarc作って
+		dummy_dir.mkdir(parents=True)#とりあえずarc作って
 		with open(Path(dummy_dir / '.dummy'), 'wb') as s: s.write(b'\xff')#ダミー突っ込んどく(ここ意味があるのか不明、未検証)
 	
 	#圧縮先チェック2 - arc2があるのにarc1が無いなら
 	if (not 'arc1' in compchklist) and ('arc2' in compchklist):
 		dummy_dir = Path(converted_dir / 'arc1' / 'arc_' )
-		dummy_dir.mkdir(parents=True, exist_ok=True)#とりあえずarc1作って
+		dummy_dir.mkdir(parents=True)#とりあえずarc1作って
 		with open(Path(dummy_dir / '.dummy'), 'wb') as s: s.write(b'\xff')#ダミー突っ込んどく(ここ意味があるのか不明、未検証)
 
 	#連番動画利用時はその画像を並列圧縮
 	if isrenban:
+		f_dict_video_list = []
+		
 		for f_dict in cnvset_dict.values():
-			if (f_dict['fileformat'] == 'video'):
+			if (f_dict['fileformat'] == 'video'): f_dict_video_list.append(f_dict)
+
+		for cnt, f_dict in enumerate(f_dict_video_list):
 				#convert_video内で実装するとThreadPoolExecutorが競合しそうなのでこっちで処理
-				convert_video_renban2(values, values_ex, f_dict)
+				startbarnum = (0.35 + ((0.60 / len(f_dict_video_list)) * cnt))
+				addbarnum = (0.60 / len(f_dict_video_list))
+				convert_video_renban2(values, values_ex, f_dict, startbarnum, addbarnum, useGUI)
 	
 	#エラーログ収集
 	allerrlog = ''
@@ -149,7 +177,7 @@ def convert_start(arg):
 			compressed_dir.mkdir()
 
 			#元valuesから計算処理かけて作った結果いれるところ+0.txt(&他)からすくい上げるもの
-			if useGUI: configure_progress_bar(0, '機種固有設定取得...')
+			if useGUI: configure_progress_bar(0.005, '機種固有設定取得...')
 			values_ex = gethardwarevalues(values['hardware'], 'values_ex')
 			
 			#並列処理用スレッド設定
@@ -171,7 +199,7 @@ def convert_start(arg):
 				pre_converted_dir.mkdir()
 
 				#個別変換用事前変換
-				if useGUI: configure_progress_bar(0, '個別設定を元に事前変換...')
+				if useGUI: configure_progress_bar(0.01, '個別設定を元に事前変換...')
 				pre_convert(values, values_ex, pre_converted_dir)
 
 				#画像解像度がスクリプト側と一致しない時用
@@ -186,51 +214,51 @@ def convert_start(arg):
 
 			#連番変換時画像サイズ先に代入
 			if (values['vid_movfmt_radio'] == '連番画像'):
-				if useGUI: configure_progress_bar(0.01, '連番画像設定...')
+				if useGUI: configure_progress_bar(0.02, '連番画像設定...')
 				values_ex['renbanresper'] = getvidrenbanres(values)
 
 			#0.txtのテキスト取得
-			if useGUI: configure_progress_bar(0.02, 'シナリオテキスト取得...')
+			if useGUI: configure_progress_bar(0.023, 'シナリオテキスト取得...')
 			values_ex['0txtscript'] = onsscript_decode(values)
 
 			#0.txtのテキストから各種情報取得
-			if useGUI: configure_progress_bar(0.03, 'シナリオ情報取得...')
+			if useGUI: configure_progress_bar(0.026, 'シナリオ情報取得...')
 			values_ex = onsscript_check(values, values_ex)
 
 			#0.txtのコメントアウト削除
 			if values['etc_0txtremovecommentout_chk']:
-				if useGUI: configure_progress_bar(0.04, 'シナリオコメント削除...')
+				if useGUI: configure_progress_bar(0.029, 'シナリオコメント削除...')
 				values_ex['0txtscript'] = remove_0txtcommentout(values_ex)
 
 			#nsa/sar展開
-			if useGUI: configure_progress_bar(0.05, 'アーカイブ展開...')
-			values_ex = extract_nsa(values, values_ex, extracted_dir, useGUI)		
+			if useGUI: configure_progress_bar(0.03, 'アーカイブ展開...')
+			values_ex = extract_nsa(values, values_ex, extracted_dir, useGUI)#進捗 0.03→0.045
 
 			#画像/音楽/動画/その他のファイルを仕分け
-			if useGUI: configure_progress_bar(0.10, '展開データ設定...')
+			if useGUI: configure_progress_bar(0.048, '展開データ設定...')
 			cnvset_dict = create_cnvsetdict(values, values_ex, extracted_dir)
 
 			#変換本処理
-			if useGUI: configure_progress_bar(0.12, '展開データ変換...')
-			values_ex = convert_files(values, values_ex, cnvset_dict, extracted_dir, converted_dir, useGUI)
+			if useGUI: configure_progress_bar(0.05, '展開データ変換...')
+			values_ex = convert_files(values, values_ex, cnvset_dict, extracted_dir, converted_dir, useGUI)#進捗 0.05→0.95
 			
 			#変換済ファイルをnsaに圧縮
-			if useGUI: configure_progress_bar(0.90, 'アーカイブ再構築...')
-			compressed_nsa(converted_dir, compressed_dir, useGUI)
+			if useGUI: configure_progress_bar(0.95, 'アーカイブ再構築...')
+			compressed_nsa(converted_dir, compressed_dir, useGUI)#進捗 0.95→0.98
 			
 			#savedataフォルダ作成(無いとエラー出す作品向け)
 			create_savedatadir(values_ex, compressed_dir)
 			
 			#機種固有コンフィグファイル作成
-			if useGUI: configure_progress_bar(0.96, 'コンフィグ作成...')
+			if useGUI: configure_progress_bar(0.98, 'コンフィグ作成...')
 			create_configfile(values, values_ex, compressed_dir)
 
 			#0.txt書き出し
-			if useGUI: configure_progress_bar(0.97, '変換済みシナリオ書込み...')
+			if useGUI: configure_progress_bar(0.982, '変換済みシナリオ書込み...')
 			create_0txt(values, values_ex, compressed_dir)
 
 			#完成品移動
-			if useGUI: configure_progress_bar(0.98, '全データ移動...')
+			if useGUI: configure_progress_bar(0.985, '全データ移動...')
 			debug_copy(values, compressed_dir)
 			result_move(result_dir, compressed_dir)
 

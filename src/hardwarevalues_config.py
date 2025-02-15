@@ -47,7 +47,7 @@ hardwarevalues_dict = {
 			'etc_0txtsetwindowbigfont_chk': True,
 			'etc_0txtskipokcancelbox_chk': True,
 			'etc_0txtskipyesnobox_chk': True,
-			'etc_0txtrndtornd2_chk': True,
+			'etc_0txtrndtornd2_chk': False,
 			'etc_0txtremovecommentout_chk': True,
 		}
 	},
@@ -85,7 +85,7 @@ hardwarevalues_dict = {
 			'vid_mjpegquality_bar': 8,
 			'vid_mp4quality_bar': 4, 'vid_mp4aud_kbps': '160', 'vid_mp4aud_hz': '44100',
 
-			'etc_filecompimg_nsa': 'arc.nsa', 'etc_filecompbgm_nsa': 'arc1.nsa', 'etc_filecompse_nsa': 'arc2.nsa', 'etc_filecomprenban_nsa': 'arc2.nsa',
+			'etc_filecompimg_nsa': 'arc.nsa', 'etc_filecompbgm_nsa': 'arc.nsa', 'etc_filecompse_nsa': 'arc1.nsa', 'etc_filecomprenban_nsa': 'arc2.nsa',
 			'etc_fileexdll_chk': True, 'etc_fileexdb_chk': True,
 			'etc_iniscreen': '拡大しない', 'etc_iniramfont_chk': True, 'etc_inicursor_chk': False,
 

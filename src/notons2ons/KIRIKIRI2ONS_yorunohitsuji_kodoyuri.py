@@ -604,7 +604,7 @@ def text_cnv(debug, zero_txt, scenario):
 					line = (r';;;;' + line) if debug else ''
 				
 				#gotoと間違えそうなやつ
-				elif re.match('*', line): 
+				elif re.match(r'\*', line): 
 					line = (';' + line) if debug else ''
 
 				#textclear

@@ -306,7 +306,7 @@ def main(values: dict = {}, values_ex: dict = {}, pre_converted_dir: Path = Path
 				trans_line = re.match(r'トランジション\(([0-9]+?)\)',line)
 				chrmsg_line = re.match(r'【(.+?)】(\((.+?)\))?(.+?)\n',line)
 				BGM_line = re.match(r'音楽再生\("([\-A-z0-9]+?)"\)',line)
-				set_line = re.match('(f\.[A-z]{2}[0-9]+) ?= ?"(.+)?";', line)
+				set_line = re.match(r'(f\.[A-z]{2}[0-9]+) ?= ?"(.+)?";', line)
 				sel_line = re.match(r'選択肢実行\(([0-9]+), ([0-9]+)\)', line)
 				selset_line = re.match(r'選択肢登録\(([0-9]+), "(.+?)", "(.+?)"\)', line)
 				tati_line = re.match(r'前景\(f\.(.+?), f\.(.+?)\+"(.+?)"\)', line)

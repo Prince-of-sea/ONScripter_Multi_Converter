@@ -3,7 +3,7 @@ from pathlib import Path
 import tkinter.messagebox
 import dearpygui.dearpygui as dpg
 import subprocess as sp
-import shutil
+import time, shutil, os
 
 from requiredfile_locations import location
 from utils2 import subprocess_args#これ書いとけば他から"from utils import subprocess_args"されても普通に動く
@@ -20,10 +20,11 @@ def message_box(msg_title: str, msg: str, msg_type: str, useGUI: bool):#将来�
 	return
 
 
-def configure_progress_bar(bar, msg):
-	dpg.set_value('progress_bar', bar)
-	dpg.configure_item('progress_bar', overlay='{}%'.format(int(bar*100)))
+def configure_progress_bar(per: float, msg: str):
+
 	if msg: dpg.set_value('progress_msg', msg)
+	dpg.set_value('progress_bar', per)
+	dpg.configure_item('progress_bar', overlay='{}%'.format(int(per * 100)))
 
 	return
 
@@ -101,6 +102,14 @@ def format_check(filepath: Path):
 			else: ff = False
 
 	return ff
+
+
+def get_dir_size(p):
+	t = 0
+	for e in os.scandir(p):
+		if e.is_file(): t += e.stat().st_size
+		elif e.is_dir(): t += get_dir_size(e.path)
+	return t
 
 
 def dir_allmove(input_dir, output_dir):

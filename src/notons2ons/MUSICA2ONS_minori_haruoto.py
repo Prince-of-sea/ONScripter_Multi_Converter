@@ -613,7 +613,7 @@ def main(values: dict = {}, values_ex: dict = {}, pre_converted_dir: Path = Path
 	Messege_before = 0
 	Labelcount = 0
 
-	print('コンバートを開始します…')
+	if not values: print('コンバートを開始します…')
 
 	for snr_path in pathlist:
 
@@ -1053,7 +1053,7 @@ def main(values: dict = {}, values_ex: dict = {}, pre_converted_dir: Path = Path
 					line = 'if %eroskip == 0 gosub *'  + erojump_line[1] + '\n'
 
 				elif eroreturn_line:
-					print('Convert now…')
+					if not values: print('Convert now…')
 					line = 'return\nend\n'
 
 				elif vscroll_line:
@@ -1088,7 +1088,7 @@ def main(values: dict = {}, values_ex: dict = {}, pre_converted_dir: Path = Path
 
 		
 
-	print("処理が完了しました")
+	if not values: print("処理が完了しました")
 
 	open(os.path.join(same_hierarchy,'0.txt'), 'w', errors='ignore').write(txt)
 

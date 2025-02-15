@@ -441,7 +441,7 @@ def text_cnv(DEBUG_MODE, same_hierarchy, zero_txt, scenario):
 				line = (r';;;;' + line) if DEBUG_MODE else ''
 
 			#gotoと間違えそうなやつ
-			elif re.match('\*', line): 
+			elif re.match(r'\*', line): 
 				line = (';' + line) if DEBUG_MODE else ''
 
 			#既に置換済み
