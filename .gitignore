@@ -117,5 +117,6 @@ dmypy.json
 .pyre/
 
 # Test
+/src/.vscode
 /src/debug
 /src/tools
