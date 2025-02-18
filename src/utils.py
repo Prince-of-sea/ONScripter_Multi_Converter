@@ -1,22 +1,25 @@
 #!/usr/bin/env python3
-from pathlib import Path
-import tkinter.messagebox
-import dearpygui.dearpygui as dpg
+import os
+import shutil
 import subprocess as sp
-import time, shutil, os
+from pathlib import Path
 
+import dearpygui.dearpygui as dpg
 from requiredfile_locations import location
-from utils2 import subprocess_args#これ書いとけば他から"from utils import subprocess_args"されても普通に動く
+from utils2 import (
+	subprocess_args, #これ書いとけば他から"from utils import subprocess_args"されても普通に動く
+)
 
 
-def message_box(msg_title: str, msg: str, msg_type: str, useGUI: bool):#将来的にはtk使わない方向で
-	if not useGUI: return
-
-	match msg_type:
-		case 'warning': tkinter.messagebox.showwarning(msg_title, msg)
-		case 'error': tkinter.messagebox.showerror(msg_title, msg)
-		case 'info': tkinter.messagebox.showinfo(msg_title, msg)
-
+def message_box(msg_title: str, msg: str, msg_type: str, useGUI: bool):
+	if not useGUI:
+		return
+	with dpg.mutex():
+		with dpg.window(label=msg_title, modal=True) as msg_window:
+			dpg.add_text(msg)
+			dpg.add_button(label="OK", callback=lambda: dpg.configure_item(msg_window, show=False))
+	dpg.split_frame()
+	dpg.set_item_pos(msg_window, [dpg.get_viewport_client_width() // 2 - dpg.get_item_width(msg_window) // 2, dpg.get_viewport_client_height() // 2 - dpg.get_item_height(msg_window) // 2])
 	return
 
 

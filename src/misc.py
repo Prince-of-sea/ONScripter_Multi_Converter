@@ -10,19 +10,26 @@ from requiredfile_locations import location, exist
 from hardwarevalues_config import gethardwarevalues_full
 from utils import message_box
 
+def ask_create_disabledvideofile():
+	with dpg.mutex():
+		with dpg.window(label="連番動画無効化ファイル作成", modal=True) as msg_ask:
+			dpg.add_text("一部作品では、連番画像に変換した動画が再生されずに\n" +\
+						"操作不能になって先に進めなくなることがあります\n\n" +\
+						"本機能で作成した無効化ファイルを置くことで\n" +\
+						"再生をスキップし、不具合を回避することが出来ます\n" +\
+						"※ver.2.3.1以降で変換した作品でのみ有効です\n\n" +\
+						"無効化ファイルを作成しますか？")
+			with dpg.group(horizontal=True):
+				dpg.add_button(label="OK", user_data=(msg_ask, True), callback=create_disabledvideofile)
+				dpg.add_button(label="キャンセル", user_data=(msg_ask, False), callback=create_disabledvideofile)
+	dpg.split_frame()
+	dpg.set_item_pos(msg_ask, [dpg.get_viewport_client_width() // 2 - dpg.get_item_width(msg_ask) // 2, dpg.get_viewport_client_height() // 2 - dpg.get_item_height(msg_ask) // 2])
+	return
 
-def create_disabledvideofile():#将来的にはtk使わない方向で
-	res = tkinter.messagebox.askokcancel('連番動画無効化ファイル作成', '''一部作品では、連番画像に変換した動画が再生されずに
-操作不能になって先に進めなくなることがあります
-
-本機能で作成した無効化ファイルを置くことで
-再生をスキップし、不具合を回避することが出来ます
-※ver.2.3.1以降で変換した作品でのみ有効です
-
-無効化ファイルを作成しますか？''')
-	
-	if not res: return
-	
+def create_disabledvideofile(sender, app_data, user_data):#将来的にはtk使わない方向で
+	dpg.configure_item(user_data[0], show=False)
+	if not user_data[1]:
+		return
 	root = tkinter.Tk()
 	root.withdraw()
 	_path = filedialog.askdirectory()

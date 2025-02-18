@@ -7,7 +7,7 @@ import dearpygui.dearpygui as dpg
 from hardwarevalues_config import gethardwarevalues_full
 from process_notons import get_titledict
 from conversion import convert_start
-from misc import create_disabledvideofile, open_repositorieslink, open_garbro, copyrights#最低限以外はmiscでやる
+from misc import ask_create_disabledvideofile, open_repositorieslink, open_garbro, copyrights#最低限以外はmiscでやる
 
 
 def open_input():
@@ -72,7 +72,7 @@ def gui_main(version, hw_key, input_dir_param, output_dir_param):
 				dpg.add_menu_item(label="終了", callback=close)
 
 			with dpg.menu(label="ツール"):
-				dpg.add_menu_item(label="連番動画無効化ファイル作成", callback=create_disabledvideofile)
+				dpg.add_menu_item(label="連番動画無効化ファイル作成", callback=ask_create_disabledvideofile)
 				dpg.add_menu_item(label="GARBroを起動", callback=open_garbro)
 
 			with dpg.menu(label="このソフトについて"):
