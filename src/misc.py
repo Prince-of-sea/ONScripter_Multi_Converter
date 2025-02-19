@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
-from pathlib import Path
+import re
+import shutil
+import subprocess as sp
+import sys
 import tkinter.filedialog as filedialog
 import tkinter.messagebox
-import dearpygui.dearpygui as dpg
-import subprocess as sp
-import webbrowser, shutil, sys, re
+import webbrowser
+from pathlib import Path
 
-from requiredfile_locations import location, exist
-from hardwarevalues_config import gethardwarevalues_full
+import dearpygui.dearpygui as dpg
+from requiredfile_locations import exist, location
 from utils import message_box
 
 

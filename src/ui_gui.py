@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
-import tkinter.filedialog as filedialog
-import tkinter.messagebox
 import tkinter
-import dearpygui.dearpygui as dpg
+import tkinter.filedialog as filedialog
 
-from hardwarevalues_config import gethardwarevalues_full
-from process_notons import get_titledict
+import dearpygui.dearpygui as dpg
 from conversion import ask_convert_start
-from misc import ask_create_disabledvideofile, open_repositorieslink, open_garbro, copyrights#最低限以外はmiscでやる
+from hardwarevalues_config import gethardwarevalues_full
+from misc import (  #最低限以外はmiscでやる
+	ask_create_disabledvideofile,
+	copyrights,
+	open_garbro,
+	open_repositorieslink,
+)
+from process_notons import get_titledict
 
 
 def open_input():

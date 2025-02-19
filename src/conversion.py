@@ -1,18 +1,30 @@
 #!/usr/bin/env python3
-from pathlib import Path
 import concurrent.futures
-import dearpygui.dearpygui as dpg
-import tempfile, shutil, time, math, os
+import math
+import os
+import shutil
+import tempfile
+import time
+from pathlib import Path
 
-from requiredfile_locations import exist_env, exist_all
+import dearpygui.dearpygui as dpg
+from conversion_etc import create_cnvsetdict, tryconvert
+from conversion_video import convert_video_renban2, getvidrenbanres
 from hardwarevalues_config import gethardwarevalues, gethardwarevalues_full
-from conversion_video import getvidrenbanres, convert_video_renban2
-from nsa_operations import extract_nsa, compressed_nsa
-from conversion_etc import tryconvert, create_cnvsetdict
+from misc import (
+	create_0txt,
+	create_configfile,
+	create_savedatadir,
+	debug_copy,
+	in_out_dir_check,
+	remove_0txtcommentout,
+	result_move,
+)
+from nsa_operations import compressed_nsa, extract_nsa
+from ons_script import onsscript_check, onsscript_decode
 from process_notons import get_titledict, pre_convert
-from ons_script import onsscript_decode, onsscript_check
-from utils import configure_progress_bar, message_box, get_dir_size
-from misc import in_out_dir_check, remove_0txtcommentout, create_savedatadir, create_configfile, create_0txt, debug_copy, result_move
+from requiredfile_locations import exist_all, exist_env
+from utils import configure_progress_bar, get_dir_size, message_box
 
 
 def convert_files(values: dict, values_ex: dict, cnvset_dict: dict, extracted_dir: Path, converted_dir: Path, useGUI: bool):
