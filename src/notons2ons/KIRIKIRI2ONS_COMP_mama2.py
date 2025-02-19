@@ -30,7 +30,7 @@ def title_info():
 
 
 def extract_resource(values: dict, values_ex: dict, pre_converted_dir: Path):
-	from utils import extract_archive_garbro
+	from utils import extract_archive_garbro # type: ignore
 
 	num_workers = values_ex['num_workers']
 	input_dir = values['input_dir']
@@ -405,7 +405,7 @@ def main(values: dict = {}, values_ex: dict = {}, pre_converted_dir: Path = Path
 
 	txt = txt.replace(r';<<-EFFECT->>', add0txt_effect)
 
-	open(os.path.join(same_hierarchy,'0.txt'), 'w', errors='ignore').write(txt)
+	open(os.path.join(same_hierarchy,'0.txt'), 'w', encoding='cp932', errors='ignore').write(txt)
 
 
 #事前に展開済みなら一応単体でも動作するようにしておく

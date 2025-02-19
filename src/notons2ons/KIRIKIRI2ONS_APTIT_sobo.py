@@ -44,7 +44,7 @@ def title_info():
 
 
 def extract_resource_main(Kikiriki_copy_Path, input_dir, xp3_name, pre_converted_dir):
-	from utils import extract_archive_garbro, subprocess_args
+	from utils import extract_archive_garbro, subprocess_args # type: ignore
 
 	xp3_path = Path(input_dir / '{}.xp3'.format(xp3_name))
 	xp3_outdir = Path(pre_converted_dir / xp3_name)
@@ -66,8 +66,8 @@ def extract_resource_main(Kikiriki_copy_Path, input_dir, xp3_name, pre_converted
 
 
 def extract_resource(values: dict, values_ex: dict, pre_converted_dir: Path):
-	from requiredfile_locations import location
-	from utils import extract_archive_garbro
+	from requiredfile_locations import location # type: ignore
+	from utils import extract_archive_garbro # type: ignore
 
 	input_dir = values['input_dir']
 	num_workers = values_ex['num_workers']
@@ -637,7 +637,7 @@ def main(values: dict = {}, values_ex: dict = {}, pre_converted_dir: Path = Path
 		else:#体験版
 			txt = txt.replace(r';<<-RMENU->>', r'rmenu "スキップ",skip,"リセット",reset')
 
-		open(os.path.join(same_hierarchy,'0.txt'), 'w', errors='ignore').write(txt)
+		open(os.path.join(same_hierarchy,'0.txt'), 'w', encoding='cp932', errors='ignore').write(txt)
 	
 	#不要ファイル削除
 	for suffix in ['.asd', '.ks', '.tjs']:

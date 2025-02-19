@@ -320,8 +320,8 @@ def bgm_cnv_main(f, s2v_d, s2v_n, same_hierarchy, values):
 	os.makedirs(os.path.dirname(fwav), exist_ok=True)#フォルダなかったら作る
 
 	if values:
-		from requiredfile_locations import location_env
-		from utils import subprocess_args
+		from requiredfile_locations import location_env # type: ignore
+		from utils import subprocess_args # type: ignore
 		
 		ffmpeg_Path = location_env('ffmpeg')
 
@@ -528,7 +528,7 @@ def text_cnv(s2v_d, s2v_n, same_hierarchy, bgimage_dir, fgimage_dir):
 	txt = txt.replace(r'lsp 20,"taticnv/chara/seira/裸_腕広げ_すまし.png_1416_2000_0_-10.png",0,0:print 14', '')
 	txt = txt.replace(r'lsph 23,"taticnv/chara/seira/mainvisual.jpg_1280_1810_0_-400.png",0,0', r'lsp 23,"taticnv/chara/seira/mainvisual.jpg_1280_1810_0_-400.png",0,0:print 15')
 
-	open(os.path.join(same_hierarchy,'0.txt'), 'w', errors='ignore').write(txt)
+	open(os.path.join(same_hierarchy,'0.txt'), 'w', encoding='cp932', errors='ignore').write(txt)
 
 
 	#画像加工(別にdef取れよって感じだけど)

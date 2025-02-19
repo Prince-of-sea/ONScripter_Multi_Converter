@@ -29,7 +29,7 @@ def title_info():
 
 
 def extract_resource(values: dict, values_ex: dict, pre_converted_dir: Path):
-	from utils import extract_archive_garbro
+	from utils import extract_archive_garbro # type: ignore
 
 	input_dir = values['input_dir']
 	data_xp3 = Path(input_dir / 'data.xp3')
@@ -763,7 +763,7 @@ def text_cnv(debug, zero_txt, scenario):
 	txt = txt.replace(r';<<-EFFECT->>', add0txt_effect)
 
 	#出力結果を書き込み
-	open(zero_txt, 'w', errors='ignore').write(txt)
+	open(zero_txt, 'w', encoding='cp932', errors='ignore').write(txt)
 
 	return
 

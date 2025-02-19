@@ -55,6 +55,19 @@ def convert_files(values: dict, values_ex: dict, cnvset_dict: dict, extracted_di
 		for i,ft in enumerate(concurrent.futures.as_completed(futures)):
 			if useGUI: configure_progress_bar(0.05 + (float(i / len(list(cnvset_dict))) * cnvbarnum),'')#進捗 0.05→0.95(連番時0.35)
 
+	#連番動画利用時はその画像を並列圧縮
+	if isrenban:
+		f_dict_video_list = []
+		
+		for f_dict in cnvset_dict.values():
+			if (f_dict['fileformat'] == 'video'): f_dict_video_list.append(f_dict)
+
+		for cnt, f_dict in enumerate(f_dict_video_list):
+				#convert_video内で実装するとThreadPoolExecutorが競合しそうなのでこっちで処理
+				startbarnum = (0.35 + ((0.60 / len(f_dict_video_list)) * cnt))
+				addbarnum = (0.60 / len(f_dict_video_list))
+				convert_video_renban2(values, values_ex, f_dict, startbarnum, addbarnum, useGUI)
+				
 	#2GB超えてるやつはnsa化させない
 	for arc_dir_name in compchklist:
 		arc_dir = Path(converted_dir / arc_dir_name / 'arc_' )
@@ -82,19 +95,6 @@ def convert_files(values: dict, values_ex: dict, cnvset_dict: dict, extracted_di
 		dummy_dir = Path(converted_dir / 'arc1' / 'arc_' )
 		dummy_dir.mkdir(parents=True)#とりあえずarc1作って
 		with open(Path(dummy_dir / '.dummy'), 'wb') as s: s.write(b'\xff')#ダミー突っ込んどく(ここ意味があるのか不明、未検証)
-
-	#連番動画利用時はその画像を並列圧縮
-	if isrenban:
-		f_dict_video_list = []
-		
-		for f_dict in cnvset_dict.values():
-			if (f_dict['fileformat'] == 'video'): f_dict_video_list.append(f_dict)
-
-		for cnt, f_dict in enumerate(f_dict_video_list):
-				#convert_video内で実装するとThreadPoolExecutorが競合しそうなのでこっちで処理
-				startbarnum = (0.35 + ((0.60 / len(f_dict_video_list)) * cnt))
-				addbarnum = (0.60 / len(f_dict_video_list))
-				convert_video_renban2(values, values_ex, f_dict, startbarnum, addbarnum, useGUI)
 	
 	#エラーログ収集
 	allerrlog = ''

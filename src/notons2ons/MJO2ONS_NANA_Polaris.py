@@ -33,7 +33,7 @@ def title_info():
 
 
 def extract_resource(values: dict, values_ex: dict, pre_converted_dir: Path):
-	from utils import extract_archive_garbro
+	from utils import extract_archive_garbro # type: ignore
 
 	num_workers = values_ex['num_workers']
 	input_dir = values['input_dir']
@@ -836,7 +836,7 @@ def image_convert(PATH_DICT):
 
 #テキストデコード
 def text_dec(PATH_DICT, values):
-	if values: from utils import subprocess_args
+	if values: from utils import subprocess_args # type: ignore
 	l = ['a01','a02','a03','a04','a05','a06','a07','a08','a09','a10','b01','b02','b03','b04','b05','b06','b07','b08','epilogue','スタッフルーム_まと','スタッフルーム_菊池','スタッフルームhieさん','スタッフルームとも','スタッフルームまとめ','スタッフルーム芹澤さん','スタッフルーム美鈴さん','ポラリススタッフルーム用_浅沼諒空']
 
 	for n in l:
@@ -1120,7 +1120,7 @@ def text_cnv(DEBUG_MODE, zero_txt, scenario):
 	txt = re.sub(r'@\nmsg', '@\ntextclear\nmsg', txt)
 
 	#出力結果を書き込み
-	open(zero_txt, 'w', errors='ignore').write(txt)
+	open(zero_txt, 'w', encoding='cp932', errors='ignore').write(txt)
 
 	return
 
@@ -1173,7 +1173,7 @@ def main(values: dict = {}, values_ex: dict = {}, pre_converted_dir: Path = Path
 	}
 
 	if values:
-		from requiredfile_locations import location
+		from requiredfile_locations import location # type: ignore
 		PATH_DICT['mjdisasm_exe'] = location('mjdisasm')
 	else:
 		PATH_DICT['mjdisasm_exe'] = (same_hierarchy / 'mjdisasm.exe')

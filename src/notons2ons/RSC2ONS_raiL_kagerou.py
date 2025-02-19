@@ -32,7 +32,7 @@ def title_info():
 
 
 def extract_resource(values: dict, values_ex: dict, pre_converted_dir: Path):
-	from utils import extract_archive_garbro
+	from utils import extract_archive_garbro # type: ignore
 
 	num_workers = values_ex['num_workers']
 	input_dir = values['input_dir']
@@ -599,7 +599,7 @@ def dir_check(path_list):
 
 # シナリオを平文にデコードする関数 - 本体
 def text_dec_main(p, gsc_exe, ex_gsc, scr_dec, values_ex):
-	if values_ex: from utils import subprocess_args
+	if values_ex: from utils import subprocess_args # type: ignore
 	#不要gscはここで除外
 	if not (str(p.stem) in ex_gsc):
 		#デコード処理(ライセンスとか面倒なのでsubprocessで、ネイティブで動かしたい人は勝手に作って)
@@ -899,7 +899,7 @@ def text_cnv(DEBUG_MODE, zero_txt, scr_dec, path_dict_keys):
 	txt = txt.replace(r'mov %21,8061:mov %22,8062:mov %23,8063', '*skip_fix1\n' + r'mov %21,8061:mov %22,8062:mov %23,8063:RSC_select:RSC_select_chara')#個別ルート分岐ごまかし2
 
 	#出力結果を書き込み
-	open(zero_txt, 'w', errors='ignore').write(txt)
+	open(zero_txt, 'w', encoding='cp932', errors='ignore').write(txt)
 
 	#デバッグ時のみ最大行数を表示
 	if DEBUG_MODE:
@@ -977,7 +977,7 @@ def main(values: dict = {}, values_ex: dict = {}, pre_converted_dir: Path = Path
 	}
 
 	if values:
-		from requiredfile_locations import location
+		from requiredfile_locations import location # type: ignore
 		PATH_DICT['gsc_exe'] = location('gscScriptCompAndDecompiler-cli')
 
 	else:

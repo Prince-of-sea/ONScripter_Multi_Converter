@@ -35,7 +35,7 @@ def title_info():
 
 
 def extract_resource(values: dict, values_ex: dict, pre_converted_dir: Path):
-	from utils import extract_archive_garbro
+	from utils import extract_archive_garbro # type: ignore
 
 	num_workers = values_ex['num_workers']
 	input_dir = values['input_dir']
@@ -723,7 +723,7 @@ def text_cnv(PATH_D):
 
 	txt = txt.replace(r';<<-EFFECT->>', add0txt_effect)
 
-	open(PATH_D['ZERO_TXT'], 'w', errors='ignore').write(txt)
+	open(PATH_D['ZERO_TXT'], 'w', encoding='cp932', errors='ignore').write(txt)
 	
 
 def file_check(PATH_D):
@@ -737,7 +737,7 @@ def file_check(PATH_D):
 
 
 def text_dec_main(p, PATH_D, values_ex):
-	if values_ex: from utils import subprocess_args
+	if values_ex: from utils import subprocess_args # type: ignore
 	n = (os.path.splitext(os.path.basename(p))[0])
 	if int(n) >= 2000:
 		if values_ex: sp.run([PATH_D['EXE_GSC'], '-m', 'decompile', '-i', p], shell=True, cwd=PATH_D['DIR_SCR'], **subprocess_args())
@@ -792,7 +792,7 @@ def main(values: dict = {}, values_ex: dict = {}, pre_converted_dir: Path = Path
 
 
 	if values:
-		from requiredfile_locations import location
+		from requiredfile_locations import location # type: ignore
 		PATH_D['EXE_GSC'] = str(location('gscScriptCompAndDecompiler-cli'))
 
 	else:

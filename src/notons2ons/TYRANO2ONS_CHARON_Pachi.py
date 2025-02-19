@@ -32,7 +32,7 @@ def title_info():
 
 
 def extract_resource(values: dict, values_ex: dict, pre_converted_dir: Path):
-	from utils import extract_archive_garbro
+	from utils import extract_archive_garbro # type: ignore
 
 	input_dir = values['input_dir']
 
@@ -350,8 +350,8 @@ def mov2PNG(p, x, y, values):
 	p_tmp = Path(str(str(p) + '.png'))
 
 	if values:
-		from requiredfile_locations import location_env
-		from utils import subprocess_args
+		from requiredfile_locations import location_env # type: ignore
+		from utils import subprocess_args # type: ignore
 		ffmpeg_Path = location_env('ffmpeg')
 		sp.run([ffmpeg_Path, '-i', p, '-s', (str(x)+'x'+str(y)), '-frames:v', '1', '-y', p_tmp], shell=True, **subprocess_args())
 
@@ -369,8 +369,8 @@ def mov2PNG_zugara2(p, values):#特別
 	p_result = Path(str(str(p) + '.png'))
 	
 	if values:
-		from requiredfile_locations import location_env
-		from utils import subprocess_args
+		from requiredfile_locations import location_env # type: ignore
+		from utils import subprocess_args # type: ignore
 		ffmpeg_Path = location_env('ffmpeg')
 		sp.run([ffmpeg_Path, '-i', p, '-to', '00:00:05.666', '-vf', 'crop=250:140:0:0', '-r', '3', '-vcodec', 'png', '-y', p_tmp], text=True, shell=True, **subprocess_args(True))
 
@@ -661,7 +661,7 @@ def text_cnv(DEBUG_MODE, zero_txt, scenario):
 	txt += '\nreturn'
 
 	#出力結果を書き込み
-	open(zero_txt, 'w', errors='ignore').write(txt)
+	open(zero_txt, 'w', encoding='cp932', errors='ignore').write(txt)
 
 	return
 

@@ -36,8 +36,8 @@ def title_info():
 
 
 def extract_resource(values: dict, values_ex: dict, pre_converted_dir: Path):
-	from requiredfile_locations import location
-	from utils import extract_archive_garbro, subprocess_args
+	from requiredfile_locations import location # type: ignore
+	from utils import extract_archive_garbro, subprocess_args # type: ignore
 
 	input_dir = values['input_dir']
 
@@ -990,7 +990,7 @@ def text_cnv(DEBUG_MODE, zero_txt, scenario):
 	txt = txt.replace(r'＊＊＊＊', r'誠一')
 	
 	#出力結果を書き込み
-	open(zero_txt, 'w', errors='ignore').write(txt)
+	open(zero_txt, 'w', encoding='cp932', errors='ignore').write(txt)
 
 	return
 

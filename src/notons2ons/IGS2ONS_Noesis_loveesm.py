@@ -35,7 +35,7 @@ def title_info():
 
 
 def extract_resource(values: dict, values_ex: dict, pre_converted_dir: Path):
-	from utils import extract_archive_garbro
+	from utils import extract_archive_garbro # type: ignore
 
 	num_workers = values_ex['num_workers']
 	input_dir = values['input_dir']
@@ -514,7 +514,7 @@ def img_resize(DIR_BG, DIR_FG, DIR_SYS, DIR_IMG, values_ex):
 
 
 def text_dec_main(p, DIR_SCR, EXE_IGS, values_ex):
-	if values_ex: from utils import subprocess_args
+	if values_ex: from utils import subprocess_args # type: ignore
 	n = (os.path.splitext(os.path.basename(p))[0])
 	if values_ex: sp.run([EXE_IGS, '-p', p, n+'.txt'], shell=True, cwd=DIR_SCR, **subprocess_args())
 	else: sp.run([EXE_IGS, '-p', p, n+'.txt'], shell=True, cwd=DIR_SCR)
@@ -688,7 +688,7 @@ def text_cnv(DIR_SCR_DEC, ZERO_TXT):
 	txt = txt.replace('華は顔を見合わせ、それからにっこりと笑って言った。\\', '華は顔を見合わせ、それからにっこりと笑って言った。\\\n*S9END')
 	txt = txt.replace(';SCR_C0700Z_END', 'tati_reset:csp -1:bgmstop:dwavestop -1:skipoff:mov %202,1:bgmonce "bgm\\Led_s.ogg":bg "image\\ed3_harem.png",10:mov %150,126007:gosub *staffroll:click:bgmstop:dwavestop -1:csp -1:reset')#ED3
 
-	open(ZERO_TXT, 'w', errors='ignore').write(txt)
+	open(ZERO_TXT, 'w', encoding='cp932', errors='ignore').write(txt)
 
 
 def file_check(EXE_IGS, DIR_SCR, DIR_BG, DIR_FG, DIR_SYS):
@@ -720,7 +720,7 @@ def main(values: dict = {}, values_ex: dict = {}, pre_converted_dir: Path = Path
 	same_hierarchy = str(pre_converted_dir)#(os.path.dirname(sys.argv[0]))#同一階層のパスを変数へ代入
 
 	if values:
-		from requiredfile_locations import location
+		from requiredfile_locations import location # type: ignore
 		EXE_IGS = str(location('igscriptD'))
 
 	else:

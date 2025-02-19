@@ -33,7 +33,7 @@ def title_info():
 
 
 def extract_resource(values: dict, values_ex: dict, pre_converted_dir: Path):
-	from utils import extract_archive_garbro
+	from utils import extract_archive_garbro # type: ignore
 
 	num_workers = values_ex['num_workers']
 	input_dir = values['input_dir']
@@ -722,7 +722,7 @@ def text_cnv(same_hierarchy, scenario_dir, image_dir, sound_dict):
 	txt = txt.replace(r';<<-GRAPHIC_VIEW->>', add0txt_graphic)
 	txt = txt.replace(r';<<-EFFECT->>', add0txt_effect)
 
-	open(os.path.join(same_hierarchy,'0.txt'), 'w', errors='ignore').write(txt)
+	open(os.path.join(same_hierarchy,'0.txt'), 'w', encoding='cp932', errors='ignore').write(txt)
 
 
 #--------------------main--------------------

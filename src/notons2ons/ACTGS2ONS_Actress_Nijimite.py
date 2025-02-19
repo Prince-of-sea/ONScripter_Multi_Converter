@@ -30,7 +30,7 @@ def title_info():
 
 
 def extract_resource(values: dict, values_ex: dict, pre_converted_dir: Path):
-	from utils import extract_archive_garbro
+	from utils import extract_archive_garbro # type: ignore
 
 	num_workers = values_ex['num_workers']
 	input_dir = values['input_dir']
@@ -954,7 +954,7 @@ def text_cnv(DIR_SCR, debug, same_hierarchy, str2var_cnt, define_dict, cfg_dict,
 		txt = txt.replace(r'<<-TITLE->>', r'虹を見つけたら教えて。')
 		txt = txt.replace('\n;menu\n', '\ngoto *niji_title_menu\n*niji_title_menu_end\n')
 
-	open(os.path.join(same_hierarchy,'0.txt'), 'w', errors='ignore').write(txt)
+	open(os.path.join(same_hierarchy,'0.txt'), 'w', encoding='cp932', errors='ignore').write(txt)
 
 	return str2var_cnt, define_dict, cfg_dict, gosub_list
 

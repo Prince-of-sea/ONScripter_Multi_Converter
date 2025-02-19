@@ -209,6 +209,7 @@ def convert_video_renban(values: dict, values_ex: dict, f_dict: dict):
 		'-i', extractedpath,
 		'-r', str(vid_frame),
 		'-vf', 'scale={w}:{h},pad={pw}:{ph}:0:0:black'.format(w = w, h = h, pw = pw, ph = ph),
+		'-start_number', '0',
 		str(convertedpath) + '/_%05d.png',#PNGで5桁連番 - jpgの場合も後で変換するので気にしなくて良い
 	], shell=True, **subprocess_args())
 
@@ -398,10 +399,5 @@ def convert_video_renban2(values: dict, values_ex: dict, f_dict: dict, startbarn
 	
 		for i,ft in enumerate(concurrent.futures.as_completed(futures)):
 			if useGUI: configure_progress_bar(startbarnum + (float(i / convertedpath_glob_png_num) * addbarnum),'')#進捗 0.35→0.95(繰り返しの合計)
-		
-	#00000ないと動画再生できないのでコピー
-	match values['vid_renbanfmt_radio']:
-		case 'JPEG': shutil.copy((convertedpath / '00001.jpg'), (convertedpath / '00000.jpg'))
-		case 'PNG': shutil.copy((convertedpath / '00001.png'), (convertedpath / '00000.png'))
 
 	return

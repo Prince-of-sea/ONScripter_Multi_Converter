@@ -36,7 +36,7 @@ def title_info():
 def extract_resource(values: dict, values_ex: dict, pre_converted_dir: Path):
 
 	#GARbroを使って展開する関数をutils.pyから呼び出す
-	from utils import extract_archive_garbro
+	from utils import extract_archive_garbro # type: ignore
 
 	#並列で処理する最大数を引数の辞書から持ってきて変数に代入
 	num_workers = values_ex['num_workers']
@@ -1090,7 +1090,7 @@ def main(values: dict = {}, values_ex: dict = {}, pre_converted_dir: Path = Path
 
 	if not values: print("処理が完了しました")
 
-	open(os.path.join(same_hierarchy,'0.txt'), 'w', errors='ignore').write(txt)
+	open(os.path.join(same_hierarchy,'0.txt'), 'w', encoding='cp932', errors='ignore').write(txt)
 
 		
 
