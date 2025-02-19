@@ -130,7 +130,7 @@ def compressed_nsa(converted_dir: Path, compressed_dir: Path, useGUI: bool):
 			futures.append(executor.submit(compressed_nsa_main, arc_dir, compressed_dir))
 
 		for i,ft in enumerate(concurrent.futures.as_completed(futures)):
-			if useGUI: configure_progress_bar(0.95 + float(i / len(list(converted_dir.glob('arc*'))) * 0.08), '')#進捗 0.95→0.98
+			if useGUI: configure_progress_bar(0.95 + float(i / len(list(converted_dir.glob('arc*'))) * 0.03), '')#進捗 0.95→0.98
 			
 		concurrent.futures.as_completed(futures)
 
