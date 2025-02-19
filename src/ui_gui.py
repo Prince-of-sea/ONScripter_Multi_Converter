@@ -6,7 +6,7 @@ import dearpygui.dearpygui as dpg
 
 from hardwarevalues_config import gethardwarevalues_full
 from process_notons import get_titledict
-from conversion import convert_start
+from conversion import ask_convert_start
 from misc import ask_create_disabledvideofile, open_repositorieslink, open_garbro, copyrights#最低限以外はmiscでやる
 
 
@@ -631,7 +631,7 @@ def gui_main(version, hw_key, input_dir_param, output_dir_param):
 								)
 		with dpg.group(horizontal=True):
 			dpg.add_progress_bar(default_value=0, tag="progress_bar", overlay="0%")
-			dpg.add_button(label="Convert", callback=convert_start, tag="convert_button")
+			dpg.add_button(label="Convert", callback=ask_convert_start, tag="convert_button")
 			dpg.add_text(default_value="", tag="progress_msg")
 
 			#!!!ここもっと良い書き方募集中!!!

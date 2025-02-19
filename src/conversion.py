@@ -5,14 +5,14 @@ import dearpygui.dearpygui as dpg
 import tempfile, shutil, time, math, os
 
 from requiredfile_locations import exist_env, exist_all
-from hardwarevalues_config import gethardwarevalues
+from hardwarevalues_config import gethardwarevalues, gethardwarevalues_full
 from conversion_video import getvidrenbanres, convert_video_renban2
 from nsa_operations import extract_nsa, compressed_nsa
 from conversion_etc import tryconvert, create_cnvsetdict
 from process_notons import get_titledict, pre_convert
 from ons_script import onsscript_decode, onsscript_check
 from utils import configure_progress_bar, message_box, get_dir_size
-from misc import convert_askmsg, in_out_dir_check, remove_0txtcommentout, create_savedatadir, create_configfile, create_0txt, debug_copy, result_move
+from misc import in_out_dir_check, remove_0txtcommentout, create_savedatadir, create_configfile, create_0txt, debug_copy, result_move
 
 
 def convert_files(values: dict, values_ex: dict, cnvset_dict: dict, extracted_dir: Path, converted_dir: Path, useGUI: bool):
@@ -105,6 +105,71 @@ def convert_files(values: dict, values_ex: dict, cnvset_dict: dict, extracted_di
 	return values_ex
 
 
+def ask_convert_start(arg):
+	configure_progress_bar(0, '変換開始...')
+
+	titledict = get_titledict()
+
+	#個別選択時
+	if dpg.get_value('title_setting') in titledict.keys():
+		title_info = titledict[ dpg.get_value('title_setting') ]
+		configure_progress_bar(0, '個別設定変換確認...')
+		title = title_info['title']
+		requiredsoft = title_info['requiredsoft']
+		version = title_info['version']
+		notes = title_info['notes']
+		is_43 = title_info['is_4:3']
+
+		r_txt = '\n・'.join(['']+requiredsoft) if requiredsoft else '\n・なし'
+		v_txt = '\n・'.join(['']+version)
+		n_txt = '\n・'.join(['']+notes)
+
+		h_list = []
+		for hw_k, hw_v in gethardwarevalues_full().items():
+			if (hw_k == 'PSP'): hw_s = '可'#PSPなら(埋め込み昆布は全部動くように作ってるはずなので)ok
+			elif (not hw_v['values_ex']['aspect_4:3only']): hw_s = '可'#4:3専用機ではないならok		
+			elif is_43: hw_s = '可'#作品が4:3ならok
+			else: hw_s = '不可'
+
+			h_list.append(hw_k+':'+hw_s)
+
+		h_txt = '\n'+' / '.join(h_list)
+
+		s = ('=====================================================\n'\
+			f'[変換先として指定可能なハード]{h_txt}\n\n'
+			'=====================================================\n'\
+			f'[追加で用意するソフト]{r_txt}\n\n'\
+			'=====================================================\n'\
+			f'[確認済み対応タイトル]{v_txt}\n\n'\
+			'=====================================================\n'\
+			f'[注意事項]{n_txt}\n\n'\
+			'=====================================================\n'\
+			)
+
+		with dpg.mutex():
+			with dpg.window(label=f'個別設定変換確認 - {title}', modal=True, no_close=True, no_move=True) as msg_askconv:
+				with dpg.child_window(height=276, width=620):
+					dpg.add_text(s)
+				dpg.add_text("以上を確認したうえで、変換を開始しますか？")
+				with dpg.group(horizontal=True):
+					dpg.add_button(label="OK", user_data=(msg_askconv, True, arg), callback=askconv_callback)
+					dpg.add_button(label="キャンセル", user_data=(msg_askconv, False, arg), callback=askconv_callback)
+		dpg.split_frame()
+	# 未指定なら確認を飛ばして変換開始
+	else:
+		return convert_start(arg)
+	return
+
+
+def askconv_callback(sender, app_data, user_data):
+	dpg.configure_item(user_data[0], show=False)
+	if user_data[1]:
+		return convert_start(user_data[2])
+	else:
+		configure_progress_bar(0, '変換がキャンセルされました')
+	return
+
+
 def convert_start(arg):
 	start_time = time.perf_counter()
 	useGUI = bool(arg == r'convert_button')
@@ -135,10 +200,6 @@ def convert_start(arg):
 		#個別選択時
 		if values['title_setting'] in titledict.keys():
 			title_info = titledict[ values['title_setting'] ]
-
-			#確認
-			if useGUI: configure_progress_bar(0, '個別設定変換確認...')
-			if not convert_askmsg(useGUI, title_info): raise Exception('変換がキャンセルされました')
 
 			#必要ソフトを配列に代入
 			required_soft_list += title_info['requiredsoft']

@@ -63,50 +63,6 @@ def copyrights():
 	return
 
 
-def convert_askmsg(useGUI, title_info):#将来的にはtk使わない方向で
-	if not useGUI: return True
-
-	title = title_info['title']
-	requiredsoft = title_info['requiredsoft']
-	version = title_info['version']
-	notes = title_info['notes']
-	is_43 = title_info['is_4:3']
-
-	r_txt = '\n・'.join(['']+requiredsoft) if requiredsoft else '\n・なし'
-	v_txt = '\n・'.join(['']+version)
-	n_txt = '\n・'.join(['']+notes)
-
-	h_list = []
-	for hw_k, hw_v in gethardwarevalues_full().items():
-		if (hw_k == 'PSP'): hw_s = '可'#PSPなら(埋め込み昆布は全部動くように作ってるはずなので)ok
-		elif (not hw_v['values_ex']['aspect_4:3only']): hw_s = '可'#4:3専用機ではないならok		
-		elif is_43: hw_s = '可'#作品が4:3ならok
-		else: hw_s = '不可'
-
-		h_list.append(hw_k+':'+hw_s)
-	
-	h_txt = '\n'+' / '.join(h_list)
-
-	s = '''=====================================================
-[変換先として指定可能なハード]{h}
-
-=====================================================
-[追加で用意するソフト]{r}
-
-=====================================================
-[確認済み対応タイトル]{v}
-
-=====================================================
-[注意事項]{n}
-
-=====================================================
-以上を確認したうえで、変換を開始しますか？
-'''.format(h = h_txt, r = r_txt, v = v_txt, n = n_txt)
-
-	res = tkinter.messagebox.askokcancel('個別設定変換確認 - {t}'.format(t = title), s)
-	return res
-
-
 def in_out_dir_check(values: dict):
 	input_dir = values['input_dir']
 	output_dir = values['output_dir']
