@@ -1,0 +1,39 @@
+name: upload exe
+
+on:
+  release:
+    types:
+      - published
+
+permissions:
+  contents: write
+
+jobs:
+  build_and_release:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller
+          pip install -r requirements.txt
+
+      - name: Build EXE
+        run: |
+          pyinstaller src/_main.py --hidden-import=_cffi_backend --onefile --noconsole --icon src/__icon.ico --name "ONScripter_Multi_Converter.exe"
+
+      - name: Upload EXE to GitHub Release
+        uses: softprops/action-gh-release@6034af24fba4e5a8e975aaa6056554efe4c794d0
+        with:
+          fail_on_unmatched_files: true
+          files: |
+            "**/ONScripter_Multi_Converter.exe"
