@@ -993,7 +993,7 @@ def main(values: dict = {}, values_ex: dict = {}, pre_converted_dir: Path = Path
 	#シナリオを平文にデコードする
 	text_dec(PATH_DICT['gsc_exe'], PATH_DICT['scr'], PATH_DICT2['scr_dec'], values_ex )
 
-	#GARBroでぶっこ抜いたogg何故かONSで使えないのでデコード
+	#GARbroでぶっこ抜いたogg何故かONSで使えないのでデコード
 	sound_dec([
 		PATH_DICT['bgm'],
 		PATH_DICT['wav'],

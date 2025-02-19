@@ -52,12 +52,12 @@ def extract_resource_main(Kikiriki_copy_Path, input_dir, xp3_name, pre_converted
 	#展開
 	sp.run([Kikiriki_copy_Path, '-i', xp3_path, '-o', xp3_outdir], shell=True, **subprocess_args())
 
-	#(tlgをGARBroに変換させるため)zipに圧縮
+	#(tlgをGARbroに変換させるため)zipに圧縮
 	if xp3_name in ['data', 'evecg', 'syscg']:
 		shutil.make_archive(xp3_outdir, format='zip', root_dir=xp3_outdir)
 		shutil.rmtree(xp3_outdir)
 
-		#GARBro展開変換
+		#GARbro展開変換
 		xp3_outzip = Path(pre_converted_dir / '{}.zip'.format(xp3_name))
 		extract_archive_garbro(xp3_outzip, xp3_outdir, 'png')
 		xp3_outzip.unlink()

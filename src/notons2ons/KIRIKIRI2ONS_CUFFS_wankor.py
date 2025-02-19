@@ -41,7 +41,7 @@ def extract_resource(values: dict, values_ex: dict, pre_converted_dir: Path):
 
 	input_dir = values['input_dir']
 
-	#"xp3群をkikirikiで展開→展開した'parts'をzip圧縮→parts.zipをGARBroへ→再度展開しながら変換"
+	#"xp3群をkikirikiで展開→展開した'parts'をzip圧縮→parts.zipをGARbroへ→再度展開しながら変換"
 
 	#入力パス
 	data_Path = Path(input_dir / 'data.xp3')
@@ -78,11 +78,11 @@ def extract_resource(values: dict, values_ex: dict, pre_converted_dir: Path):
 		sp.run([Kikiriki_copy_Path, '-i', data_Path, '-o', data_outdir], shell=True, **subprocess_args())
 		sp.run([Kikiriki_copy_Path, '-i', parts_Path, '-o', parts_outdir], shell=True, **subprocess_args())
 
-	#(tlgをGARBroに変換させるため)dataをzipに圧縮
+	#(tlgをGARbroに変換させるため)dataをzipに圧縮
 	shutil.make_archive(parts_outdir, format='zip', root_dir=parts_outdir)
 	shutil.rmtree(parts_outdir)
 
-	#GARBro展開変換
+	#GARbro展開変換
 	parts_outzip = Path(pre_converted_dir / 'parts.zip')
 	extract_archive_garbro(parts_outzip, parts_outdir, 'png')
 	parts_outzip.unlink()

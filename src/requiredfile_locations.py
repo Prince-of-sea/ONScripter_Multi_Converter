@@ -13,7 +13,7 @@ __same_hierarchy = Path(sys.argv[0]).parent
 requiredfile_locations_dict = {
 	#必須
 	'GARbro_GUI' : Path(__same_hierarchy / 'tools' / 'Garbro_console' / 'GARbro.GUI.exe'),
-	'GARBro' : Path(__same_hierarchy / 'tools' / 'Garbro_console' / 'GARbro.Console.exe'),
+	'GARbro' : Path(__same_hierarchy / 'tools' / 'Garbro_console' / 'GARbro.Console.exe'),
 	'smjpeg_encode' : Path(__same_hierarchy / 'tools' / 'smjpeg_encode.exe'),
 	'nsaed' : Path(__same_hierarchy / 'tools' / 'nsaed.exe'),
 

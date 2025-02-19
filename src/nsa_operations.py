@@ -9,9 +9,9 @@ from utils import configure_progress_bar, extract_archive_garbro, subprocess_arg
 
 
 def checknbz_nsa(p: Path):
-	GARBro_Path = location('GARBro')
+	GARbro_Path = location('GARbro')
 	garbrolist_raw = sp.check_output([
-		GARBro_Path, 'l', p,
+		GARbro_Path, 'l', p,
 	],text=True, shell=True, **subprocess_args(False))#check_output時はFalse 忘れずに
 
 	l = []

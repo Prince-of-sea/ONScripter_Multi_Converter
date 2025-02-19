@@ -40,7 +40,7 @@ def convert_files(values: dict, values_ex: dict, cnvset_dict: dict, extracted_di
 		compchklist.append(f_dict['comp'])
 
 	#圧縮先チェック用リスト重複削除
-	compchklist = set(compchklist)
+	compchklist = list(set(compchklist))
 	
 	#並列ファイル変換時プログレスバー最大数設定
 	cnvbarnum = 0.90 if (not isrenban) else 0.30
@@ -99,7 +99,7 @@ def convert_files(values: dict, values_ex: dict, cnvset_dict: dict, extracted_di
 	#エラーログ収集
 	allerrlog = ''
 	for errlogpath in converted_dir.glob('ERROR*'):
-		with open(errlogpath, 'r') as er: allerrlog += er.read()
+		with open(errlogpath, 'r', encoding='cp932') as er: allerrlog += er.read()
 	
 	values_ex['allerrlog'] = allerrlog
 	return values_ex
@@ -127,7 +127,7 @@ def convert_start(arg):
 
 	#ここから処理
 	try:
-		required_soft_list = ['GARBro', 'smjpeg_encode', 'nsaed']
+		required_soft_list = ['GARbro', 'smjpeg_encode', 'nsaed']
 
 		#タイトル個別処理辞書取得
 		titledict = get_titledict()

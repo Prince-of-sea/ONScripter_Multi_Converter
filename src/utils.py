@@ -33,10 +33,10 @@ def configure_progress_bar(per: float, msg: str):
 
 
 def extract_archive_garbro(p: Path, e: Path, f: str = ''):
-	GARBro_Path = location('GARBro')
+	GARbro_Path = location('GARbro')
 	e.mkdir()
-	if f: l = [GARBro_Path, 'x', '-if', f.lower(), '-ca', '-o', e, p]
-	else: l = [GARBro_Path, 'x', '-ca', '-o', e, p]
+	if f: l = [GARbro_Path, 'x', '-if', f.lower(), '-ca', '-o', e, p]
+	else: l = [GARbro_Path, 'x', '-ca', '-o', e, p]
 	sp.run(l ,shell=True, **subprocess_args())#展開
 	return
 
@@ -50,6 +50,16 @@ def openread0x84bitxor(p: Path):
 		
 	decode_text = (b''.join(bin_list)).decode('cp932', errors='ignore')
 	return decode_text
+
+
+def lower_AtoZ(s: str):
+
+	#アルファベット小文字変換
+	alphabet_upper = ''.join([chr(i) for i in range(65, 91)])#AからZ
+	alphabet_lower = ''.join([chr(i) for i in range(97, 123)])#aからz
+	s = s.translate(str.maketrans(alphabet_upper, alphabet_lower))#大文字→小文字変換
+
+	return s
 
 
 def format_check(filepath: Path):

@@ -18,7 +18,7 @@
 ## 動作に必要なもの
 ### 必須
  - "ONScripter_Multi_Converter" exe本体 [[DL (Assetsから)]](https://github.com/Prince-of-sea/ONScripter_Multi_Converter/releases/latest)
- - GARBro.Console [[DL (Googleドライブ)]](https://drive.usercontent.google.com/u/0/uc?id=1gH9nNRxaz8GexN0B1hWyUc3o692bkWXX&export=download)
+ - GARbro.Console [[DL (Googleドライブ)]](https://drive.usercontent.google.com/u/0/uc?id=1gH9nNRxaz8GexN0B1hWyUc3o692bkWXX&export=download)
  - FFmpeg / FFprobe [[DL (gyan.dev)]](https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-full.7z)
  - smjpeg_encode [[DL (archive.org)]](http://web.archive.org/web/20130203074100/http://www.geocities.jp/stm_torm/ons/smjpeg4.zip)
  - nsaed [[DL (archive.org)]](https://web.archive.org/web/20130328141650/http://www.geocities.jp/stm_torm/nsaed2.zip)
@@ -110,7 +110,7 @@
  - 本ツールは日本語専用です<br>
 
 ### CD-DAを使っているソフトについて
-ONScripter側の[CD audio 演奏の振り替え機能](https://onscripter.osdn.jp/onscripter.html#cd-audio-mapping)を利用するため、<br>
+ONScripter側の[CD audio 演奏の振り替え機能](https://web.archive.org/web/20231102082402if_/https://onscripter.osdn.jp/onscripter.html#cd-audio-mapping)を利用するため、<br>
 先に吸い出した音源(wav)を入力先に用意しておいてください<br>
 oggなどへの変換は本ツールが行うため事前の変換は不要です<br>
 
@@ -119,7 +119,7 @@ oggなどへの変換は本ツールが行うため事前の変換は不要で�
  - nsa/sar/ns2アーカイブの外にあるnbzは処理不能
  - 個別設定欄のいくつかの文字が"?"になっている(動作には影響なし)
  - パス内に文字列"&"が入っている音源や動画の変換に失敗する
-
+ - 一部の日本語の入ったsarファイルが正常な名前で展開できない(GARbro側の不具合?)
 
 ### お約束
  - 本ツールの使用において生じた問題や不利益などについて、<br>

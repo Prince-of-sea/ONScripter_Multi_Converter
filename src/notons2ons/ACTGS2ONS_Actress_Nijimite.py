@@ -63,11 +63,11 @@ def extract_resource(values: dict, values_ex: dict, pre_converted_dir: Path):
 		ps = p.with_suffix('.psd')
 		if ps.exists(): ps.unlink()
 	
-	#(psd/bmpをGARBroに変換させるため)cgをzipに圧縮
+	#(psd/bmpをGARbroに変換させるため)cgをzipに圧縮
 	shutil.make_archive(cg_outdir, format='zip', root_dir=cg_outdir)
 	shutil.rmtree(cg_outdir)
 
-	#GARBro展開変換
+	#GARbro展開変換
 	cg_outzip = Path(pre_converted_dir / 'cg.zip')
 	extract_archive_garbro(cg_outzip, cg_outdir, 'png')
 	cg_outzip.unlink()
@@ -531,7 +531,7 @@ def music_cnv_main(i, dp):
 
 
 def music_cnv(values_ex, DIR_WAV):
-	#GARBro出力されたoggが何故か一部ちゃんと鳴らないので
+	#GARbro出力されたoggが何故か一部ちゃんと鳴らないので
 	num_workers = values_ex.get('num_workers', os.cpu_count() + 4)
 	d1 = glob.glob(os.path.join(DIR_WAV, '*.*'))
 

@@ -35,7 +35,7 @@ def title_info():
 # ONScripter_Multi_Converter用アーカイブ自動展開関数
 def extract_resource(values: dict, values_ex: dict, pre_converted_dir: Path):
 
-	#GARBroを使って展開する関数をutils.pyから呼び出す
+	#GARbroを使って展開する関数をutils.pyから呼び出す
 	from utils import extract_archive_garbro
 
 	#並列で処理する最大数を引数の辞書から持ってきて変数に代入
@@ -65,7 +65,7 @@ def extract_resource(values: dict, values_ex: dict, pre_converted_dir: Path):
 				#(ファイル名)が見つかりませんエラー
 				raise FileNotFoundError('{}が見つかりません'.format(str(p.name)))
 			
-			#処理予定のタスクへ「"GARBroを使って展開する関数"へpazファイルと出力先を引数にして処理」を追加
+			#処理予定のタスクへ「"GARbroを使って展開する関数"へpazファイルと出力先を引数にして処理」を追加
 			futures.append(executor.submit(extract_archive_garbro, p, e, 'png'))
 
 		#並列処理タスクがすべて終わるまでここで待つ

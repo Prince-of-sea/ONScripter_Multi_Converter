@@ -73,7 +73,7 @@ def gui_main(version, hw_key, input_dir_param, output_dir_param):
 
 			with dpg.menu(label="ツール"):
 				dpg.add_menu_item(label="連番動画無効化ファイル作成", callback=ask_create_disabledvideofile)
-				dpg.add_menu_item(label="GARBroを起動", callback=open_garbro)
+				dpg.add_menu_item(label="GARbroを起動", callback=open_garbro)
 
 			with dpg.menu(label="このソフトについて"):
 				dpg.add_menu_item(label="サイトを開く", callback=open_repositorieslink)

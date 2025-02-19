@@ -2,7 +2,7 @@
 from pathlib import Path
 import math, re
 
-from utils import openread0x84bitxor
+from utils import openread0x84bitxor, lower_AtoZ
 
 
 def onsscript_decode(values: dict):
@@ -19,7 +19,7 @@ def onsscript_decode(values: dict):
 		for i in range(0, 100):
 			zzrange_path = Path(input_dir / (str(i).zfill(2) + '.txt'))
 			if zzrange_path.exists():				
-				with open(zzrange_path, 'r', errors='ignore') as zzrangetext:
+				with open(zzrange_path, 'r', encoding='cp932', errors='ignore') as zzrangetext:
 					text += zzrangetext.read()
 					text += '\n\n;##\n;{} end\n;##\n\n'.format(str(zzrange_path.name))
 	
@@ -27,7 +27,7 @@ def onsscript_decode(values: dict):
 		for i in range(0, 10):
 			zrange_path = Path(input_dir / (str(i) + '.txt'))
 			if zrange_path.exists():				
-				with open(zrange_path, 'r', errors='ignore') as zrangetext:
+				with open(zrange_path, 'r', encoding='cp932', errors='ignore') as zrangetext:
 					text += zrangetext.read()
 					text += '\n\n;##\n;{} end\n;##\n\n'.format(str(zrange_path.name))
 
@@ -45,7 +45,7 @@ def onsscript_check_resolution(values: dict, values_ex: dict, ztxtscript: str, o
 	aspect_43only = values_ex['aspect_4:3only']
 
 	#解像度表記抽出
-	oldnsc_mode = (r';mode(320|400|800)')#ONS解像度旧表記
+	oldnsc_mode = (r';[Mm][Oo][Dd][Ee](320|400|800)')#ONS解像度旧表記
 	newnsc_mode = (r'(\r|\n|\t|\s)*?;\$[Vv][0-9]{1,}[Gg]([0-9]{1,})[Ss]([0-9]{1,}),([0-9]{1,})[Ll][0-9]{1,}')#ONS解像度新表記
 	oldnsc_search = re.search(oldnsc_mode, ztxtscript)
 	newnsc_search = re.search(newnsc_mode, ztxtscript)
@@ -106,6 +106,10 @@ def onsscript_check_resolution(values: dict, values_ex: dict, ztxtscript: str, o
 
 
 def onsscript_check_image(ztxtscript: str):
+
+	#アルファベット小文字変換
+	ztxtscript = lower_AtoZ(ztxtscript)
+
 	#画像表示命令抽出
 	imgdict = {
 		#カーソル類は最初から書いとく
@@ -181,6 +185,10 @@ def onsscript_check_image(ztxtscript: str):
 
 
 def onsscript_check_bgm(ztxtscript: str):
+
+	#アルファベット小文字変換
+	ztxtscript = lower_AtoZ(ztxtscript)
+
 	#bgm再生命令抽出
 	bgmlist = []
 	for a in re.findall(r'(bgm|mp3loop)[\t\s]+"(.+?)"', ztxtscript): bgmlist.append(Path(a[1]))#txt内の音源の相対パスを格納
@@ -188,6 +196,10 @@ def onsscript_check_bgm(ztxtscript: str):
 
 
 def onsscript_check_vid(ztxtscript: str):
+
+	#アルファベット小文字変換
+	ztxtscript = lower_AtoZ(ztxtscript)
+
 	#動画再生命令抽出
 	vidlist = []
 	for a in re.findall(r'(mpegplay|avi)[\t\s]+"(.+?)"', ztxtscript): vidlist.append(Path(a[1]))#txt内の動画の相対パスを格納
@@ -196,12 +208,13 @@ def onsscript_check_vid(ztxtscript: str):
 
 def onsscript_check_txtmodify_adddefsub(ztxtscript: str, pre_txt: str, aft_txt: str):
 
+	ztxtscript_old = ztxtscript
+
 	#game命令追加
-	if re.search(r'[\n\t\s]*game[\t\s]*(;(.*?))?[\t\s]*\n', ztxtscript):
-		ztxtscript = re.sub(r'[\n\t\s]*game[\t\s]*(;(.*?))?[\t\s]*\n',
-					  '\n{p}\ngame\n{a}\n'.format(p = pre_txt, a = aft_txt), ztxtscript, 1)
+	ztxtscript = re.sub(r'[\n\t\s]*[Gg][Aa][Mm][Ee][\t\s]*(;(.*?))?[\t\s]*\n',
+				  '\n{p}\ngame\n{a}\n'.format(p = pre_txt, a = aft_txt), ztxtscript, 1)
 	
-	else:
+	if (ztxtscript == ztxtscript_old):
 		raise ValueError('game命令追加エラー')
 	
 	return ztxtscript
@@ -210,13 +223,8 @@ def onsscript_check_txtmodify_adddefsub(ztxtscript: str, pre_txt: str, aft_txt: 
 def onsscript_check_txtmodify(values: dict, values_ex: dict, ztxtscript: str, override_resolution: list):
 	hardware = values['hardware']
 
-	#アルファベット小文字変換
-	alphabet_upper = ''.join([chr(i) for i in range(65, 91)])#AからZ
-	alphabet_lower = ''.join([chr(i) for i in range(97, 123)])#aからz
-	ztxtscript = ztxtscript.translate(str.maketrans(alphabet_upper, alphabet_lower))#大文字→小文字変換
-
 	#ns2/ns3命令は全部nsaへ
-	ztxtscript = re.sub(r'\n[\t\s]*ns[2|3][\t\s]*\n', r'\nnsa\n', ztxtscript)
+	ztxtscript = re.sub(r'\n[\t\s]*[Nn][Ss][2|3][\t\s]*\n', r'\nnsa\n', ztxtscript)
 
 	#numalias命令を追加
 	numalias_list = [4080, 4081, 4082, 4083, 4084, 4085, 4086, 4087, 4088, 4089]#ここ将来的にはGUIで設定できるようにしたい
@@ -247,7 +255,7 @@ def onsscript_check_txtmodify(values: dict, values_ex: dict, ztxtscript: str, ov
 
 		#利用する(正規表現置換)
 		case '利用する(正規表現置換)':
-			ztxtscript = re.sub(r'([\n|\t| |:])avi[\t\s]+"(.+?)",[\t\s]*([0|1]|%[0-9]+)', r'\1mpegplay "\2",\3', ztxtscript)
+			ztxtscript = re.sub(r'([\n|\t| |:])[Aa][Vv][Ii][\t\s]+"(.+?)",[\t\s]*([0|1]|%[0-9]+)', r'\1mpegplay "\2",\3', ztxtscript)
 
 		#利用しない
 		case '利用しない': pass
@@ -268,7 +276,7 @@ def onsscript_check_txtmodify(values: dict, values_ex: dict, ztxtscript: str, ov
 
 		#利用する(正規表現置換)
 		case '利用する(正規表現置換)':
-			ztxtscript = re.sub(r'savescreenshot2?[\t\s]+"(.+?)"[\t\s]*([:|\n])', r'wait 0\2', ztxtscript)
+			ztxtscript = re.sub(r'[Ss][Aa][Vv][Ee][Ss][Cc][Rr][Ee][Ee][Nn][Ss][Hh][Oo][Tt]2?[\t\s]+"(.+?)"[\t\s]*([:|\n])', r'wait 0\2', ztxtscript)
 	
 		#利用しない
 		case '利用しない': pass
@@ -291,7 +299,7 @@ def onsscript_check_txtmodify(values: dict, values_ex: dict, ztxtscript: str, ov
 		if fontper < 1:
 
 			#txt内のsetwindow命令を格納 - [0]命令文前部分/[2]横文字数/[3]縦文字数/[4]横文字サイズ/[5]縦文字サイズ/[6]横文字間隔/[7]縦文字間隔/[8]命令文後部分
-			setwindow_re_fnttup = re.findall(r'(setwindow3? ([0-9]{1,},){2})([0-9]{1,}),([0-9]{1,}),([0-9]{1,}),([0-9]{1,}),([0-9]{1,}),([0-9]{1,}),(([0-9]{1,},){3}(.+?)(,[0-9]{1,}){2,4})', ztxtscript)
+			setwindow_re_fnttup = re.findall(r'([Ss][Ee][Tt][Ww][Ii][Nn][Dd][Oo][Ww]3? ([0-9]{1,},){2})([0-9]{1,}),([0-9]{1,}),([0-9]{1,}),([0-9]{1,}),([0-9]{1,}),([0-9]{1,}),(([0-9]{1,},){3}(.+?)(,[0-9]{1,}){2,4})', ztxtscript)
 	
 			for v in set(setwindow_re_fnttup):
 
@@ -317,15 +325,15 @@ def onsscript_check_txtmodify(values: dict, values_ex: dict, ztxtscript: str, ov
 
 	#okcancelboxをmovで強制ok
 	if values['etc_0txtskipokcancelbox_chk']:
-		ztxtscript = re.sub(r'([\n|\t| |:])okcancelbox[\t\s]+%([A-z0-9_]+?),', r'\1mov %\2,1 ;', ztxtscript)
+		ztxtscript = re.sub(r'([\n|\t| |:])[Oo][Kk][Cc][Aa][Nn][Cc][Ee][Ll][Bb][Oo][Xx][\t\s]+%([A-z0-9_]+?),', r'\1mov %\2,1 ;', ztxtscript)
 	
 	#yesnoboxをmovで強制yes
 	if values['etc_0txtskipyesnobox_chk']:
-		ztxtscript = re.sub(r'([\n|\t| |:])yesnobox[\t\s]+%([A-z0-9_]+?),', r'\1mov %\2,1 ;', ztxtscript)
+		ztxtscript = re.sub(r'([\n|\t| |:])[Yy][Ee][Ss][Nn][Oo][Bb][Oo][Xx][\t\s]+%([A-z0-9_]+?),', r'\1mov %\2,1 ;', ztxtscript)
 
 	#rnd2を自作命令multiconverterrnd2def(連番)に変換
 	if values['etc_0txtrndtornd2_chk']:
-		for i,r in enumerate( re.findall(r'(([\n|\t| |:])rnd2[\t\s]+(%[A-z0-9_]+)[\t\s]*,[\t\s]*([0-9]+|%[A-z0-9_]+)[\t\s]*,[\t\s]*([0-9]+|%[A-z0-9_]+))', ztxtscript) ):
+		for i,r in enumerate( re.findall(r'(([\n|\t| |:])[Rr][Nn][Dd]2[\t\s]+(%[A-z0-9_]+)[\t\s]*,[\t\s]*([0-9]+|%[A-z0-9_]+)[\t\s]*,[\t\s]*([0-9]+|%[A-z0-9_]+))', ztxtscript) ):
 			ztxtscript = onsscript_check_txtmodify_adddefsub(ztxtscript, 'defsub multiconverterrnd2def{i}'.format(i = i), '*multiconverterrnd2def{i}\nrnd {r2},{r4}+1-{r3}:add {r2},{r3}:return'.format(i = i, r2 = r[2], r3 = r[3], r4 = r[4]))
 			ztxtscript = re.sub(r[0], '{r1}multiconverterrnd2def{i}'.format(r1=r[1], i = i), ztxtscript, 1)
 	
@@ -448,11 +456,11 @@ def onsscript_check(values: dict, values_ex: dict):
 	values_ex['vidlist'] = onsscript_check_vid(ztxtscript)
 
 	#savedir抽出
-	try: values_ex['savedir_path'] = (re.search(r'\n[\t| ]*savedir[\t| ]+"(.+?)"', ztxtscript))[1]
+	try: values_ex['savedir_path'] = (re.search(r'\n[\t| ]*savedir[\t| ]+"(.+?)"', lower_AtoZ(ztxtscript)))[1]
 	except: values_ex['savedir_path'] = False
 
 	#画像が初期設定でどのような透過指定で扱われるかを代入
-	try: values_ex['imgtransmode'] = (re.search(r'\n[\t| ]*transmode[\t| ]+(leftup|copy|alpha)', ztxtscript))[1][0]#transmode命令があればそれ(の最初の文字)を採用
+	try: values_ex['imgtransmode'] = (re.search(r'\n[\t| ]*transmode[\t| ]+(leftup|copy|alpha)', lower_AtoZ(ztxtscript)))[1][0]#transmode命令があればそれ(の最初の文字)を採用
 	except: values_ex['imgtransmode'] = 'a'#見つからないなら初期値leftup…のはずだがlだとタグ付けミスった時盛大に破綻するので仕方なくalpha
 
 	#0.txt関連はここで編集

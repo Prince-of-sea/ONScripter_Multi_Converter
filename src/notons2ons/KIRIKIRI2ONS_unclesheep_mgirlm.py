@@ -796,7 +796,7 @@ def staffroll_create(same_hierarchy):
 	if not Path(ttf).exists():#古いwindowsとかでBIZ-UD明朝がない場合
 		ttf = "C:\\Windows\\Fonts\\msmincho.ttc"#MS明朝なら大体入ってるでしょ
 		
-	with open(s_path) as f:
+	with open(s_path, encoding='cp932', errors='ignore') as f:
 		s = f.read()
 		s = s.replace(r'[', '\n'+r'[')
 

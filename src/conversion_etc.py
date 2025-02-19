@@ -196,6 +196,6 @@ def tryconvert(values: dict, values_ex: dict, f_dict: dict, f_path_re: Path, con
 	except Exception as e:
 		dt_now = datetime.datetime.now()
 		errmsg = '{t}\t{p}\t{e}\n'.format(t = dt_now.strftime('%Y/%m/%d %H:%M:%S.%f'), p = f_path_re, e = e)
-		with open(Path(converted_dir / ('ERROR' + dt_now.strftime('%Y%m%d%H%M%S%f') + str(f_path_re.stem).upper()[:20]) ), 'w') as s: s.write(errmsg)
+		with open(Path(converted_dir / ('ERROR' + dt_now.strftime('%Y%m%d%H%M%S%f') + str(f_path_re.stem).upper()[:20]) ), 'w', encoding='cp932') as s: s.write(errmsg)
 
 	return

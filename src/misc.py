@@ -10,6 +10,7 @@ from requiredfile_locations import location, exist
 from hardwarevalues_config import gethardwarevalues_full
 from utils import message_box
 
+
 def ask_create_disabledvideofile():
 	with dpg.mutex():
 		with dpg.window(label="連番動画無効化ファイル作成", modal=True) as msg_ask:
@@ -17,7 +18,7 @@ def ask_create_disabledvideofile():
 						"操作不能になって先に進めなくなることがあります\n\n" +\
 						"本機能で作成した無効化ファイルを置くことで\n" +\
 						"再生をスキップし、不具合を回避することが出来ます\n" +\
-						"※ver.2.3.1以降で変換した作品でのみ有効です\n\n" +\
+						"(ver.2.3.1以降で変換した作品でのみ有効です)\n\n" +\
 						"無効化ファイルを作成しますか？")
 			with dpg.group(horizontal=True):
 				dpg.add_button(label="OK", user_data=(msg_ask, True), callback=create_disabledvideofile)
@@ -26,7 +27,8 @@ def ask_create_disabledvideofile():
 	dpg.set_item_pos(msg_ask, [dpg.get_viewport_client_width() // 2 - dpg.get_item_width(msg_ask) // 2, dpg.get_viewport_client_height() // 2 - dpg.get_item_height(msg_ask) // 2])
 	return
 
-def create_disabledvideofile(sender, app_data, user_data):#将来的にはtk使わない方向で
+
+def create_disabledvideofile(sender, app_data, user_data):
 	dpg.configure_item(user_data[0], show=False)
 	if not user_data[1]:
 		return
@@ -189,7 +191,7 @@ ALDOWN=275
 			
 		case _: return
 
-	with open(Path(compressed_dir / configfile), 'w') as s: s.write(cfg)
+	with open(Path(compressed_dir / configfile), 'w', encoding='utf-8') as s: s.write(cfg)
 
 	return
 
@@ -233,11 +235,11 @@ def create_0txt(values: dict, values_ex: dict, compressed_dir: Path):
 
 	#0.txt書き出し
 	ztxtscript += ('\nend\n\n;\tConverted by "ONScripter Multi Converter ver.{}"\n;\thttps://github.com/Prince-of-sea/ONScripter_Multi_Converter\n'.format(version))
-	with open(Path(compressed_dir / '0.txt'), 'w') as s: s.write(ztxtscript)
+	with open(Path(compressed_dir / '0.txt'), 'w', encoding='cp932', errors='ignore') as s: s.write(ztxtscript)
 
 	#ついでにエラーログがあれば書き出し
 	if allerrlog:
-		with open(Path(compressed_dir / 'errorlog.tsv'), 'w') as s: s.write(allerrlog)
+		with open(Path(compressed_dir / 'errorlog.tsv'), 'w', encoding='cp932', errors='ignore') as s: s.write(allerrlog)
 
 	return
 
