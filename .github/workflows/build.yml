@@ -29,11 +29,11 @@ jobs:
 
       - name: Build EXE
         run: |
-          pyinstaller src/_main.py --hidden-import=_cffi_backend --onefile --noconsole --icon src/__icon.ico --name "ONScripter_Multi_Converter.exe"
+          pyinstaller src/_main.py --hidden-import=_cffi_backend --onefile --noconsole --icon src/__icon.ico --name ONScripter_Multi_Converter.exe
 
       - name: Upload EXE to GitHub Release
         uses: softprops/action-gh-release@6034af24fba4e5a8e975aaa6056554efe4c794d0
         with:
           fail_on_unmatched_files: true
           files: |
-            "**/ONScripter_Multi_Converter.exe"
+            **/ONScripter_Multi_Converter.exe
