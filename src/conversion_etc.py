@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from pathlib import Path
-import datetime
+import datetime, re
 
 from conversion_video import convert_video
 from conversion_image import convert_image
@@ -96,7 +96,8 @@ def create_cnvsetdict(values: dict, values_ex: dict, extracted_dir: Path):
 
 				#BGMかSEかの判断をここでやる
 				cnvset_dict[f_path_re] = {'fileformat':'music'}
-				if (f_path_re in values_ex['bgmlist']) or ('bgm' in str(f_path_re).lower()):
+				
+				if (f_path_re in values_ex['bgmlist']) or ('bgm' in str(f_path_re).lower()) or (re.fullmatch(r'cd[\/\\]track[0-9]{2}\.[A-z0-9]+', str(f_path_re).lower())):
 
 					match values['aud_bgmch_radio']:
 						case 'ステレオ': cnvset_dict[f_path_re]['ch'] = '2'

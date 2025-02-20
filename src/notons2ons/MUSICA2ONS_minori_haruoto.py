@@ -24,7 +24,7 @@ def title_info():
 
 		'notes': [
 			'本作の変換は主にRightHand氏が制作したものです',
-			'詳細につきましては、\ngithub.com/migite/HARU2ONSを確認してください',
+			'詳細につきましては、github.com/migite/HARU2ONSを確認してください',
 		]
 	}
 
