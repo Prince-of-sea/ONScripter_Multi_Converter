@@ -6,7 +6,9 @@ import dearpygui.dearpygui as dpg
 from conversion import ask_convert_start
 from hardwarevalues_config import gethardwarevalues_full
 from misc import (  #最低限以外はmiscでやる
+	get_uiiconpath,
 	ask_create_disabledvideofile,
+	ask_decode_nscriptdat,
 	copyrights,
 	open_garbro,
 	open_repositorieslink,
@@ -61,7 +63,7 @@ def gui_main(version, hw_key, input_dir_param, output_dir_param):
 		dpg.bind_font(default_font)
 
 	window_title = hardwarevalues_full[hw_key]['values_default']['window_title']
-	dpg.create_viewport(title=window_title, width=640, height=400, resizable=False)
+	dpg.create_viewport(title=window_title, width=640, height=400, small_icon=get_uiiconpath(), large_icon=get_uiiconpath(), resizable=False)
 
 	with dpg.window(label="Main Window", tag="Main Window", no_resize=True) as window:
 		with dpg.menu_bar():
@@ -77,6 +79,7 @@ def gui_main(version, hw_key, input_dir_param, output_dir_param):
 
 			with dpg.menu(label="ツール"):
 				dpg.add_menu_item(label="連番動画無効化ファイル作成", callback=ask_create_disabledvideofile)
+				dpg.add_menu_item(label="nscript.dat復号化", callback=ask_decode_nscriptdat)
 				dpg.add_menu_item(label="GARbroを起動", callback=open_garbro)
 
 			with dpg.menu(label="このソフトについて"):

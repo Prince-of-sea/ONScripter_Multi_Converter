@@ -10,8 +10,15 @@ from pathlib import Path
 
 import dearpygui.dearpygui as dpg
 from requiredfile_locations import exist, location
-from utils import message_box
+from utils import message_box, openread0x84bitxor
 
+
+def get_uiiconpath():
+	if hasattr(sys, '_MEIPASS'): base_dir =  Path(sys._MEIPASS)
+	else: base_dir = Path('.')
+	uiicon = Path(base_dir / '__icon.ico')
+	return str(uiicon)
+	
 
 def ask_create_disabledvideofile():
 	with dpg.mutex():
@@ -45,6 +52,60 @@ def create_disabledvideofile(sender, app_data, user_data):
 	with open(Path(_path / '_DISABLED_VIDEO'), 'wb') as s: s.write(b'\xff')
 	
 	message_box('完了', '無効化ファイルを作成しました', 'info', True)
+	return
+
+
+def ask_decode_nscriptdat():
+	with dpg.mutex():
+		with dpg.window(label="nscript.dat復号化", modal=True) as msg_ask:
+			dpg.add_text("そのままでは読めない形式になっているnscript.datを復号化します\n" +\
+						"普通はゲームを選択し[Convert]ボタンを押せば自動で復号化されるため、\n" +\
+						"本機能は使う必要がありません\n" +\
+						"また、普通のConvertで復号化が失敗するnscript.datは、\n" +\
+						"本機能でも復号化に失敗します\n\n" +\
+						"Convert前に0.txtを手動で編集する必要がある時など、\n" +\
+						"特殊な作業を行う場合にのみ使ってください\n\n" +\
+						"復号化するnscript.datを選択しますか？")
+			with dpg.group(horizontal=True):
+				dpg.add_button(label="OK", user_data=(msg_ask, True), callback=decode_nscriptdat)
+				dpg.add_button(label="キャンセル", user_data=(msg_ask, False), callback=decode_nscriptdat)
+	dpg.split_frame()
+	dpg.set_item_pos(msg_ask, [dpg.get_viewport_client_width() // 2 - dpg.get_item_width(msg_ask) // 2, dpg.get_viewport_client_height() // 2 - dpg.get_item_height(msg_ask) // 2])
+	return
+
+
+def decode_nscriptdat(sender, app_data, user_data):
+	dpg.configure_item(user_data[0], show=False)
+	if not user_data[1]:
+		return
+	root = tkinter.Tk()
+	root.withdraw()
+	_path = filedialog.askopenfilename(filetypes=[('NScripter script','nscript.dat;*.scp')])#どうせ同じなので旧Scripterもできるようにしておく
+	root.destroy()
+
+	if not _path: return
+
+	_path = Path(_path)
+
+	if (str(_path.name).lower() == 'nscript.dat'):
+
+		txtpath = _path.parent / '0.txt'
+		bakpath = _path.parent / '0.txt.bak'
+
+	else:#旧Scripter
+		txtpath = _path.parent / '{}.txt'.format(_path.stem)
+		bakpath = _path.parent / '{}.txt.bak'.format(_path.stem)
+		
+	if txtpath.exists():
+		if bakpath.exists():
+			if bakpath.is_file(): bakpath.unlink()
+			else: shutil.rmtree(bakpath)
+
+		txtpath.rename(bakpath)
+
+	with open(txtpath, 'w', encoding='cp932', errors='ignore') as s: s.write(openread0x84bitxor(_path))
+	
+	message_box('完了', '復号化しました', 'info', True)
 	return
 
 
