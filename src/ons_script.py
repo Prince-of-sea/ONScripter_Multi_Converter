@@ -241,7 +241,7 @@ def onsscript_check_txtmodify(values: dict, values_ex: dict, ztxtscript: str, ov
 	
 	#nbz変換設定
 	match values['etc_0txtnbz_radio']:
-		case '0.txtを".nbz"->".wav"で一括置換': ztxtscript = ztxtscript.replace('.nbz', '.wav')
+		case '0.txtを".nbz"->".wav"で一括置換': ztxtscript = re.sub(r'\.[Nn][Bb][Zz]', r'.wav', ztxtscript)
 		case '変換後のファイルを拡張子nbzとwavで両方用意しておく': pass
 		case _: raise ValueError('「nbz変換設定」未選択エラー')
 	
