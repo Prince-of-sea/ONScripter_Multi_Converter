@@ -351,7 +351,7 @@ def convert_start(arg):
 			s = str(c_time % 60).zfill(2)
 
 			configure_progress_bar(1, '変換完了')
-			message_box('変換完了', '変換処理が終了しました\n処理時間: {m}分{s}秒'.format(m = m, s = s), 'info', useGUI)
+			message_box('変換完了', f'変換処理が終了しました\n処理時間: {m}分{s}秒', 'info', useGUI)
 
 			#入出力初期化
 			dpg.set_value('input_dir', '')

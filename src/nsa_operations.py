@@ -12,7 +12,7 @@ def checknbz_nsa(p: Path):
 	GARbro_Path = location('GARbro')
 	garbrolist_raw = sp.check_output([
 		GARbro_Path, 'l', p,
-	],text=True, shell=True, **subprocess_args(False))#check_output時はFalse 忘れずに
+	],text=True, **subprocess_args(False))#check_output時はFalse 忘れずに
 
 	l = []
 	for f in re.findall(r'\[[A-F0-9]{8}\]\s+[0-9]+\s+(.+?)\n', garbrolist_raw):
@@ -113,7 +113,7 @@ def compressed_nsa_main(arc_dir: Path, compressed_dir: Path):
 	shutil.copy(nsaed_Path, nsaedcopy_Path)
 
 	#コピーしたnsaedを走らせる
-	try: sp.call([nsaedcopy_Path, (arc_dir / 'arc_')], shell=True, **subprocess_args())
+	try: sp.call([nsaedcopy_Path, (arc_dir / 'arc_')], **subprocess_args())
 	except: dir_allmove((arc_dir / 'arc_'), compressed_dir)#異常終了時  - そのまま移動
 	else: shutil.move((arc_dir / 'arc.nsa'), (compressed_dir / (str(arc_dir.name) + '.nsa')))#正常終了時 - nsa移動
 

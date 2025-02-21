@@ -110,7 +110,7 @@ def decode_nscriptdat(sender, app_data, user_data):
 
 
 def open_garbro():
-	if exist('GARbro_GUI'): sp.Popen([location('GARbro_GUI')], shell=True)
+	if exist('GARbro_GUI'): sp.Popen([location('GARbro_GUI')])
 	else: message_box('警告', 'GARbro_GUIが見つかりません', 'warning', True)
 	return
 

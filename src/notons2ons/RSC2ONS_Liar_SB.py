@@ -740,8 +740,8 @@ def text_dec_main(p, PATH_D, values_ex):
 	if values_ex: from utils import subprocess_args # type: ignore
 	n = (os.path.splitext(os.path.basename(p))[0])
 	if int(n) >= 2000:
-		if values_ex: sp.run([PATH_D['EXE_GSC'], '-m', 'decompile', '-i', p], shell=True, cwd=PATH_D['DIR_SCR'], **subprocess_args())
-		else: sp.run([PATH_D['EXE_GSC'], '-m', 'decompile', '-i', p], shell=True, cwd=PATH_D['DIR_SCR'])
+		if values_ex: sp.run([PATH_D['EXE_GSC'], '-m', 'decompile', '-i', p],  cwd=PATH_D['DIR_SCR'], **subprocess_args())
+		else: sp.run([PATH_D['EXE_GSC'], '-m', 'decompile', '-i', p],  cwd=PATH_D['DIR_SCR'])
 	return
 
 

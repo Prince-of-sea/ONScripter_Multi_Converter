@@ -841,8 +841,8 @@ def text_dec(PATH_DICT, values):
 
 	for n in l:
 		p = (PATH_DICT['scenario'] / (n + '.mjo') )
-		if values: sp.run([PATH_DICT['mjdisasm_exe'], p], shell=True, cwd=PATH_DICT['scenario'], **subprocess_args())
-		else: sp.run([PATH_DICT['mjdisasm_exe'], p], shell=True, cwd=PATH_DICT['scenario'])
+		if values: sp.run([PATH_DICT['mjdisasm_exe'], p],  cwd=PATH_DICT['scenario'], **subprocess_args())
+		else: sp.run([PATH_DICT['mjdisasm_exe'], p],  cwd=PATH_DICT['scenario'])
 
 
 

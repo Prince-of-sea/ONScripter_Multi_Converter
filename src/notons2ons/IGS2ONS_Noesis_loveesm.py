@@ -516,8 +516,8 @@ def img_resize(DIR_BG, DIR_FG, DIR_SYS, DIR_IMG, values_ex):
 def text_dec_main(p, DIR_SCR, EXE_IGS, values_ex):
 	if values_ex: from utils import subprocess_args # type: ignore
 	n = (os.path.splitext(os.path.basename(p))[0])
-	if values_ex: sp.run([EXE_IGS, '-p', p, n+'.txt'], shell=True, cwd=DIR_SCR, **subprocess_args())
-	else: sp.run([EXE_IGS, '-p', p, n+'.txt'], shell=True, cwd=DIR_SCR)
+	if values_ex: sp.run([EXE_IGS, '-p', p, n+'.txt'],  cwd=DIR_SCR, **subprocess_args())
+	else: sp.run([EXE_IGS, '-p', p, n+'.txt'],  cwd=DIR_SCR)
 
 
 def text_dec(DIR_SCR_DEC, DIR_SCR, EXE_IGS, values_ex):

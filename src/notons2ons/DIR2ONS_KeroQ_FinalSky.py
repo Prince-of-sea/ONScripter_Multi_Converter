@@ -82,7 +82,7 @@ def extract_resource(values: dict, values_ex: dict, pre_converted_dir: Path):
 		shutil.copytree(Xtras_dir, Xtras_copy_dir)
 
 		#一括展開(上記展開物パスをコマンドに引数として全部突っ込む)
-		sp.run([DirectorCastRipper_copy_Path]+dxr_list, shell=True, **subprocess_args())
+		sp.run([DirectorCastRipper_copy_Path]+dxr_list, **subprocess_args())
 
 		#展開物移動
 		Exports_Path = Path(temp_dir / 'Exports')

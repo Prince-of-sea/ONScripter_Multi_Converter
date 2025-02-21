@@ -49,7 +49,7 @@ def gui_main(version, hw_key, input_dir_param, output_dir_param):
 
 	#ハード変更用
 	for k in hardwarevalues_full.keys():
-		hardwarevalues_full[k]['values_default']['window_title'] = "ONScripter Multi Converter for {k} ver.{version}".format(k = k, version = version)
+		hardwarevalues_full[k]['values_default']['window_title'] = f"ONScripter Multi Converter for {k} ver.{version}"
 		hardwarevalues_full[k]['values_default']['hardware'] = str(k)
 
 	#個別

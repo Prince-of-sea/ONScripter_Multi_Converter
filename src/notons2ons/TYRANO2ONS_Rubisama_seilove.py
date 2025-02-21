@@ -289,7 +289,7 @@ def music_cnv_main(f):
 				#'-ab', '56k',
 				'-ar', '44100',
 				'-ac', '2',	fogg,
-			], shell=True)
+			])
 		except:
 			pass
 		else:
@@ -325,15 +325,15 @@ def bgm_cnv_main(f, s2v_d, s2v_n, same_hierarchy, values):
 		
 		ffmpeg_Path = location_env('ffmpeg')
 
-		try: subprocess.run([ffmpeg_Path, '-y', '-i', f, fwav, ], shell=True, **subprocess_args())
+		try: subprocess.run([ffmpeg_Path, '-y', '-i', f, fwav, ], **subprocess_args())
 		except: pass
-		try: subprocess.run([ffmpeg_Path, '-y', '-i', fwav, '-ar', '44100', '-ac', '2',	 fogg], shell=True, **subprocess_args())
+		try: subprocess.run([ffmpeg_Path, '-y', '-i', fwav, '-ar', '44100', '-ac', '2',	 fogg], **subprocess_args())
 		except: pass
 
 	else:
-		try: subprocess.run(['ffmpeg', '-y', '-i', f, fwav], shell=True)
+		try: subprocess.run(['ffmpeg', '-y', '-i', f, fwav])
 		except: pass
-		try: subprocess.run(['ffmpeg', '-y', '-i', fwav, '-ar', '44100', '-ac', '2', fogg], shell=True)
+		try: subprocess.run(['ffmpeg', '-y', '-i', fwav, '-ar', '44100', '-ac', '2', fogg])
 		except: pass
 
 	os.remove(fwav)

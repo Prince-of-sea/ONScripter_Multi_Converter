@@ -50,7 +50,7 @@ def extract_resource_main(Kikiriki_copy_Path, input_dir, xp3_name, pre_converted
 	xp3_outdir = Path(pre_converted_dir / xp3_name)
 	
 	#展開
-	sp.run([Kikiriki_copy_Path, '-i', xp3_path, '-o', xp3_outdir], shell=True, **subprocess_args())
+	sp.run([Kikiriki_copy_Path, '-i', xp3_path, '-o', xp3_outdir], **subprocess_args())
 
 	#(tlgをGARbroに変換させるため)zipに圧縮
 	if xp3_name in ['data', 'evecg', 'syscg']:

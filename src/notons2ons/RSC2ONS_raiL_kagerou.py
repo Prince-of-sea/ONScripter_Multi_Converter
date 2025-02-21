@@ -603,8 +603,8 @@ def text_dec_main(p, gsc_exe, ex_gsc, scr_dec, values_ex):
 	#不要gscはここで除外
 	if not (str(p.stem) in ex_gsc):
 		#デコード処理(ライセンスとか面倒なのでsubprocessで、ネイティブで動かしたい人は勝手に作って)
-		if values_ex: sp.run([str(gsc_exe), '-m', 'decompile', '-i', str(p)], shell=True, cwd=scr_dec , **subprocess_args())
-		else: sp.run([str(gsc_exe), '-m', 'decompile', '-i', str(p)], shell=True, cwd=scr_dec )
+		if values_ex: sp.run([str(gsc_exe), '-m', 'decompile', '-i', str(p)],  cwd=scr_dec , **subprocess_args())
+		else: sp.run([str(gsc_exe), '-m', 'decompile', '-i', str(p)],  cwd=scr_dec )
 	return
 
 

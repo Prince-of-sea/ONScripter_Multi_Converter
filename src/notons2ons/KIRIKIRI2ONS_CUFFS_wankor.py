@@ -75,8 +75,8 @@ def extract_resource(values: dict, values_ex: dict, pre_converted_dir: Path):
 		shutil.copy(tpm_Path, tpm_copy_Path)
 
 		#展開
-		sp.run([Kikiriki_copy_Path, '-i', data_Path, '-o', data_outdir], shell=True, **subprocess_args())
-		sp.run([Kikiriki_copy_Path, '-i', parts_Path, '-o', parts_outdir], shell=True, **subprocess_args())
+		sp.run([Kikiriki_copy_Path, '-i', data_Path, '-o', data_outdir], **subprocess_args())
+		sp.run([Kikiriki_copy_Path, '-i', parts_Path, '-o', parts_outdir], **subprocess_args())
 
 	#(tlgをGARbroに変換させるため)dataをzipに圧縮
 	shutil.make_archive(parts_outdir, format='zip', root_dir=parts_outdir)

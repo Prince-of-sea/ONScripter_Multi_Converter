@@ -212,7 +212,7 @@ def onsscript_check_txtmodify_adddefsub(ztxtscript: str, pre_txt: str, aft_txt: 
 
 	#game命令追加
 	ztxtscript = re.sub(r'[\n\t\s]*[Gg][Aa][Mm][Ee][\t\s]*(;(.*?))?[\t\s]*\n',
-				  '\n{p}\ngame\n{a}\n'.format(p = pre_txt, a = aft_txt), ztxtscript, 1)
+				  f'\n{pre_txt}\ngame\n{aft_txt}\n', ztxtscript, 1)
 	
 	if (ztxtscript == ztxtscript_old):
 		raise ValueError('game命令追加エラー')
@@ -287,7 +287,7 @@ def onsscript_check_txtmodify(values: dict, values_ex: dict, ztxtscript: str, ov
 	#最大回想ページ数設定
 	if values['etc_0txtmaxkaisoupage_chk']:
 		mk = str(int(values['etc_0txtmaxkaisoupage_num']))
-		ztxtscript = onsscript_check_txtmodify_adddefsub(ztxtscript, 'maxkaisoupage {mk}'.format(mk = mk), '')#本当はdefsub追加用の関数だが流用
+		ztxtscript = onsscript_check_txtmodify_adddefsub(ztxtscript, f'maxkaisoupage {mk}', '')#本当はdefsub追加用の関数だが流用
 	
 	#setwindowのフォントサイズ変更(PSP解像度無視変換時は無効)
 	if values['etc_0txtsetwindowbigfont_chk'] and (not override_resolution):
@@ -334,7 +334,7 @@ def onsscript_check_txtmodify(values: dict, values_ex: dict, ztxtscript: str, ov
 	#rnd2を自作命令multiconverterrnd2def(連番)に変換
 	if values['etc_0txtrndtornd2_chk']:
 		for i,r in enumerate( re.findall(r'(([\n|\t| |:])[Rr][Nn][Dd]2[\t\s]+(%[A-z0-9_]+)[\t\s]*,[\t\s]*([0-9]+|%[A-z0-9_]+)[\t\s]*,[\t\s]*([0-9]+|%[A-z0-9_]+))', ztxtscript) ):
-			ztxtscript = onsscript_check_txtmodify_adddefsub(ztxtscript, 'defsub multiconverterrnd2def{i}'.format(i = i), '*multiconverterrnd2def{i}\nrnd {r2},{r4}+1-{r3}:add {r2},{r3}:return'.format(i = i, r2 = r[2], r3 = r[3], r4 = r[4]))
+			ztxtscript = onsscript_check_txtmodify_adddefsub(ztxtscript, f'defsub multiconverterrnd2def{i}', '*multiconverterrnd2def{i}\nrnd {r2},{r4}+1-{r3}:add {r2},{r3}:return'.format(i = i, r2 = r[2], r3 = r[3], r4 = r[4]))
 			ztxtscript = re.sub(r[0], '{r1}multiconverterrnd2def{i}'.format(r1=r[1], i = i), ztxtscript, 1)
 	
 	#連番画像利用時mpegplay命令
@@ -352,7 +352,7 @@ def onsscript_check_txtmodify(values: dict, values_ex: dict, ztxtscript: str, ov
 		bltx2 = math.ceil(bltx1 * values_ex['renbanresper'])
 		blty2 = math.ceil(blty1 * values_ex['renbanresper'])
 
-		ztxtscript = onsscript_check_txtmodify_adddefsub(ztxtscript, 'defsub mpegplay', '''*mpegplay
+		ztxtscript = onsscript_check_txtmodify_adddefsub(ztxtscript, 'defsub mpegplay', f'''*mpegplay
 saveoff
 mov %multiconverteralias0,%0 :mov %multiconverteralias1,%1 :mov %multiconverteralias2,%2 :mov %multiconverteralias3,%3 :mov %multiconverteralias4,%4 
 mov %multiconverteralias5,%5 :mov %multiconverteralias6,%6 :mov %multiconverteralias7,%7 :mov %multiconverteralias8,%8 :mov %multiconverteralias9,%9 
@@ -391,7 +391,7 @@ lr_trap off:ofscpy:bg black,1:stop
 mov %0 ,%multiconverteralias0:mov %1 ,%multiconverteralias1:mov %2 ,%multiconverteralias2:mov %3 ,%multiconverteralias3:mov %4 ,%multiconverteralias4
 mov %5 ,%multiconverteralias5:mov %6 ,%multiconverteralias6:mov %7 ,%multiconverteralias7:mov %8 ,%multiconverteralias8:mov %9 ,%multiconverteralias9
 mov $10,$multiconverteralias0:mov $11,$multiconverteralias1:mov $12,$multiconverteralias2:mov $13,$multiconverteralias3:mov $14,$multiconverteralias4:mov $15,$multiconverteralias5
-saveon:return'''.format(bltx1 = bltx1, blty1 = blty1, bltx2 = bltx2, blty2 = blty2))
+saveon:return''')
 
 	#nsa命令追記
 	ztxtscript = onsscript_check_txtmodify_adddefsub(ztxtscript, 'nsa', '')

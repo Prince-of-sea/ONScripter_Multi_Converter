@@ -5,7 +5,7 @@ from conversion import convert_start
 
 def cli_main(version: str, hardware: str, input_dir: str, output_dir: str):
 	#とりあえずタイトル
-	window_title = 'ONScripter Multi Converter for {hardware} ver.{version}'.format(hardware = hardware, version = version)
+	window_title = f'ONScripter Multi Converter for {hardware} ver.{version}'
 
 	#タイトル表示
 	print('\n------------------------------------------------------------\n' + window_title +'\n------------------------------------------------------------')

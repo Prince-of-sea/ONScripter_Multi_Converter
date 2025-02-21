@@ -353,10 +353,10 @@ def mov2PNG(p, x, y, values):
 		from requiredfile_locations import location_env # type: ignore
 		from utils import subprocess_args # type: ignore
 		ffmpeg_Path = location_env('ffmpeg')
-		sp.run([ffmpeg_Path, '-i', p, '-s', (str(x)+'x'+str(y)), '-frames:v', '1', '-y', p_tmp], shell=True, **subprocess_args())
+		sp.run([ffmpeg_Path, '-i', p, '-s', (str(x)+'x'+str(y)), '-frames:v', '1', '-y', p_tmp], **subprocess_args())
 
 	else:
-		sp.run(['ffmpeg', '-i', p, '-s', (str(x)+'x'+str(y)), '-frames:v', '1', '-y', p_tmp], shell=True)
+		sp.run(['ffmpeg', '-i', p, '-s', (str(x)+'x'+str(y)), '-frames:v', '1', '-y', p_tmp])
 
 	im = Image.open(p_tmp)
 	im.putalpha(im.convert('L'))
@@ -372,10 +372,10 @@ def mov2PNG_zugara2(p, values):#特別
 		from requiredfile_locations import location_env # type: ignore
 		from utils import subprocess_args # type: ignore
 		ffmpeg_Path = location_env('ffmpeg')
-		sp.run([ffmpeg_Path, '-i', p, '-to', '00:00:05.666', '-vf', 'crop=250:140:0:0', '-r', '3', '-vcodec', 'png', '-y', p_tmp], text=True, shell=True, **subprocess_args(True))
+		sp.run([ffmpeg_Path, '-i', p, '-to', '00:00:05.666', '-vf', 'crop=250:140:0:0', '-r', '3', '-vcodec', 'png', '-y', p_tmp], text=True, **subprocess_args(True))
 
 	else:
-		sp.run(['ffmpeg', '-i', p, '-to', '00:00:05.666', '-vf', 'crop=250:140:0:0', '-r', '3', '-vcodec', 'png', '-y', p_tmp], text=True, shell=True)
+		sp.run(['ffmpeg', '-i', p, '-to', '00:00:05.666', '-vf', 'crop=250:140:0:0', '-r', '3', '-vcodec', 'png', '-y', p_tmp], text=True)
 
 	im_tmp = Image.new('RGBA', size=(250*17, 140))
 	for i,f in enumerate(Path(p.parent).glob('zugara2.webm_*.png')):

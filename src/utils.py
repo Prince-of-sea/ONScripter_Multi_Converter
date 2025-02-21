@@ -37,7 +37,7 @@ def extract_archive_garbro(p: Path, e: Path, f: str = ''):
 	e.mkdir()
 	if f: l = [GARbro_Path, 'x', '-if', f.lower(), '-ca', '-o', e, p]
 	else: l = [GARbro_Path, 'x', '-ca', '-o', e, p]
-	sp.run(l ,shell=True, **subprocess_args())#展開
+	sp.run(l , **subprocess_args())#展開
 	return
 
 

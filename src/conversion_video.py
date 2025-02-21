@@ -37,7 +37,7 @@ def getvidframe(extractedpath: Path):
 	vid_frame_raw = sp.check_output([
 		ffprobe_Path, '-v', 'error', '-select_streams', 'v:0', '-show_entries', 
 		'stream=r_frame_rate', '-of', 'default=noprint_wrappers=1:nokey=1', extractedpath,
-	],text=True, shell=True, **subprocess_args(False))#check_output時はFalse 忘れずに
+	],text=True, **subprocess_args(False))#check_output時はFalse 忘れずに
 
 	#fpsの上2桁を抽出(fpsが小数点の際たまに暴走して299700fpsとかになるので)& "/1" 削除
 	vid_frame = (vid_frame_raw.replace('/1', ''))[:2]
@@ -57,7 +57,7 @@ def getvidcodec(extractedpath: Path):
 	vid_codec = sp.check_output([
 		ffprobe_Path, '-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=codec_name', 
 		  '-of', 'default=noprint_wrappers=1:nokey=1', extractedpath,
-	],text=True, shell=True, **subprocess_args(False))#check_output時はFalse 忘れずに
+	],text=True, **subprocess_args(False))#check_output時はFalse 忘れずに
 
 	return vid_codec
 
@@ -71,7 +71,7 @@ def getvidaudio(extractedpath: Path):
 	vid_audio = sp.check_output([
 		ffprobe_Path, '-v', 'error', '-select_streams', 'a', '-show_entries', 'stream=codec_type',
 		  '-of', 'default=noprint_wrappers=1:nokey=1', extractedpath,
-	],text=True, shell=True)#, **subprocess_args(False))#check_output時はFalse 忘れずに
+	],text=True, **subprocess_args(False))#check_output時はFalse 忘れずに
 
 	return bool('audio' in vid_audio)
 
@@ -85,7 +85,7 @@ def getvidplaytime(extractedpath: Path):
 	vid_playtime = sp.check_output([
 		ffprobe_Path, '-v', 'error', '-select_streams', 'v:0', '-show_entries', 'format=duration',
 		  '-of', 'default=noprint_wrappers=1:nokey=1', extractedpath,
-	],text=True, shell=True, **subprocess_args(False))#check_output時はFalse 忘れずに
+	],text=True, **subprocess_args(False))#check_output時はFalse 忘れずに
 
 	vid_playtime = math.ceil(float(vid_playtime)*1000)
 
@@ -130,7 +130,7 @@ def convert_video_mjpeg(values: dict, values_ex: dict, f_dict: dict):
 				'-vcodec', 'mpeg2video',
 				'-qscale', '0',
 				str(vidtemppath),
-			], shell=True, **subprocess_args())
+			], **subprocess_args())
 
 		#縦横指定
 		w = values_ex['output_resolution'][0]
@@ -139,11 +139,11 @@ def convert_video_mjpeg(values: dict, values_ex: dict, f_dict: dict):
 		#連番画像展開
 		sp.run([ffmpeg_Path, '-y',
 			'-i', vidtemppath,
-			'-s', str('{w}:{h}'.format(w = w, h = h)),
+			'-s', str(f'{w}:{h}'),
 			'-r', str(vid_frame),
 			'-qscale', str(values['vid_mjpegquality_bar']),
 			str(vidtemp_dir) + '/%08d.jpg',#8桁連番
-		], shell=True, **subprocess_args())
+		], **subprocess_args())
 
 		#音源抽出+16bitPCMへ変換
 		if getvidaudio(extractedpath):
@@ -154,7 +154,7 @@ def convert_video_mjpeg(values: dict, values_ex: dict, f_dict: dict):
 				'-ar', '44100',
 				'-ac', '2',
 				str(vidtemp_dir) + '/audiodump.pcm',
-			], shell=True, **subprocess_args())
+			], **subprocess_args())
 		
 		#-抽出ファイルをsmjpeg_encode.exeで結合-
 		sp.run([smjpeg_encode_Path,
@@ -162,7 +162,7 @@ def convert_video_mjpeg(values: dict, values_ex: dict, f_dict: dict):
 		 '--audio-rate', '44100',
 		 '--audio-bits', '16',
 		 '--audio-channels', '2',
-		], shell=True, cwd=vidtemp_dir, **subprocess_args())
+		],  cwd=vidtemp_dir, **subprocess_args())
 
 		#完成品を移動
 		shutil.move((vidtemp_dir / r'output.mjpg'), convertedpath)
@@ -189,7 +189,7 @@ def convert_video_renban(values: dict, values_ex: dict, f_dict: dict):
 
 	#再生時間受け渡し用ダミーファイル作成
 	for keta, num in enumerate(reversed(list(str(vid_playtime))), 1):#取得した再生時間をstr→listに変換し逆順でfor
-		timedummypath = (convertedpath / 'keta{keta}_{num}'.format(keta = keta, num = num))#保存先パス作成
+		timedummypath = (convertedpath / f'keta{keta}_{num}')#保存先パス作成
 		with open(timedummypath, 'wb') as s: s.write(b'\xff')#ダミーファイルを書き込み - 内容空だと0kbでonsのfileexist無反応になるっぽい
 
 	#縦横指定
@@ -208,10 +208,10 @@ def convert_video_renban(values: dict, values_ex: dict, f_dict: dict):
 	sp.run([ffmpeg_Path, '-y',
 		'-i', extractedpath,
 		'-r', str(vid_frame),
-		'-vf', 'scale={w}:{h},pad={pw}:{ph}:0:0:black'.format(w = w, h = h, pw = pw, ph = ph),
+		'-vf', f'scale={w}:{h},pad={pw}:{ph}:0:0:black',
 		'-start_number', '0',
 		str(convertedpath) + '/_%05d.png',#PNGで5桁連番 - jpgの場合も後で変換するので気にしなくて良い
-	], shell=True, **subprocess_args())
+	], **subprocess_args())
 
 	#音源変換 - 動画を音声ファイルとして関数に投げさせる
 	if getvidaudio(extractedpath):
@@ -320,12 +320,12 @@ def convert_video_mp4(values: dict, values_ex: dict, f_dict: dict):
 	#変換
 	sp.run([ffmpeg_Path, '-y',
 		'-i', extractedpath,
-		'-s', str('{w}:{h}'.format(w = w, h = h)),
+		'-s', f'{w}:{h}',
 		'-vcodec', 'libx264',
 		'-acodec', 'aac',
 		'-ar', '44100',
 		convertedpath_mp4,
-	], shell=True, **subprocess_args())
+	], **subprocess_args())
 
 	#PSVITA以外、なおかつ元々mp4ではないなら名前戻す
 	if (hardware != 'PSVITA') and (convertedpath != convertedpath_mp4):
