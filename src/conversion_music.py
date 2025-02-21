@@ -8,55 +8,54 @@ from utils import subprocess_args
 
 
 def convert_music(f_dict: dict):
-	extractedpath = f_dict['extractedpath']
-	convertedpath = f_dict['convertedpath']
+	extractedpath = Path(f_dict['extractedpath'])
+	convertedpath = Path(f_dict['convertedpath'])
 
 	#ffmpegのパス取得
 	ffmpeg_Path = location_env('ffmpeg')
 
 	with tempfile.TemporaryDirectory() as mustemp_dir:
 		mustemp_dir = Path(mustemp_dir)
+		mustemppath = Path(mustemp_dir / 'x.{}'.format(f_dict['format']).lower())
 	
 		match f_dict['format']:
 			case 'OGG':
-				mustemppath = (mustemp_dir / 'x.ogg')
-				sp.run([ffmpeg_Path, '-y',
+				cmd = [ffmpeg_Path, '-y',
 					'-i', extractedpath,
 					'-vn',
-					'-ab', str(f_dict['kbps']) + 'k',
-					'-ar', str(f_dict['hz']),
-					'-ac', str(f_dict['ch']), 
+					'-ab', '{}k'.format(f_dict['kbps']),
+					'-ar', f_dict['hz'],
+					'-ac', f_dict['ch'], 
 					mustemppath,
-				], **subprocess_args())
+				]
 
 			case 'MP3':
-				mustemppath = (mustemp_dir / 'x.mp3')
-				sp.run([ffmpeg_Path, '-y',
+				cmd = [ffmpeg_Path, '-y',
 					'-i', extractedpath,
 					'-vn',
-					'-ab', str(f_dict['kbps']) + 'k',
-					'-ar', str(f_dict['hz']),
-					'-ac', str(f_dict['ch']), 
-					'-cutoff', str(f_dict['cutoff']),
+					'-ab', '{}k'.format(f_dict['kbps']),
+					'-ar', f_dict['hz'],
+					'-ac', f_dict['ch'], 
+					'-cutoff', f_dict['cutoff'],
 					mustemppath,
-				], **subprocess_args())	
+				]
 
 			case 'WAV':
-				mustemppath = (mustemp_dir / 'x.wav')
-				sp.run([ffmpeg_Path, '-y',
+				cmd = [ffmpeg_Path, '-y',
 					'-i', extractedpath,
 					'-vn',
-					'-ar', str(f_dict['hz']),
-					'-ac', str(f_dict['ch']), 
+					'-ar', f_dict['hz'],
+					'-ac', f_dict['ch'], 
 					'-acodec', f_dict['acodec'],
 					mustemppath,
-				], **subprocess_args())	
+				]
 
 			case _: raise ValueError('音声の変換フォーマットが選択されていません')
 		
+		sp.run(cmd, **subprocess_args())
 		shutil.move(mustemppath, convertedpath)
 
 	#元nbz用コビー
-	if (f_dict['nbz']) and (convertedpath.suffix != '.nbz'): shutil.copy(convertedpath, convertedpath.with_suffix('.nbz'))
+	if (f_dict['nbz']) and (str(convertedpath.suffix).lower() != '.nbz'): shutil.copy(convertedpath, convertedpath.with_suffix('.nbz'))
 
 	return
