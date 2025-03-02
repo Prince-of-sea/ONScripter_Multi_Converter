@@ -47,7 +47,7 @@ hardwarevalues_dict = {
 			'etc_0txtsetwindowbigfont_chk': True,
 			'etc_0txtskipokcancelbox_chk': True,
 			'etc_0txtskipyesnobox_chk': True,
-			'etc_0txtrndtornd2_chk': False,
+			'etc_0txtrndtornd2_chk': True,
 			'etc_0txtremovecommentout_chk': True,
 		}
 	},
@@ -97,7 +97,7 @@ hardwarevalues_dict = {
 			'etc_0txtsetwindowbigfont_chk': False,
 			'etc_0txtskipokcancelbox_chk': True,
 			'etc_0txtskipyesnobox_chk': True,
-			'etc_0txtrndtornd2_chk': True,
+			'etc_0txtrndtornd2_chk': False,
 			'etc_0txtremovecommentout_chk': True,
 		}
 	},
@@ -154,7 +154,7 @@ hardwarevalues_dict = {
 
 	'Android': {
 		'values_ex': {
-			'hardware_full': 'Android OS汎用',
+			'hardware_full': 'Android OS',
 			'select_resolution': (),
 			'disable_video': ('MJPEG'),
 			'aspect_4:3only': False,

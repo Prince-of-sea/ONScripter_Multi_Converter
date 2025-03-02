@@ -58,7 +58,7 @@ def gui_main(version, hw_key, input_dir_param, output_dir_param):
 	dpg.create_context()
 
 	with dpg.font_registry():
-		with dpg.font(file=r"C:\Windows\Fonts\meiryo.ttc", size=16) as default_font:
+		with dpg.font(file=r"C:/Windows/Fonts/meiryo.ttc", size=16) as default_font:
 			dpg.add_font_range_hint(dpg.mvFontRangeHint_Japanese)
 		dpg.bind_font(default_font)
 
@@ -73,7 +73,7 @@ def gui_main(version, hw_key, input_dir_param, output_dir_param):
 					dpg.add_menu_item(label="SONY PlayStation Portable", callback=refresh_state, user_data=hardwarevalues_full['PSP']['values_default'])
 					dpg.add_menu_item(label="SONY PlayStation Vita", callback=refresh_state, user_data=hardwarevalues_full['PSVITA']['values_default'])
 					dpg.add_menu_item(label="SHARP Brain(Windows CE 6.0)", callback=refresh_state, user_data=hardwarevalues_full['Brain']['values_default'])
-					dpg.add_menu_item(label="Android OS汎用", callback=refresh_state, user_data=hardwarevalues_full['Android']['values_default'])
+					dpg.add_menu_item(label="Android OS", callback=refresh_state, user_data=hardwarevalues_full['Android']['values_default'])
 
 				dpg.add_menu_item(label="終了", callback=close)
 
