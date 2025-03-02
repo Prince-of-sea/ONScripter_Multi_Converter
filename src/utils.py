@@ -17,7 +17,7 @@ def message_box(msg_title: str, msg: str, msg_type: str, useGUI: bool):
 	with dpg.mutex():
 		with dpg.window(label=msg_title, modal=True) as msg_window:
 			dpg.add_text(msg)
-			dpg.add_button(label="OK", callback=lambda: dpg.configure_item(msg_window, show=False))
+			dpg.add_button(label='OK', callback=lambda: dpg.configure_item(msg_window, show=False))
 	dpg.split_frame()
 	dpg.set_item_pos(msg_window, [dpg.get_viewport_client_width() // 2 - dpg.get_item_width(msg_window) // 2, dpg.get_viewport_client_height() // 2 - dpg.get_item_height(msg_window) // 2])
 	return
@@ -42,7 +42,7 @@ def extract_archive_garbro(p: Path, e: Path, f: str = ''):
 
 
 def openread0x84bitxor(p: Path):
-	data = open(p,"rb").read()#復号化前のtxt読み込み用変数
+	data = open(p,'rb').read()#復号化前のtxt読み込み用変数
 	bin_list = []#復号したバイナリを格納する配列の作成
 		
 	for b in range(len(data)):#復号 0x84でbitxorしてるんだけどいまいち自分でもよく分かってない

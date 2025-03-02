@@ -22,16 +22,16 @@ def get_uiiconpath():
 
 def ask_create_disabledvideofile():
 	with dpg.mutex():
-		with dpg.window(label="連番動画無効化ファイル作成", modal=True) as msg_ask:
-			dpg.add_text("一部作品では、連番画像に変換した動画が再生されずに\n" +\
-						"操作不能になって先に進めなくなることがあります\n\n" +\
-						"本機能で作成した無効化ファイルを置くことで\n" +\
-						"再生をスキップし、不具合を回避することが出来ます\n" +\
-						"(ver.2.3.1以降で変換した作品でのみ有効です)\n\n" +\
-						"無効化ファイルを作成しますか？")
+		with dpg.window(label='連番動画無効化ファイル作成', modal=True) as msg_ask:
+			dpg.add_text('一部作品では、連番画像に変換した動画が再生されずに\n' +\
+						'操作不能になって先に進めなくなることがあります\n\n' +\
+						'本機能で作成した無効化ファイルを置くことで\n' +\
+						'再生をスキップし、不具合を回避することが出来ます\n' +\
+						'(ver.2.3.1以降で変換した作品でのみ有効です)\n\n' +\
+						'無効化ファイルを作成しますか？')
 			with dpg.group(horizontal=True):
-				dpg.add_button(label="OK", user_data=(msg_ask, True), callback=create_disabledvideofile)
-				dpg.add_button(label="キャンセル", user_data=(msg_ask, False), callback=create_disabledvideofile)
+				dpg.add_button(label='OK', user_data=(msg_ask, True), callback=create_disabledvideofile)
+				dpg.add_button(label='キャンセル', user_data=(msg_ask, False), callback=create_disabledvideofile)
 	dpg.split_frame()
 	dpg.set_item_pos(msg_ask, [dpg.get_viewport_client_width() // 2 - dpg.get_item_width(msg_ask) // 2, dpg.get_viewport_client_height() // 2 - dpg.get_item_height(msg_ask) // 2])
 	return
@@ -57,18 +57,18 @@ def create_disabledvideofile(sender, app_data, user_data):
 
 def ask_decode_nscriptdat():
 	with dpg.mutex():
-		with dpg.window(label="nscript.dat復号化", modal=True) as msg_ask:
-			dpg.add_text("そのままでは読めない形式になっているnscript.datを復号化します\n" +\
-						"普通はゲームを選択し[Convert]ボタンを押せば自動で復号化されるため、\n" +\
-						"本機能は使う必要がありません\n" +\
-						"また、普通のConvertで復号化が失敗するnscript.datは、\n" +\
-						"本機能でも復号化に失敗します\n\n" +\
-						"Convert前に0.txtを手動で編集する必要がある時など、\n" +\
-						"特殊な作業を行う場合にのみ使ってください\n\n" +\
-						"復号化するnscript.datを選択しますか？")
+		with dpg.window(label='nscript.dat復号化', modal=True) as msg_ask:
+			dpg.add_text('そのままでは読めない形式になっているnscript.datを復号化します\n' +\
+						'普通はゲームを選択し[Convert]ボタンを押せば自動で復号化されるため、\n' +\
+						'本機能は使う必要がありません\n' +\
+						'また、普通のConvertで復号化が失敗するnscript.datは、\n' +\
+						'本機能でも復号化に失敗します\n\n' +\
+						'Convert前に0.txtを手動で編集する必要がある時など、\n' +\
+						'特殊な作業を行う場合にのみ使ってください\n\n' +\
+						'復号化するnscript.datを選択しますか？')
 			with dpg.group(horizontal=True):
-				dpg.add_button(label="OK", user_data=(msg_ask, True), callback=decode_nscriptdat)
-				dpg.add_button(label="キャンセル", user_data=(msg_ask, False), callback=decode_nscriptdat)
+				dpg.add_button(label='OK', user_data=(msg_ask, True), callback=decode_nscriptdat)
+				dpg.add_button(label='キャンセル', user_data=(msg_ask, False), callback=decode_nscriptdat)
 	dpg.split_frame()
 	dpg.set_item_pos(msg_ask, [dpg.get_viewport_client_width() // 2 - dpg.get_item_width(msg_ask) // 2, dpg.get_viewport_client_height() // 2 - dpg.get_item_height(msg_ask) // 2])
 	return

@@ -15,7 +15,7 @@ from ui_cli import cli_main
 
 
 def main(use_cli, hardware, input_dir, output_dir):
-	"""ONS向け画像/音源/動画&シナリオ変換ツール"""
+	'''ONS向け画像/音源/動画&シナリオ変換ツール'''
 	version = '2.3.6'
 
 	if os.name != 'nt': raise Exception('Windows以外では起動できません')
@@ -23,5 +23,5 @@ def main(use_cli, hardware, input_dir, output_dir):
 	else: gui_main(version, hardware, input_dir, output_dir)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
 	main()

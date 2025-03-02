@@ -163,10 +163,10 @@ def ask_convert_start(arg):
 			with dpg.window(label=f'個別設定変換確認 - {title}', modal=True, no_close=True, no_move=True) as msg_askconv:
 				with dpg.child_window(height=270, width=620):
 					dpg.add_text(s)
-				dpg.add_text("以上を確認したうえで、変換を開始しますか？")
+				dpg.add_text('以上を確認したうえで、変換を開始しますか？')
 				with dpg.group(horizontal=True):
-					dpg.add_button(label="OK", user_data=(msg_askconv, True, arg), callback=askconv_callback)
-					dpg.add_button(label="キャンセル", user_data=(msg_askconv, False, arg), callback=askconv_callback)
+					dpg.add_button(label='OK', user_data=(msg_askconv, True, arg), callback=askconv_callback)
+					dpg.add_button(label='キャンセル', user_data=(msg_askconv, False, arg), callback=askconv_callback)
 		dpg.split_frame()
 	# 未指定なら確認を飛ばして変換開始
 	else:
