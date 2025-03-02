@@ -27,7 +27,7 @@ def configure_progress_bar(per: float, msg: str):
 
 	if msg: dpg.set_value('progress_msg', msg)
 	dpg.set_value('progress_bar', per)
-	dpg.configure_item('progress_bar', overlay='{}%'.format(int(per * 100)))
+	dpg.configure_item('progress_bar', overlay=f'{int(per * 100)}%')
 
 	return
 

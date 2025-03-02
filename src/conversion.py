@@ -243,7 +243,7 @@ def convert_start(arg):
 			compressed_dir = Path(temp_dir / 'compressed')
 
 			#最終的な出力はこれ
-			result_dir = Path(values['output_dir'] / Path('result_{hw}_{n}'.format(hw = values['hardware'], n = str(values['input_dir'].name))))
+			result_dir = Path(values['output_dir'] / Path(f'result_{values['hardware']}_{values['input_dir'].name}'))
 
 			#データ置き場作成
 			extracted_dir.mkdir()
@@ -284,7 +284,7 @@ def convert_start(arg):
 
 			#選択不可の動画形式選んでたらエラー
 			if (values['vid_movfmt_radio'] in values_ex['disable_video']):
-				raise Exception('{hw}は動画を{v}形式に変換できません'.format(hw = values['hardware'], v = values['vid_movfmt_radio']))
+				raise Exception(f'{values['hardware']}は動画を{values['vid_movfmt_radio']}形式に変換できません')
 
 			#連番変換時画像サイズ先に代入
 			if (values['vid_movfmt_radio'] == '連番画像'):

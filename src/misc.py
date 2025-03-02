@@ -93,8 +93,8 @@ def decode_nscriptdat(sender, app_data, user_data):
 		bakpath = _path.parent / '0.txt.bak'
 
 	else:#旧Scripter
-		txtpath = _path.parent / '{}.txt'.format(_path.stem)
-		bakpath = _path.parent / '{}.txt.bak'.format(_path.stem)
+		txtpath = _path.parent / f'{_path.stem}.txt'
+		bakpath = _path.parent / f'{_path.stem}.txt.bak'
 		
 	if txtpath.exists():
 		if bakpath.exists():
@@ -122,7 +122,7 @@ def open_repositorieslink():
 
 
 def copyrights():
-	message_box('copyrights', 'ONScripter Multi Converter ver.{}\n(C) 2021-2025 Prince-of-sea / PC-CNT / RightHand'.format(dpg.get_value('version')), 'info', True)
+	message_box('copyrights', f'ONScripter Multi Converter ver.{dpg.get_value('version')}\n(C) 2021-2025 Prince-of-sea / PC-CNT / RightHand', 'info', True)
 	return
 
 
@@ -178,9 +178,9 @@ def create_configfile(values: dict, values_ex:dict, compressed_dir: Path):
 			#analogkey
 			analogkey = 'ON2' if etc_inicursor_chk else 'ON1'
 
-			cfg = '''SURFACE={surface}
-WIDTH={width}
-HEIGHT={height}
+			cfg = f'''SURFACE={surface}
+WIDTH={output_resolution[0]}
+HEIGHT={output_resolution[1]}
 ASPECT={aspect}
 SCREENBPP=32
 CPUCLOCK=333
@@ -203,8 +203,8 @@ SELECT=48
 START=97
 ALUP=276
 ALDOWN=275
-'''.format(surface = surface, width = output_resolution[0], height = output_resolution[1], aspect = aspect, fontmemory = fontmemory, analogkey = analogkey)
-			
+'''
+		
 		case 'sittings.txt':#現時点ではvita専用 おそらくyuri系列大体この仕様
 			cfg = r'--window --fontcache --textbox --enc:sjis'
 			
@@ -253,7 +253,7 @@ def create_0txt(values: dict, values_ex: dict, compressed_dir: Path):
 	version = values['version']
 
 	#0.txt書き出し
-	ztxtscript += ('\nend\n\n;\tConverted by "ONScripter Multi Converter ver.{}"\n;\thttps://github.com/Prince-of-sea/ONScripter_Multi_Converter\n'.format(version))
+	ztxtscript += (f'\nend\n\n;\tConverted by "ONScripter Multi Converter ver.{version}"\n;\thttps://github.com/Prince-of-sea/ONScripter_Multi_Converter\n')
 	with open(Path(compressed_dir / '0.txt'), 'w', encoding='cp932', errors='ignore') as s: s.write(ztxtscript)
 
 	#ついでにエラーログがあれば書き出し

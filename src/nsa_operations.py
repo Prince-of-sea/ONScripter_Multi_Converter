@@ -26,14 +26,14 @@ def getnsasar_pathlist(input_dir: Path):
 	
 	if Path(input_dir / '00.ns2').exists():
 		for i in range(1, 100):
-			p = Path(input_dir / '{}.ns2'.format(str(i).zfill(2)))
+			p = Path(input_dir / f'{str(i).zfill(2)}.ns2')
 			if p.exists(): nsasar_pathlist.append(p)
 			else: break
 
 	elif Path(input_dir / 'arc.nsa').exists():
 		nsasar_pathlist.append( Path(input_dir / 'arc.nsa') )
 		for i in range(1, 10):
-			p = Path(input_dir / 'arc{}.nsa'.format(i))
+			p = Path(input_dir / f'arc{i}.nsa')
 			if p.exists(): nsasar_pathlist.append(p)
 			else: break
 

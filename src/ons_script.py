@@ -21,7 +21,7 @@ def onsscript_decode(values: dict):
 			if zzrange_path.exists():				
 				with open(zzrange_path, 'r', encoding='cp932', errors='ignore') as zzrangetext:
 					text += zzrangetext.read()
-					text += '\n\n;##\n;{} end\n;##\n\n'.format(str(zzrange_path.name))
+					text += f'\n\n;##\n;{zzrange_path.name} end\n;##\n\n'
 	
 	elif ztxt_path.exists():
 		for i in range(0, 10):
@@ -29,7 +29,7 @@ def onsscript_decode(values: dict):
 			if zrange_path.exists():				
 				with open(zrange_path, 'r', encoding='cp932', errors='ignore') as zrangetext:
 					text += zrangetext.read()
-					text += '\n\n;##\n;{} end\n;##\n\n'.format(str(zrange_path.name))
+					text += f'\n\n;##\n;{zrange_path.name} end\n;##\n\n'
 
 	elif nsdat_path.exists():
 		text += openread0x84bitxor(nsdat_path)
@@ -228,16 +228,16 @@ def onsscript_check_txtmodify(values: dict, values_ex: dict, ztxtscript: str, ov
 
 	#numalias命令を追加
 	numalias_list = [4080, 4081, 4082, 4083, 4084, 4085, 4086, 4087, 4088, 4089]#ここ将来的にはGUIで設定できるようにしたい
-	ztxtscript = onsscript_check_txtmodify_adddefsub(ztxtscript, 'numalias multiconverteralias0,{l0}'.format(l0 = numalias_list[0]), '')
-	ztxtscript = onsscript_check_txtmodify_adddefsub(ztxtscript, 'numalias multiconverteralias1,{l1}'.format(l1 = numalias_list[1]), '')
-	ztxtscript = onsscript_check_txtmodify_adddefsub(ztxtscript, 'numalias multiconverteralias2,{l2}'.format(l2 = numalias_list[2]), '')
-	ztxtscript = onsscript_check_txtmodify_adddefsub(ztxtscript, 'numalias multiconverteralias3,{l3}'.format(l3 = numalias_list[3]), '')
-	ztxtscript = onsscript_check_txtmodify_adddefsub(ztxtscript, 'numalias multiconverteralias4,{l4}'.format(l4 = numalias_list[4]), '')
-	ztxtscript = onsscript_check_txtmodify_adddefsub(ztxtscript, 'numalias multiconverteralias5,{l5}'.format(l5 = numalias_list[5]), '')
-	ztxtscript = onsscript_check_txtmodify_adddefsub(ztxtscript, 'numalias multiconverteralias6,{l6}'.format(l6 = numalias_list[6]), '')
-	ztxtscript = onsscript_check_txtmodify_adddefsub(ztxtscript, 'numalias multiconverteralias7,{l7}'.format(l7 = numalias_list[7]), '')
-	ztxtscript = onsscript_check_txtmodify_adddefsub(ztxtscript, 'numalias multiconverteralias8,{l8}'.format(l8 = numalias_list[8]), '')
-	ztxtscript = onsscript_check_txtmodify_adddefsub(ztxtscript, 'numalias multiconverteralias9,{l9}'.format(l9 = numalias_list[9]), '')
+	ztxtscript = onsscript_check_txtmodify_adddefsub(ztxtscript, f'numalias multiconverteralias0,{numalias_list[0]}', '')
+	ztxtscript = onsscript_check_txtmodify_adddefsub(ztxtscript, f'numalias multiconverteralias1,{numalias_list[1]}', '')
+	ztxtscript = onsscript_check_txtmodify_adddefsub(ztxtscript, f'numalias multiconverteralias2,{numalias_list[2]}', '')
+	ztxtscript = onsscript_check_txtmodify_adddefsub(ztxtscript, f'numalias multiconverteralias3,{numalias_list[3]}', '')
+	ztxtscript = onsscript_check_txtmodify_adddefsub(ztxtscript, f'numalias multiconverteralias4,{numalias_list[4]}', '')
+	ztxtscript = onsscript_check_txtmodify_adddefsub(ztxtscript, f'numalias multiconverteralias5,{numalias_list[5]}', '')
+	ztxtscript = onsscript_check_txtmodify_adddefsub(ztxtscript, f'numalias multiconverteralias6,{numalias_list[6]}', '')
+	ztxtscript = onsscript_check_txtmodify_adddefsub(ztxtscript, f'numalias multiconverteralias7,{numalias_list[7]}', '')
+	ztxtscript = onsscript_check_txtmodify_adddefsub(ztxtscript, f'numalias multiconverteralias8,{numalias_list[8]}', '')
+	ztxtscript = onsscript_check_txtmodify_adddefsub(ztxtscript, f'numalias multiconverteralias9,{numalias_list[9]}', '')
 	
 	#nbz変換設定
 	match values['etc_0txtnbz_radio']:
@@ -334,8 +334,8 @@ def onsscript_check_txtmodify(values: dict, values_ex: dict, ztxtscript: str, ov
 	#rnd2を自作命令multiconverterrnd2def(連番)に変換
 	if values['etc_0txtrndtornd2_chk']:
 		for i,r in enumerate( re.findall(r'(([\n|\t| |:])[Rr][Nn][Dd]2[\t\s]+(%[A-z0-9_]+)[\t\s]*,[\t\s]*([0-9]+|%[A-z0-9_]+)[\t\s]*,[\t\s]*([0-9]+|%[A-z0-9_]+))', ztxtscript) ):
-			ztxtscript = onsscript_check_txtmodify_adddefsub(ztxtscript, f'defsub multiconverterrnd2def{i}', '*multiconverterrnd2def{i}\nrnd {r2},{r4}+1-{r3}:add {r2},{r3}:return'.format(i = i, r2 = r[2], r3 = r[3], r4 = r[4]))
-			ztxtscript = re.sub(r[0], '{r1}multiconverterrnd2def{i}'.format(r1=r[1], i = i), ztxtscript, 1)
+			ztxtscript = onsscript_check_txtmodify_adddefsub(ztxtscript, f'defsub multiconverterrnd2def{i}', f'*multiconverterrnd2def{i}\nrnd {r[2]},{r[4]}+1-{r[3]}:add {r[2]},{r[3]}:return')
+			ztxtscript = re.sub(r[0], f'{r[1]}multiconverterrnd2def{i}', ztxtscript, 1)
 	
 	#連番画像利用時mpegplay命令
 	if (values['vid_movfmt_radio'] == '連番画像'):
