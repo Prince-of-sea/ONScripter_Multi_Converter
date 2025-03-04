@@ -583,7 +583,7 @@ def gui_main(version, hw_key, input_dir_param, output_dir_param):
 								)
 							with dpg.group(horizontal=True):
 								dpg.add_checkbox(
-									label='低容量RAM搭載端末用maxkaisoupage最大値指定：',
+									label='maxkaisoupage最大値指定：',
 									default_value=values_default['etc_0txtmaxkaisoupage_chk'],
 									tag='etc_0txtmaxkaisoupage_chk',
 								)
@@ -595,7 +595,7 @@ def gui_main(version, hw_key, input_dir_param, output_dir_param):
 								)
 							with dpg.group(horizontal=True):
 								dpg.add_checkbox(
-									label='低解像度端末用setwindow/setwindow3文字潰れ防止',
+									label='setwindow/setwindow3文字潰れ防止',
 									default_value=values_default['etc_0txtsetwindowbigfont_chk'],
 									tag='etc_0txtsetwindowbigfont_chk',
 								)
@@ -616,6 +616,12 @@ def gui_main(version, hw_key, input_dir_param, output_dir_param):
 									label='rnd2命令->rnd命令変換',
 									default_value=values_default['etc_0txtrndtornd2_chk'],
 									tag='etc_0txtrndtornd2_chk',
+								)
+							with dpg.group(horizontal=True):
+								dpg.add_checkbox(
+									label='textgosub命令無効化',
+									default_value=values_default['etc_0txtdisabletextgosub_chk'],
+									tag='etc_0txtdisabletextgosub_chk',
 								)
 							with dpg.group(horizontal=True):
 								dpg.add_checkbox(

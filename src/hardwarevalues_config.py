@@ -48,6 +48,7 @@ hardwarevalues_dict = {
 			'etc_0txtskipokcancelbox_chk': True,
 			'etc_0txtskipyesnobox_chk': True,
 			'etc_0txtrndtornd2_chk': True,
+			'etc_0txtdisabletextgosub_chk': False,
 			'etc_0txtremovecommentout_chk': True,
 		}
 	},
@@ -98,6 +99,7 @@ hardwarevalues_dict = {
 			'etc_0txtskipokcancelbox_chk': True,
 			'etc_0txtskipyesnobox_chk': True,
 			'etc_0txtrndtornd2_chk': False,
+			'etc_0txtdisabletextgosub_chk': False,
 			'etc_0txtremovecommentout_chk': True,
 		}
 	},
@@ -148,6 +150,7 @@ hardwarevalues_dict = {
 			'etc_0txtskipokcancelbox_chk': True,
 			'etc_0txtskipyesnobox_chk': True,
 			'etc_0txtrndtornd2_chk': True,
+			'etc_0txtdisabletextgosub_chk': False,
 			'etc_0txtremovecommentout_chk': True,
 		}
 	},
@@ -198,6 +201,7 @@ hardwarevalues_dict = {
 			'etc_0txtskipokcancelbox_chk': False,
 			'etc_0txtskipyesnobox_chk': False,
 			'etc_0txtrndtornd2_chk': False,
+			'etc_0txtdisabletextgosub_chk': False,
 			'etc_0txtremovecommentout_chk': True,
 		}
 	},

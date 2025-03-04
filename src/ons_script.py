@@ -276,7 +276,7 @@ def onsscript_check_txtmodify(values: dict, values_ex: dict, ztxtscript: str, ov
 
 		#利用する(正規表現置換)
 		case '利用する(正規表現置換)':
-			ztxtscript = re.sub(r'[Ss][Aa][Vv][Ee][Ss][Cc][Rr][Ee][Ee][Nn][Ss][Hh][Oo][Tt]2?[\t\s]+"(.+?)"[\t\s]*([:|\n])', r'wait 0\2', ztxtscript)
+			ztxtscript = re.sub(r'([:|\n])[Ss][Aa][Vv][Ee][Ss][Cc][Rr][Ee][Ee][Nn][Ss][Hh][Oo][Tt]2?[\t\s]+"(.+?)"[\t\s]*([:|\n])', r'\1wait 0\3', ztxtscript)
 	
 		#利用しない
 		case '利用しない': pass
@@ -299,7 +299,7 @@ def onsscript_check_txtmodify(values: dict, values_ex: dict, ztxtscript: str, ov
 		if fontper < 1:
 
 			#txt内のsetwindow命令を格納 - [0]命令文前部分/[2]横文字数/[3]縦文字数/[4]横文字サイズ/[5]縦文字サイズ/[6]横文字間隔/[7]縦文字間隔/[8]命令文後部分
-			setwindow_re_fnttup = re.findall(r'([Ss][Ee][Tt][Ww][Ii][Nn][Dd][Oo][Ww]3? ([0-9]{1,},){2})([0-9]{1,}),([0-9]{1,}),([0-9]{1,}),([0-9]{1,}),([0-9]{1,}),([0-9]{1,}),(([0-9]{1,},){3}(.+?)(,[0-9]{1,}){2,4})', ztxtscript)
+			setwindow_re_fnttup = re.findall(r'([Ss][Ee][Tt][Ww][Ii][Nn][Dd][Oo][Ww]3?[\t\s]+([0-9]{1,},){2})([0-9]{1,}),([0-9]{1,}),([0-9]{1,}),([0-9]{1,}),([0-9]{1,}),([0-9]{1,}),(([0-9]{1,},){3}(.+?)(,[0-9]{1,}){2,4})', ztxtscript)
 	
 			for v in set(setwindow_re_fnttup):
 
@@ -336,7 +336,22 @@ def onsscript_check_txtmodify(values: dict, values_ex: dict, ztxtscript: str, ov
 		for i,r in enumerate( re.findall(r'(([\n|\t| |:])[Rr][Nn][Dd]2[\t\s]+(%[A-z0-9_]+)[\t\s]*,[\t\s]*([0-9]+|%[A-z0-9_]+)[\t\s]*,[\t\s]*([0-9]+|%[A-z0-9_]+))', ztxtscript) ):
 			ztxtscript = onsscript_check_txtmodify_adddefsub(ztxtscript, f'defsub multiconverterrnd2def{i}', f'*multiconverterrnd2def{i}\nrnd {r[2]},{r[4]}+1-{r[3]}:add {r[2]},{r[3]}:return')
 			ztxtscript = re.sub(r[0], f'{r[1]}multiconverterrnd2def{i}', ztxtscript, 1)
-	
+
+	#textgosub無効化
+	if values['etc_0txtdisabletextgosub_chk']:
+		textgosub_regex = r'([:|\n])[Tt][Ee][Xx][Tt][Gg][Oo][Ss][Uu][Bb][\t\s]+\*[A-z0-9_]+[\t\s]*([:|\n])'
+		rmenu_regex = r'([Rr][Mm][Ee][Nn][Uu][\t\s]+"(.+?),?[\t\s]*([:|\n]))'
+		rmenucm_regex = r';([Rr][Mm][Ee][Nn][Uu][\t\s]+"(.+?),?[\t\s]*([:|\n]))'
+		
+		if re.search(textgosub_regex, ztxtscript):
+			ztxtscript = re.sub(textgosub_regex, r'\1wait 0\2', ztxtscript)#本当は定義節にwaitっておかしいんだけど動くのでそのまま
+
+			#rmenuがコメントアウトされてるなら復活
+			if re.search(rmenucm_regex, ztxtscript): ztxtscript = re.sub(rmenu_regex, r'\1', ztxtscript)
+
+			#そもそもrmenuがない場合は作成
+			elif not re.search(rmenu_regex, ztxtscript): ztxtscript = onsscript_check_txtmodify_adddefsub(ztxtscript, 'rmenu "セーブ",save,"ロード",load,"スキップ",skip,"タイトル",reset', '')
+
 	#連番画像利用時mpegplay命令
 	if (values['vid_movfmt_radio'] == '連番画像'):
 		#参考: https://web.archive.org/web/20110308215321fw_/http://blog.livedoor.jp/tormtorm/archives/51356258.html
@@ -412,7 +427,7 @@ def set_output_resolution(values: dict, values_ex: dict, override_resolution: li
 			if (preferred_resolution == '高解像度優先'): output_resolution = select_resolution[0]
 			else: output_resolution = select_resolution[1]
 
-		#その他
+	#その他
 	else: output_resolution = script_resolution
 
 	return output_resolution

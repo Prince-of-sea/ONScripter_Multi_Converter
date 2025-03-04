@@ -192,7 +192,7 @@ def open_select():
 
 	with dpg.window(label=f'インストール済みゲーム一覧', height=360, width=628, modal=True, no_move=True) as opsel:
 		for d in programs_list:
-			with dpg.group(horizontal=True, height=50, width=600):
+			with dpg.group(horizontal=True, height=32, width=600):
 				dpg.add_button(label=f'{d['name']}\t({d['exe_path'].parent}){'　'*50}', user_data=(opsel, d), callback=open_select_main)
 		
 		dpg.split_frame()
