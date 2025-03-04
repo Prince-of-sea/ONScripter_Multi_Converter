@@ -15,6 +15,8 @@ def title_info():
 		'title': '未来のキミと、すべての歌に―',
 		'requiredsoft': [],
 		'is_4:3': bool(not r'<ONS_RESOLUTION_CHECK_DISABLED>' in default_txt()),
+		'program_name': 'ミクキス',#一覧取得用
+		'exe_name': 'miku',#一覧取得用
 
 		'version': [
 			'未来のキミと、すべての歌に― DLsite DL版(RJ038558 - 2008/04/04)',

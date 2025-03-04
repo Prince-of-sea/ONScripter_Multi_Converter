@@ -15,6 +15,8 @@ def title_info():
 		'title': '処女回路',
 		'requiredsoft': [],
 		'is_4:3': bool(not r'<ONS_RESOLUTION_CHECK_DISABLED>' in default_txt()),
+		'program_name': '処女回路',#一覧取得用
+		'exe_name': '処女回路',#一覧取得用
 
 		'version': [
 			'処女回路 パッケージ版(2011/05/27)',

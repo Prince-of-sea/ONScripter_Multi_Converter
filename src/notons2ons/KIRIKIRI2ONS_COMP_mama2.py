@@ -14,7 +14,9 @@ def title_info():
 		'title': 'ママとの甘い性活II',
 		'requiredsoft': [],
 		'is_4:3': bool(not r'<ONS_RESOLUTION_CHECK_DISABLED>' in default_txt()),
-
+		'program_name': 'Complets',#一覧取得用
+		'exe_name': 'MS2',#一覧取得用
+		
 		'version': [
 			'ママとの甘い性活II FANZA DL版(cveaa_0038)',
 		],

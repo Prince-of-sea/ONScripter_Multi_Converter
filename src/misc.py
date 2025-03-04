@@ -1,16 +1,69 @@
 #!/usr/bin/env python3
+import os
 import re
 import shutil
 import subprocess as sp
 import sys
+import pythoncom
 import tkinter.filedialog as filedialog
 import tkinter.messagebox
+import win32com.client
 import webbrowser
 from pathlib import Path
-
 import dearpygui.dearpygui as dpg
+
 from requiredfile_locations import exist, location
 from utils import message_box, openread0x84bitxor
+from process_notons import get_titledict
+
+def get_programslist():
+	titledict = get_titledict()
+	programs_list = []
+
+	for env in ['ALLUSERSPROFILE', 'APPDATA']:
+
+		#環境変数からスタートメニューへのパスを取得
+		programs_dir = Path(Path(os.environ[env]) / 'Microsoft' / 'Windows' / 'Start Menu' / 'Programs')
+
+		#スタートメニューリンク一覧取得
+		for lnk_path in programs_dir.glob('**/*.lnk'):
+
+			#アンインストール系(と思われるもの)は飛ばす
+			if any(s in lnk_path.stem.lower() for s in ['削除', 'アンインストール', 'ｱﾝｲﾝｽﾄｰﾙ', 'uninstall']): continue
+
+			#ショートカットのターゲットを取得
+			pythoncom.CoInitialize()
+			target_path = Path(win32com.client.Dispatch("WScript.Shell").CreateShortcut(str(lnk_path)).TargetPath)
+			pythoncom.CoUninitialize()
+
+			#拡張子が.exeでない場合は飛ばす
+			if (not target_path.suffix.lower() == '.exe'): continue
+
+			#ショートカットの親ディレクトリ名を取得
+			lnk_parentname = lnk_path.parent.name
+
+			#親ディレクトリ名がProgramsでない場合はそのまま、Programsの場合はショートカット名にする
+			program_name = lnk_parentname if (lnk_parentname != 'Programs') else lnk_path.stem
+
+			#ショートカットのターゲットにnscripterのシナリオファイルが存在するか確認
+			if any(s for s in ['nscript.dat', '0.txt', '00.txt'] if Path(target_path.parent / s).is_file()):
+
+				#存在する場合はprograms_listに追加
+				programs_list.append( {'name': program_name, 'exe_path': target_path, 'overwrite_title_setting': False} )
+			
+			#存在しない場合はタイトル名を取得し、titledictからtitleを取得
+			else:
+
+				#個別変換一致確認
+				for k,v in titledict.items():
+
+					#名前一致&ファイルが存在する場合
+					if (v.get('program_name') == program_name) and (v.get('exe_name') == target_path.stem) and (target_path.is_file()):
+
+						#存在する場合はprograms_listに追加
+						programs_list.append( {'name': v['title'], 'exe_path': target_path, 'overwrite_title_setting': k} )
+
+	return programs_list
 
 
 def get_uiiconpath():
@@ -126,6 +179,59 @@ def copyrights():
 	return
 
 
+def open_input():
+	root = tkinter.Tk()
+	root.withdraw()
+	_path = filedialog.askdirectory()
+	root.destroy()
+	dpg.set_value('input_dir', _path)
+
+
+def open_select():
+	programs_list = get_programslist()
+
+	with dpg.window(label=f'インストール済みゲーム一覧', height=360, width=628, modal=True, no_move=True) as opsel:
+		for d in programs_list:
+			with dpg.group(horizontal=True, height=50, width=600):
+				dpg.add_button(label=f'{d['name']}\t({d['exe_path'].parent}){'　'*50}', user_data=(opsel, d), callback=open_select_main)
+		
+		dpg.split_frame()
+	return
+
+
+def open_select_main(sender, app_data, user_data):
+	dpg.configure_item(user_data[0], show=False)
+	if not user_data[1]: return
+
+	d = user_data[1]
+
+	_path = str(d['exe_path'].parent).replace('\\', '/')
+	dpg.set_value('input_dir', _path)
+
+	if d['overwrite_title_setting']: dpg.set_value('title_setting', d['overwrite_title_setting'])
+	else: dpg.set_value('title_setting', '未指定')
+
+	return
+
+
+def open_output():
+	root = tkinter.Tk()
+	root.withdraw()
+	_path = filedialog.askdirectory()
+	root.destroy()
+	dpg.set_value('output_dir', _path)
+
+
+def desktop_output():
+	_path = str(Path(os.environ['USERPROFILE']) / 'Desktop').replace('\\', '/')
+	dpg.set_value('output_dir', _path)
+	return
+
+
+def close_dpg():
+	dpg.stop_dearpygui()
+
+
 def in_out_dir_check(values: dict):
 	input_dir = values['input_dir']
 	output_dir = values['output_dir']
@@ -134,10 +240,10 @@ def in_out_dir_check(values: dict):
 	errmsg = ''
 	
 	if not input_dir: errmsg = '入力先が指定されていません'
-	elif Path(input_dir).exists() == False: errmsg = '入力先が存在しません'
+	elif Path(input_dir).is_dir() == False: errmsg = '入力先が存在しません'
 
 	elif not output_dir: errmsg = '出力先が指定されていません'
-	elif Path(output_dir).exists() == False: errmsg = '出力先が存在しません'
+	elif Path(output_dir).is_dir() == False: errmsg = '出力先が存在しません'
 
 	elif input_dir in output_dir: errmsg = '入出力先が競合しています'
 

@@ -12,28 +12,13 @@ from misc import (  #最低限以外はmiscでやる
 	copyrights,
 	open_garbro,
 	open_repositorieslink,
+	open_input,
+	open_select,
+	open_output,
+	desktop_output,
+	close_dpg,
 )
 from process_notons import get_titledict
-
-
-def open_input():
-	root = tkinter.Tk()
-	root.withdraw()
-	_path = filedialog.askdirectory()
-	root.destroy()
-	dpg.set_value('input_dir', _path)
-
-
-def open_output():
-	root = tkinter.Tk()
-	root.withdraw()
-	_path = filedialog.askdirectory()
-	root.destroy()
-	dpg.set_value('output_dir', _path)
-
-
-def close():
-	dpg.stop_dearpygui()
 
 
 def refresh_state(sender, app_data, user_data):
@@ -75,7 +60,7 @@ def gui_main(version, hw_key, input_dir_param, output_dir_param):
 					dpg.add_menu_item(label='SHARP Brain(Windows CE 6.0)', callback=refresh_state, user_data=hardwarevalues_full['Brain']['values_default'])
 					dpg.add_menu_item(label='Android OS', callback=refresh_state, user_data=hardwarevalues_full['Android']['values_default'])
 
-				dpg.add_menu_item(label='終了', callback=close)
+				dpg.add_menu_item(label='終了', callback=close_dpg)
 
 			with dpg.menu(label='ツール'):
 				dpg.add_menu_item(label='連番動画無効化ファイル作成', callback=ask_create_disabledvideofile)
@@ -90,11 +75,13 @@ def gui_main(version, hw_key, input_dir_param, output_dir_param):
 			dpg.add_text('入力元：　')
 			dpg.add_input_text(tag='input_dir', readonly=True)
 			dpg.add_button(label='Browse', callback=open_input, tag='input_browse_btn')
+			dpg.add_button(label='一覧から選択', callback=open_select, tag='input_select_btn')
 
 		with dpg.group(horizontal=True):
 			dpg.add_text('出力先：　')
 			dpg.add_input_text(tag='output_dir', readonly=True)
 			dpg.add_button(label='Browse', callback=open_output, tag='output_browse_btn')
+			dpg.add_button(label='既定値に設定', callback=desktop_output, tag='output_desktop_btn')
 
 		with dpg.group(horizontal=True):
 			dpg.add_text('個別設定：')
