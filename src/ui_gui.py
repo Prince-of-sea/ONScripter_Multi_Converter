@@ -595,6 +595,18 @@ def gui_main(version, hw_key, input_dir_param, output_dir_param):
 								)
 							with dpg.group(horizontal=True):
 								dpg.add_checkbox(
+									label='savenumber上書き：',
+									default_value=values_default['etc_0txtoverwritesavenumber_chk'],
+									tag='etc_0txtoverwritesavenumber_chk',
+								)
+								dpg.add_combo(
+									items=[str(i) for i in range(1, 21)],#1から20をstr型で保持したlist
+									default_value=values_default['etc_0txtoverwritesavenumber_num'],
+									fit_width=True,
+									tag='etc_0txtoverwritesavenumber_num',
+								)
+							with dpg.group(horizontal=True):
+								dpg.add_checkbox(
 									label='setwindow/setwindow3文字潰れ防止',
 									default_value=values_default['etc_0txtsetwindowbigfont_chk'],
 									tag='etc_0txtsetwindowbigfont_chk',

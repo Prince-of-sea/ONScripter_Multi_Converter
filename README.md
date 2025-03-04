@@ -10,7 +10,7 @@
  <br>
  [制作/検証に使用した作者のPC環境]<br>
  PCスペック: <br>
- [![CPU-Z](https://valid.x86.fr/cache/banner/izbfap-2.png)](https://valid.x86.fr/izbfap)<br>
+ [![CPU-Z](https://valid.x86.fr/cache/banner/uvcxdx-2.png)](https://valid.x86.fr/uvcxdx)<br>
  FFmpeg-version: version 7.1-full_build<br>
  Python-version: Python 3.13.2<br>
 
@@ -77,9 +77,6 @@
 
 
 ### ツールの設定
- ![インターフェース](./md_ui_full.png)<br>
- ※画像は古いバージョンや開発中バージョンの場合があります<br>
- 
  [こちらに詳しく書いてあります](./README_setting.md)<br>
 ~~よくわからないならハード変更だけしてあと入力/出力指定してconvert押せばいいと思います~~
 

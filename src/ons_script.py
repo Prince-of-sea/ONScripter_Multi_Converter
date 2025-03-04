@@ -286,9 +286,12 @@ def onsscript_check_txtmodify(values: dict, values_ex: dict, ztxtscript: str, ov
 	
 	#最大回想ページ数設定
 	if values['etc_0txtmaxkaisoupage_chk']:
-		mk = str(int(values['etc_0txtmaxkaisoupage_num']))
-		ztxtscript = onsscript_check_txtmodify_adddefsub(ztxtscript, f'maxkaisoupage {mk}', '')#本当はdefsub追加用の関数だが流用
-	
+		ztxtscript = onsscript_check_txtmodify_adddefsub(ztxtscript, f'maxkaisoupage {values['etc_0txtmaxkaisoupage_num']}', '')#本当はdefsub追加用の関数だが流用
+
+	#最大セーブ数設定
+	if values['etc_0txtoverwritesavenumber_chk']:
+		ztxtscript = onsscript_check_txtmodify_adddefsub(ztxtscript, f'savenumber {values['etc_0txtoverwritesavenumber_num']}', '')#本当はdefsub追加用の関数だが流用
+
 	#setwindowのフォントサイズ変更(PSP解像度無視変換時は無効)
 	if values['etc_0txtsetwindowbigfont_chk'] and (not override_resolution):
 
