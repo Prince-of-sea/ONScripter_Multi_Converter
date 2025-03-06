@@ -13,6 +13,7 @@ def title_info():
 		'brand': 'Supplement Time',
 		'date': 20071231,
 		'title': '未来のキミと、すべての歌に―',
+		'cli_arg': 'st_miku',
 		'requiredsoft': [],
 		'is_4:3': bool(not r'<ONS_RESOLUTION_CHECK_DISABLED>' in default_txt()),
 		'program_name': 'ミクキス',#一覧取得用

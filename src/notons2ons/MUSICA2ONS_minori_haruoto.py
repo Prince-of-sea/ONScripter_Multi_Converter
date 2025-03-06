@@ -15,6 +15,7 @@ def title_info():
 		'brand': 'minori',
 		'date': 20040723,
 		'title': 'はるのあしおと',
+		'cli_arg': 'minori_haruoto',
 		'requiredsoft': [],
 		'is_4:3': bool(not r'<ONS_RESOLUTION_CHECK_DISABLED>' in default_txt()),
 		'program_name': 'はるのあしおと',#一覧取得用

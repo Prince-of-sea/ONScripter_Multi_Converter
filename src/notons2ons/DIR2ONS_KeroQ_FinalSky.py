@@ -14,6 +14,7 @@ def title_info():
 		'brand': 'ケロQ',
 		'date': 19990827,
 		'title': '終ノ空',
+		'cli_arg': 'keroq_finalsky',
 		'requiredsoft': ['DirectorCastRipper_D10'],
 		'is_4:3': bool(not r'<ONS_RESOLUTION_CHECK_DISABLED>' in default_txt()),
 

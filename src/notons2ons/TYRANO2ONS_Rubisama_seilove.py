@@ -14,6 +14,7 @@ def title_info():
 		'brand': 'るび様を崇める会',
 		'date': 20220715,
 		'title': 'ご主人様、セイラに夢みたいないちゃラブご奉仕させていただけますか',
+		'cli_arg': 'rubisama_seilove',
 		'requiredsoft': [],
 		'is_4:3': bool(not r'<ONS_RESOLUTION_CHECK_DISABLED>' in default_txt()),
 

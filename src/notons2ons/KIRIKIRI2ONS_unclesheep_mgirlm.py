@@ -12,6 +12,7 @@ def title_info():
 		'brand': '羊おじさん倶楽部',
 		'date': 20200803,
 		'title': '魔女魔少魔法魔',
+		'cli_arg': 'unclesheep_mgirlm',
 		'requiredsoft': [],
 		'is_4:3': bool(not r'<ONS_RESOLUTION_CHECK_DISABLED>' in default_txt()),
 

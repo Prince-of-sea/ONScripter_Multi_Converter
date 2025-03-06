@@ -117,72 +117,6 @@ def convert_files(values: dict, values_ex: dict, cnvset_dict: dict, extracted_di
 	return values_ex
 
 
-def ask_convert_start(arg):
-	configure_progress_bar(0, '変換開始...')
-
-	titledict = get_titledict()
-
-	#個別選択時
-	if dpg.get_value('title_setting') in titledict.keys():
-		title_info = titledict[ dpg.get_value('title_setting') ]
-		configure_progress_bar(0, '個別設定変換確認...')
-		title = title_info['title']
-		requiredsoft = title_info['requiredsoft']
-		version = title_info['version']
-		notes = title_info['notes']
-		is_43 = title_info['is_4:3']
-
-		r_txt = '\n・'.join(['']+requiredsoft) if requiredsoft else '\n・なし'
-		v_txt = '\n・'.join(['']+version)
-		n_txt = '\n・'.join(['']+notes)
-
-		h_list = []
-		for hw_k, hw_v in gethardwarevalues_full().items():
-			if (hw_k == 'PSP'): hw_s = '可'#PSPなら(埋め込み昆布は全部動くように作ってるはずなので)ok
-			elif (not hw_v['values_ex']['aspect_4:3only']): hw_s = '可'#4:3専用機ではないならok		
-			elif is_43: hw_s = '可'#作品が4:3ならok
-			else: hw_s = '不可'
-
-			h_list.append(hw_k+':'+hw_s)
-
-		h_txt = '\n'+' / '.join(h_list)
-
-		s = (
-			'=================================================================\n'\
-			f'[変換先として指定可能なハード]{h_txt}\n\n'
-			'=================================================================\n'\
-			f'[追加で用意するソフト]{r_txt}\n\n'\
-			'=================================================================\n'\
-			f'[確認済み対応タイトル]{v_txt}\n\n'\
-			'=================================================================\n'\
-			f'[注意事項]{n_txt}\n\n'\
-			'=================================================================\n'\
-			)
-
-		with dpg.mutex():
-			with dpg.window(label=f'個別設定変換確認 - {title}', modal=True, no_close=True, no_move=True) as msg_askconv:
-				with dpg.child_window(height=270, width=620):
-					dpg.add_text(s)
-				dpg.add_text('以上を確認したうえで、変換を開始しますか？')
-				with dpg.group(horizontal=True):
-					dpg.add_button(label='OK', user_data=(msg_askconv, True, arg), callback=askconv_callback)
-					dpg.add_button(label='キャンセル', user_data=(msg_askconv, False, arg), callback=askconv_callback)
-		dpg.split_frame()
-	# 未指定なら確認を飛ばして変換開始
-	else:
-		return convert_start(arg)
-	return
-
-
-def askconv_callback(sender, app_data, user_data):
-	dpg.configure_item(user_data[0], show=False)
-	if user_data[1]:
-		return convert_start(user_data[2])
-	else:
-		configure_progress_bar(0, '変換がキャンセルされました')
-	return
-
-
 def convert_start(arg):
 	start_time = time.perf_counter()
 	useGUI = bool(arg == r'convert_button')
@@ -344,18 +278,23 @@ def convert_start(arg):
 		else: print('Error: ' + str(e))
 	
 	else:
-		if (useGUI):
-			end_time = time.perf_counter()
-			c_time = math.ceil(end_time-start_time)
-			m = str(c_time // 60).zfill(2)
-			s = str(c_time % 60).zfill(2)
+		end_time = time.perf_counter()
+		c_time = math.ceil(end_time-start_time)
+		m = str(c_time // 60).zfill(2)
+		s = str(c_time % 60).zfill(2)
+		
+		cnvmsg = f'変換処理が終了しました\n処理時間: {m}分{s}秒'
 
+		if (useGUI):
 			configure_progress_bar(1, '変換完了')
-			message_box('変換完了', f'変換処理が終了しました\n処理時間: {m}分{s}秒', 'info', useGUI)
+			message_box('変換完了', cnvmsg, 'info', useGUI)
 
 			#入出力初期化
 			dpg.set_value('input_dir', '')
 			dpg.set_value('title_setting', '未指定')
+		
+		else:
+			print(cnvmsg)
 
 	#GUI時
 	if (useGUI):

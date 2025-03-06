@@ -199,5 +199,5 @@ def convert_image(values: dict, values_ex: dict, f_dict: dict):
 		case _: raise ValueError('画像保存フォーマットが選択されていません')
 
 	#元nbz用コビー
-	if (f_dict['nbz']) and (convertedpath.suffix != '.nbz'): shutil.copy(convertedpath, convertedpath.with_suffix('.nbz'))
+	if (f_dict['nbz']) and (convertedpath.suffix.lower() != '.nbz'): shutil.copy(convertedpath, convertedpath.with_suffix('.nbz'))
 	return

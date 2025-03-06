@@ -14,6 +14,7 @@ def title_info():
 		'brand': 'Liar-soft',
 		'date': 20050218,
 		'title': 'SEVEN-BRIDGE',
+		'cli_arg': 'liar_sb',
 		'requiredsoft': ['gscScriptCompAndDecompiler-cli'],
 		'is_4:3': bool(not r'<ONS_RESOLUTION_CHECK_DISABLED>' in default_txt()),
 

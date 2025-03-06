@@ -12,6 +12,7 @@ def title_info():
 		'brand': 'コンプリーツ',
 		'date': 20170721,
 		'title': 'ママとの甘い性活II',
+		'cli_arg': 'comp_mama2',
 		'requiredsoft': [],
 		'is_4:3': bool(not r'<ONS_RESOLUTION_CHECK_DISABLED>' in default_txt()),
 		'program_name': 'Complets',#一覧取得用

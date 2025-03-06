@@ -16,7 +16,7 @@ def convert_music(f_dict: dict):
 
 	with tempfile.TemporaryDirectory() as mustemp_dir:
 		mustemp_dir = Path(mustemp_dir)
-		mustemppath = Path(mustemp_dir / f'x.{f_dict['format']}'.lower())
+		mustemppath = Path(mustemp_dir / f'_.{f_dict['format']}'.lower())
 	
 		match f_dict['format']:
 			case 'OGG':
@@ -26,6 +26,7 @@ def convert_music(f_dict: dict):
 					'-ab', f'{f_dict['kbps']}k',
 					'-ar', f_dict['hz'],
 					'-ac', f_dict['ch'], 
+					'-threads', '1',
 					mustemppath,
 				]
 
@@ -37,6 +38,7 @@ def convert_music(f_dict: dict):
 					'-ar', f_dict['hz'],
 					'-ac', f_dict['ch'], 
 					'-cutoff', f_dict['cutoff'],
+					'-threads', '1',
 					mustemppath,
 				]
 
@@ -47,6 +49,7 @@ def convert_music(f_dict: dict):
 					'-ar', f_dict['hz'],
 					'-ac', f_dict['ch'], 
 					'-acodec', f_dict['acodec'],
+					'-threads', '1',
 					mustemppath,
 				]
 

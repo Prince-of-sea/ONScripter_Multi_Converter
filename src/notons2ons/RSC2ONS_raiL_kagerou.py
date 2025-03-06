@@ -14,6 +14,7 @@ def title_info():
 		'brand': 'raiL-soft',
 		'date': 20080725,
 		'title': '霞外籠逗留記',
+		'cli_arg': 'rail_kagerou',
 		'requiredsoft': ['gscScriptCompAndDecompiler-cli'],
 		'is_4:3': bool(not r'<ONS_RESOLUTION_CHECK_DISABLED>' in default_txt()),
 

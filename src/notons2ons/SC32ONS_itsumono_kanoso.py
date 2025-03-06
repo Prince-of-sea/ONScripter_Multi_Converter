@@ -8,6 +8,7 @@ def title_info():
 		'brand': 'いつものところ',
 		'date': 19991226,
 		'title': 'Kanoso ～思い出を壊す物語～',
+		'cli_arg': 'itsumono_kanoso',
 		'requiredsoft': [],
 		'is_4:3': True,
 		

@@ -13,6 +13,7 @@ def title_info():
 		'brand': 'Moviendo',
 		'date': 20110527,
 		'title': '処女回路',
+		'cli_arg': 'moviendo_otomec',
 		'requiredsoft': [],
 		'is_4:3': bool(not r'<ONS_RESOLUTION_CHECK_DISABLED>' in default_txt()),
 		'program_name': '処女回路',#一覧取得用

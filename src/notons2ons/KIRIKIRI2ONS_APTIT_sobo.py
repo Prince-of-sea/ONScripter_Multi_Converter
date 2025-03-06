@@ -13,6 +13,7 @@ def title_info():
 		'brand': 'アパタイト',
 		'date': 20170310,
 		'title': '祖母シリーズ汎用 (〜2020)',
+		'cli_arg': 'aptit_sobo',
 		'requiredsoft': ['Kikiriki'],
 		'is_4:3': bool(not r'<ONS_RESOLUTION_CHECK_DISABLED>' in default_txt()),
 

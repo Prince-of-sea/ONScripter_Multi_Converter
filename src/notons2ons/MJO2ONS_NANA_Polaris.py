@@ -14,6 +14,7 @@ def title_info():
 		'brand': 'ステージ☆なな',
 		'date': 20171229,
 		'title': '冬のポラリス',
+		'cli_arg': 'nana_polaris',
 		'requiredsoft': ['mjdisasm'],
 		'is_4:3': bool(not r'<ONS_RESOLUTION_CHECK_DISABLED>' in default_txt()),
 

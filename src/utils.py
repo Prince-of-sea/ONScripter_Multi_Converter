@@ -6,9 +6,20 @@ from pathlib import Path
 
 import dearpygui.dearpygui as dpg
 from requiredfile_locations import location
+from process_notons import get_titledict
 from utils2 import (
 	subprocess_args, #これ書いとけば他から"from utils import subprocess_args"されても普通に動く
 )
+
+
+def get_titlesettingfull(param: str):
+	title_setting = '未指定'
+	for k,v in get_titledict().items():
+		if (param == v['cli_arg']):
+			title_setting = k
+			break
+	
+	return title_setting
 
 
 def message_box(msg_title: str, msg: str, msg_type: str, useGUI: bool):

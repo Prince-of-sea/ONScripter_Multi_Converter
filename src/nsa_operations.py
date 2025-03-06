@@ -98,7 +98,7 @@ def extract_nsa(values: dict, values_ex: dict, extracted_dir: Path, useGUI: bool
 					elif (values['etc_fileexdb_chk']) and (str(f_movedpath.name) == 'thumbs.db'): pass#thumbs.db無視
 					else: shutil.move(f_path, f_movedpath)
 		
-		configure_progress_bar(0.045, '')#進捗 0.042→0.045
+		if useGUI: configure_progress_bar(0.045, '')#進捗 0.042→0.045
 
 	return values_ex
 

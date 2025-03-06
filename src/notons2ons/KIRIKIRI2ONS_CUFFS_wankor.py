@@ -14,6 +14,7 @@ def title_info():
 		'brand': 'CUFFS',
 		'date': 20060811,
 		'title': 'ワンコとリリー (パッケージ版不可)',
+		'cli_arg': 'cuffs_wankor',
 		'requiredsoft': ['Kikiriki'],
 		'is_4:3': bool(not r'<ONS_RESOLUTION_CHECK_DISABLED>' in default_txt()),
 

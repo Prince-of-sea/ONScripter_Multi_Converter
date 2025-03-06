@@ -11,6 +11,7 @@ def title_info():
 		'brand': '夜のひつじ',
 		'date': 20110619,
 		'title': '孤独に効く百合',
+		'cli_arg': 'yorunohitsuji_kodoyuri',
 		'requiredsoft': [],
 		'is_4:3': bool(not r'<ONS_RESOLUTION_CHECK_DISABLED>' in default_txt()),
 

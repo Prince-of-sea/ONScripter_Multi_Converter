@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
-import tkinter
-import tkinter.filedialog as filedialog
-
+import win32console, win32gui
 import dearpygui.dearpygui as dpg
-from conversion import ask_convert_start
+
 from hardwarevalues_config import gethardwarevalues_full
-from misc import (  #最低限以外はmiscでやる
-	get_uiiconpath,
+from utils import get_titlesettingfull
+from misc import get_uiiconpath
+from ui_gui2 import (  #最低限以外のui周りはui_gui2でやる
 	ask_create_disabledvideofile,
 	ask_decode_nscriptdat,
+	ask_convert_start,
 	copyrights,
 	open_garbro,
 	open_repositorieslink,
@@ -28,7 +28,16 @@ def refresh_state(sender, app_data, user_data):
 	return	
 
 
-def gui_main(version, hw_key, input_dir_param, output_dir_param):
+def gui_main(version: str, hw_key: str, input_dir_param: str, output_dir_param: str, title_setting_param: str):
+
+	#コマンドプロンプトのウィンドウハンドルを取得
+	console_window = win32console.GetConsoleWindow()
+
+	#ウィンドウを最小化
+	win32gui.ShowWindow(console_window, 6) #SW_MINIMIZE
+	print('GUIモード起動中...\nこのウィンドウを閉じないようにしてください')
+
+	#ハードウェア値取得
 	hardwarevalues_full = gethardwarevalues_full()
 	values_default = hardwarevalues_full[hw_key]['values_default']
 
@@ -36,9 +45,6 @@ def gui_main(version, hw_key, input_dir_param, output_dir_param):
 	for k in hardwarevalues_full.keys():
 		hardwarevalues_full[k]['values_default']['window_title'] = f'ONScripter Multi Converter for {k} ver.{version}'
 		hardwarevalues_full[k]['values_default']['hardware'] = str(k)
-
-	#個別
-	title_list = (['未指定'] + list(get_titledict().keys()))
 	
 	dpg.create_context()
 
@@ -55,10 +61,8 @@ def gui_main(version, hw_key, input_dir_param, output_dir_param):
 			with dpg.menu(label='設定'):
 				dpg.add_menu_item(label='CPU使用率低減モード', check=True, default_value=False, tag='lower_cpu_usage')
 				with dpg.menu(label='ハード変更'):
-					dpg.add_menu_item(label='SONY PlayStation Portable', callback=refresh_state, user_data=hardwarevalues_full['PSP']['values_default'])
-					dpg.add_menu_item(label='SONY PlayStation Vita', callback=refresh_state, user_data=hardwarevalues_full['PSVITA']['values_default'])
-					dpg.add_menu_item(label='SHARP Brain(Windows CE 6.0)', callback=refresh_state, user_data=hardwarevalues_full['Brain']['values_default'])
-					dpg.add_menu_item(label='Android OS', callback=refresh_state, user_data=hardwarevalues_full['Android']['values_default'])
+					for hwk, hwv in hardwarevalues_full.items():
+						dpg.add_menu_item(label=hwv['values_ex']['hardware_full'], callback=refresh_state, user_data=hardwarevalues_full[hwk]['values_default'])
 
 				dpg.add_menu_item(label='終了', callback=close_dpg)
 
@@ -87,8 +91,8 @@ def gui_main(version, hw_key, input_dir_param, output_dir_param):
 			dpg.add_text('個別設定：')
 			dpg.add_combo(
 				tag='title_setting',
-				default_value='未指定',
-				items=title_list,
+				default_value=get_titlesettingfull(title_setting_param),
+				items=(['未指定'] + list(get_titledict().keys())),
 			)
 
 		# with dpg.child_window(height=220, border=False):

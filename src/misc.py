@@ -2,21 +2,17 @@
 import os
 import re
 import shutil
-import subprocess as sp
 import sys
 import pythoncom
-import tkinter.filedialog as filedialog
-import tkinter.messagebox
+import win32ui, win32gui
 import win32com.client
-import webbrowser
-from pathlib import Path
-import dearpygui.dearpygui as dpg
 
-from requiredfile_locations import exist, location
-from utils import message_box, openread0x84bitxor
+from pathlib import Path
+
 from process_notons import get_titledict
 
-def get_programslist():
+
+def get_programslist(icotemp_dir: Path):
 	titledict = get_titledict()
 	programs_list = []
 
@@ -26,7 +22,8 @@ def get_programslist():
 		programs_dir = Path(Path(os.environ[env]) / 'Microsoft' / 'Windows' / 'Start Menu' / 'Programs')
 
 		#スタートメニューリンク一覧取得
-		for lnk_path in programs_dir.glob('**/*.lnk'):
+		for i, lnk_path in enumerate(programs_dir.glob('**/*.lnk')):
+			icon_path = Path(icotemp_dir / f'{i}.bmp')
 
 			#アンインストール系(と思われるもの)は飛ばす
 			if any(s in lnk_path.stem.lower() for s in ['削除', 'アンインストール', 'ｱﾝｲﾝｽﾄｰﾙ', 'uninstall']): continue
@@ -49,9 +46,11 @@ def get_programslist():
 			if any(s for s in ['nscript.dat', '0.txt', '00.txt'] if Path(target_path.parent / s).is_file()):
 
 				#存在する場合はprograms_listに追加
-				programs_list.append( {'name': program_name, 'exe_path': target_path, 'overwrite_title_setting': False} )
+				programs_list.append( {'name': program_name, 'exe_path': target_path, 'icon_path': icon_path, 'overwrite_title_setting': False} )
 			
 			#存在しない場合はタイトル名を取得し、titledictからtitleを取得
+			# [追記]この仕様「.lnkの親フォルダ名(ない場合.lnk本体の名前)」と「リンク先の.exe名」でチェック掛けてるので両方一致すると別プログラムでも元作品と誤認します
+			# 今のところは意図的に合わせないと被らないような名前だけだが、将来的にはもっと厳格な仕様に変えたほうが良いかも
 			else:
 
 				#個別変換一致確認
@@ -61,9 +60,32 @@ def get_programslist():
 					if (v.get('program_name') == program_name) and (v.get('exe_name') == target_path.stem) and (target_path.is_file()):
 
 						#存在する場合はprograms_listに追加
-						programs_list.append( {'name': v['title'], 'exe_path': target_path, 'overwrite_title_setting': k} )
+						programs_list.append( {'name': v['title'], 'exe_path': target_path, 'icon_path': icon_path, 'overwrite_title_setting': k} )
 
 	return programs_list
+
+
+def exepath2icon(exe_path: Path, icon_path: Path):
+	#参考: https://stackoverflow.com/questions/19760913/how-to-extract-32x32-icon-bitmap-data-from-exe-and-convert-it-into-a-pil-image-o
+
+	large, small = win32gui.ExtractIconEx(str(exe_path),0)
+
+	hdc = win32ui.CreateDCFromHandle( win32gui.GetDC(0) )
+	hbmp = win32ui.CreateBitmap()
+	hbmp.CreateCompatibleBitmap( hdc, 32, 32 )
+	hdc = hdc.CreateCompatibleDC()
+
+	hdc.SelectObject( hbmp )
+
+	try: hdc.DrawIcon( (0,0), large[0] )#アイコンがない場合ここでエラー
+	except: pass
+
+	win32gui.DestroyIcon(large[0])
+	win32gui.DestroyIcon(small[0])
+
+	hbmp.SaveBitmapFile( hdc, str(icon_path))
+	
+	return
 
 
 def get_uiiconpath():
@@ -71,165 +93,6 @@ def get_uiiconpath():
 	else: base_dir = Path('.')
 	uiicon = Path(base_dir / '__icon.ico')
 	return str(uiicon)
-	
-
-def ask_create_disabledvideofile():
-	with dpg.mutex():
-		with dpg.window(label='連番動画無効化ファイル作成', modal=True) as msg_ask:
-			dpg.add_text('一部作品では、連番画像に変換した動画が再生されずに\n' +\
-						'操作不能になって先に進めなくなることがあります\n\n' +\
-						'本機能で作成した無効化ファイルを置くことで\n' +\
-						'再生をスキップし、不具合を回避することが出来ます\n' +\
-						'(ver.2.3.1以降で変換した作品でのみ有効です)\n\n' +\
-						'無効化ファイルを作成しますか？')
-			with dpg.group(horizontal=True):
-				dpg.add_button(label='OK', user_data=(msg_ask, True), callback=create_disabledvideofile)
-				dpg.add_button(label='キャンセル', user_data=(msg_ask, False), callback=create_disabledvideofile)
-	dpg.split_frame()
-	dpg.set_item_pos(msg_ask, [dpg.get_viewport_client_width() // 2 - dpg.get_item_width(msg_ask) // 2, dpg.get_viewport_client_height() // 2 - dpg.get_item_height(msg_ask) // 2])
-	return
-
-
-def create_disabledvideofile(sender, app_data, user_data):
-	dpg.configure_item(user_data[0], show=False)
-	if not user_data[1]:
-		return
-	root = tkinter.Tk()
-	root.withdraw()
-	_path = filedialog.askdirectory()
-	root.destroy()
-
-	if not _path: return
-
-	_path = Path(_path)
-	with open(Path(_path / '_DISABLED_VIDEO'), 'wb') as s: s.write(b'\xff')
-	
-	message_box('完了', '無効化ファイルを作成しました', 'info', True)
-	return
-
-
-def ask_decode_nscriptdat():
-	with dpg.mutex():
-		with dpg.window(label='nscript.dat復号化', modal=True) as msg_ask:
-			dpg.add_text('そのままでは読めない形式になっているnscript.datを復号化します\n' +\
-						'普通はゲームを選択し[Convert]ボタンを押せば自動で復号化されるため、\n' +\
-						'本機能は使う必要がありません\n' +\
-						'また、普通のConvertで復号化が失敗するnscript.datは、\n' +\
-						'本機能でも復号化に失敗します\n\n' +\
-						'Convert前に0.txtを手動で編集する必要がある時など、\n' +\
-						'特殊な作業を行う場合にのみ使ってください\n\n' +\
-						'復号化するnscript.datを選択しますか？')
-			with dpg.group(horizontal=True):
-				dpg.add_button(label='OK', user_data=(msg_ask, True), callback=decode_nscriptdat)
-				dpg.add_button(label='キャンセル', user_data=(msg_ask, False), callback=decode_nscriptdat)
-	dpg.split_frame()
-	dpg.set_item_pos(msg_ask, [dpg.get_viewport_client_width() // 2 - dpg.get_item_width(msg_ask) // 2, dpg.get_viewport_client_height() // 2 - dpg.get_item_height(msg_ask) // 2])
-	return
-
-
-def decode_nscriptdat(sender, app_data, user_data):
-	dpg.configure_item(user_data[0], show=False)
-	if not user_data[1]:
-		return
-	root = tkinter.Tk()
-	root.withdraw()
-	_path = filedialog.askopenfilename(filetypes=[('NScripter script','nscript.dat;*.scp')])#どうせ同じなので旧Scripterもできるようにしておく
-	root.destroy()
-
-	if not _path: return
-
-	_path = Path(_path)
-
-	if (str(_path.name).lower() == 'nscript.dat'):
-
-		txtpath = _path.parent / '0.txt'
-		bakpath = _path.parent / '0.txt.bak'
-
-	else:#旧Scripter
-		txtpath = _path.parent / f'{_path.stem}.txt'
-		bakpath = _path.parent / f'{_path.stem}.txt.bak'
-		
-	if txtpath.exists():
-		if bakpath.exists():
-			if bakpath.is_file(): bakpath.unlink()
-			else: shutil.rmtree(bakpath)
-
-		txtpath.rename(bakpath)
-
-	with open(txtpath, 'w', encoding='cp932', errors='ignore') as s: s.write(openread0x84bitxor(_path))
-	
-	message_box('完了', '復号化しました', 'info', True)
-	return
-
-
-def open_garbro():
-	if exist('GARbro_GUI'): sp.Popen([location('GARbro_GUI')])
-	else: message_box('警告', 'GARbro_GUIが見つかりません', 'warning', True)
-	return
-
-
-def open_repositorieslink():
-	url = 'https://github.com/Prince-of-sea/ONScripter_Multi_Converter'
-	webbrowser.open(url, new=1, autoraise=True)
-	return
-
-
-def copyrights():
-	message_box('copyrights', f'ONScripter Multi Converter ver.{dpg.get_value('version')}\n(C) 2021-2025 Prince-of-sea / PC-CNT / RightHand', 'info', True)
-	return
-
-
-def open_input():
-	root = tkinter.Tk()
-	root.withdraw()
-	_path = filedialog.askdirectory()
-	root.destroy()
-	dpg.set_value('input_dir', _path)
-
-
-def open_select():
-	programs_list = get_programslist()
-
-	with dpg.window(label=f'インストール済みゲーム一覧', height=360, width=628, modal=True, no_move=True) as opsel:
-		for d in programs_list:
-			with dpg.group(horizontal=True, height=32, width=600):
-				dpg.add_button(label=f'{d['name']}\t({d['exe_path'].parent}){'　'*50}', user_data=(opsel, d), callback=open_select_main)
-		
-		dpg.split_frame()
-	return
-
-
-def open_select_main(sender, app_data, user_data):
-	dpg.configure_item(user_data[0], show=False)
-	if not user_data[1]: return
-
-	d = user_data[1]
-
-	_path = str(d['exe_path'].parent).replace('\\', '/')
-	dpg.set_value('input_dir', _path)
-
-	if d['overwrite_title_setting']: dpg.set_value('title_setting', d['overwrite_title_setting'])
-	else: dpg.set_value('title_setting', '未指定')
-
-	return
-
-
-def open_output():
-	root = tkinter.Tk()
-	root.withdraw()
-	_path = filedialog.askdirectory()
-	root.destroy()
-	dpg.set_value('output_dir', _path)
-
-
-def desktop_output():
-	_path = str(Path(os.environ['USERPROFILE']) / 'Desktop').replace('\\', '/')
-	dpg.set_value('output_dir', _path)
-	return
-
-
-def close_dpg():
-	dpg.stop_dearpygui()
 
 
 def in_out_dir_check(values: dict):
@@ -245,7 +108,7 @@ def in_out_dir_check(values: dict):
 	elif not output_dir: errmsg = '出力先が指定されていません'
 	elif Path(output_dir).is_dir() == False: errmsg = '出力先が存在しません'
 
-	elif input_dir in output_dir: errmsg = '入出力先が競合しています'
+	elif os.path.normpath(input_dir).lower() in os.path.normpath(output_dir).lower(): errmsg = '入出力先が競合しています'
 
 	if errmsg: raise Exception(errmsg)
 	

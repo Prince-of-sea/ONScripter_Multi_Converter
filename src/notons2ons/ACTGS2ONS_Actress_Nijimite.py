@@ -12,6 +12,7 @@ def title_info():
 		'brand': 'ACTRESS',
 		'date': 20041029,
 		'title': '虹を見つけたら教えて。',
+		'cli_arg': 'actress_nijimite',
 		'requiredsoft': [],
 		'is_4:3': bool(not r'<ONS_RESOLUTION_CHECK_DISABLED>' in default_txt()),
 
