@@ -2,7 +2,7 @@
 from pathlib import Path
 import concurrent.futures
 import subprocess as sp
-import tempfile, chardet, shutil, glob, os, re
+import tempfile, shutil, glob, os, re
 
 # めんどいので昔作ったソースできるだけ使いまわしてます
 # 記法滅茶苦茶だけど多分動くからゆるして
@@ -293,6 +293,23 @@ goto *title_loop
 
 
 #--------------------def--------------------
+def get_titleid(add0txt_title):
+
+	if add0txt_title[:3]=='祖母と': title_id = 85
+	elif add0txt_title[:3]=='ボクの': title_id = 95
+	elif add0txt_title[:3]=='祖母の': title_id = 1102
+	elif add0txt_title[:3]=='義祖母': title_id = 104
+	elif add0txt_title[:4]=='あの頃、': title_id = 108
+	elif add0txt_title[:3]=='妻の祖': title_id = 121
+	elif add0txt_title[:2]=='ばぁ': title_id = 130
+	elif add0txt_title[0]=='曾': title_id = 138
+	elif add0txt_title[:2]=='孫の': title_id = 155
+	elif add0txt_title[:2]=='まご': title_id = 173
+	else: title_id = 0
+
+	return title_id
+
+
 def quodel(s):
 	s=str(s).replace('"', '')
 	return s
@@ -432,18 +449,21 @@ def main(values: dict = {}, values_ex: dict = {}, pre_converted_dir: Path = Path
 		txt_f = f.read()
 		add0txt_title = re.search(r'\[title name="(.+?)(　Ver.\...)?"\]', txt_f).group(1)
 
-	# with open(os.path.join(same_hierarchy, 'default.txt')) as f:
-	# 	txt = f.read()
+	title_id = get_titleid(add0txt_title)
+	if not title_id: Exception('非対応タイトルです')
+	
 	txt = default_txt()
 
+	if title_id==85: utf16list = ['_first']
+	else: utf16list = ['scr', '_first']
+
 	for ks_path in glob.glob(os.path.join(scenario_dir, '*')):
-		
-		with open(ks_path, 'rb') as f:
-			char_code =chardet.detect(f.read())['encoding']
+		ks_name = os.path.splitext(os.path.basename(ks_path))[0]
+		char_code = 'UTF-16' if (ks_name in utf16list) else 'SHIFT_JIS'
 
 		with open(ks_path, encoding=char_code, errors='ignore') as f:
 			#ks名をそのままonsのgoto先のラベルとして使い回す
-			txt += '\n\n*' + os.path.splitext(os.path.basename(ks_path))[0] + '_ks\n'
+			txt += '\n\n*' + ks_name + '_ks\n'
 
 			for line in f:
 
@@ -516,115 +536,113 @@ def main(values: dict = {}, values_ex: dict = {}, pre_converted_dir: Path = Path
 
 	nsc_num12 = int('体験版' in add0txt_title)
 
-	if add0txt_title[:3]=='祖母と':#85
-		txt = txt.replace(r'goto *40_021', r'select "ＥＮＤ１へ",*40_021,"ＥＮＤ２へ",*test'+'\n*test')#選択分岐処理実装面倒だったので
-		nsc_str10 = r'cv\brandcall.ogg'
-		nsc_str11 = r'cv\titlecall.ogg'
-		nsc_str12 = r'bgm\bgm26.ogg'
-		nsc_num10 = 1
-		nsc_num11 = 0
+	match title_id:
+		case 85:
+			txt = txt.replace(r'goto *40_021', r'select "ＥＮＤ１へ",*40_021,"ＥＮＤ２へ",*test'+'\n*test')#選択分岐処理実装面倒だったので
+			nsc_str10 = r'cv\brandcall.ogg'
+			nsc_str11 = r'cv\titlecall.ogg'
+			nsc_str12 = r'bgm\bgm26.ogg'
+			nsc_num10 = 1
+			nsc_num11 = 0
 
-		end_pic = 6600
-		end_snd = 124
+			end_pic = 6600
+			end_snd = 124
 
-	elif add0txt_title[:3]=='ボクの':#95
-		nsc_str10 = r'cv\brandcall.ogg'
-		nsc_str11 = r'cv\titlecall.ogg'
-		nsc_str12 = r'bgm\bgm26.ogg'
-		nsc_num10 = 1
-		nsc_num11 = 0
+		case 95:
+			nsc_str10 = r'cv\brandcall.ogg'
+			nsc_str11 = r'cv\titlecall.ogg'
+			nsc_str12 = r'bgm\bgm26.ogg'
+			nsc_num10 = 1
+			nsc_num11 = 0
 
-		end_pic = 6900
-		end_snd = 136
+			end_pic = 6900
+			end_snd = 136
 
-	elif add0txt_title[:3]=='祖母の':#102
-		nsc_str10 = r'cv\brandcall.ogg'
-		nsc_str11 = r'cv\titlecall.ogg'
-		nsc_str12 = r'bgm\bgm26.ogg'
-		nsc_num10 = 1
-		nsc_num11 = 0
+		case 102:
+			nsc_str10 = r'cv\brandcall.ogg'
+			nsc_str11 = r'cv\titlecall.ogg'
+			nsc_str12 = r'bgm\bgm26.ogg'
+			nsc_num10 = 1
+			nsc_num11 = 0
 
-		end_pic = 6800
-		end_snd = 119
+			end_pic = 6800
+			end_snd = 119
 
-	elif add0txt_title[:3]=='義祖母':#104
-		txt = txt.replace(r'goto *30_000', r'select "ＥＮＤ１へ",*20_000,"ＥＮＤ２へ",*test'+'\n*test')#選択分岐処理実装面倒だったので
-		nsc_str10 = r'cv\brandcall.ogg'
-		nsc_str11 = r'cv\titlecall.ogg'
-		nsc_str12 = r'bgm\bgm26.ogg'
-		nsc_num10 = 1
-		nsc_num11 = 0
+		case 104:
+			txt = txt.replace(r'goto *30_000', r'select "ＥＮＤ１へ",*20_000,"ＥＮＤ２へ",*test'+'\n*test')#選択分岐処理実装面倒だったので
+			nsc_str10 = r'cv\brandcall.ogg'
+			nsc_str11 = r'cv\titlecall.ogg'
+			nsc_str12 = r'bgm\bgm26.ogg'
+			nsc_num10 = 1
+			nsc_num11 = 0
 
-		end_pic = 6800
-		end_snd = 137
+			end_pic = 6800
+			end_snd = 137
 
-	elif add0txt_title[:4]=='あの頃、':#108
-		txt = txt.replace(r';;;;;主人公：', 'mov %4,1\n;')
-		txt = txt.replace(r'goto *20_000', r'select "ＥＮＤ１へ",*20_000,"ＥＮＤ２へ",*test'+'\n*test')#選択分岐処理実装面倒だったので
-		nsc_str10 = r'cv\brandcall.ogg'
-		nsc_str11 = r'cv\titlecall.ogg'
-		nsc_str12 = r'bgm\bgm01.ogg'
-		nsc_num10 = 0
-		nsc_num11 = 1
+		case 108:
+			txt = txt.replace(r';;;;;主人公：', 'mov %4,1\n;')
+			txt = txt.replace(r'goto *20_000', r'select "ＥＮＤ１へ",*20_000,"ＥＮＤ２へ",*test'+'\n*test')#選択分岐処理実装面倒だったので
+			nsc_str10 = r'cv\brandcall.ogg'
+			nsc_str11 = r'cv\titlecall.ogg'
+			nsc_str12 = r'bgm\bgm01.ogg'
+			nsc_num10 = 0
+			nsc_num11 = 1
 
-		end_pic = 6600
-		end_snd = 103
+			end_pic = 6600
+			end_snd = 103
 
-	elif add0txt_title[:3]=='妻の祖':#121
-		nsc_str10 = r'cv\brandcall.ogg'
-		nsc_str11 = r'cv\titlecall.ogg'
-		nsc_str12 = r'bgm\bgm01.ogg'
-		nsc_num10 = 1
-		nsc_num11 = 0
+		case 121:
+			nsc_str10 = r'cv\brandcall.ogg'
+			nsc_str11 = r'cv\titlecall.ogg'
+			nsc_str12 = r'bgm\bgm01.ogg'
+			nsc_num10 = 1
+			nsc_num11 = 0
 
-		end_pic = 6600
-		end_snd = 112
+			end_pic = 6600
+			end_snd = 112
 
-	elif add0txt_title[:2]=='ばぁ':#130
-		txt = txt.replace(r'goto *07_000', r'select "ＥＮＤ１へ",*07_000,"ＥＮＤ２へ",*08_000,"ＥＮＤ３へ",*09_000,"ＥＮＤ４へ",*10_000')#選択分岐処理実装面倒だったので
-		nsc_str10 = r'cv\brandcall01.ogg'
-		nsc_str11 = r'cv\titlecall01.ogg'
-		nsc_str12 = r'bgm\bgm15.ogg'
-		nsc_num10 = 1
-		nsc_num11 = 0
+		case 130:
+			txt = txt.replace(r'goto *07_000', r'select "ＥＮＤ１へ",*07_000,"ＥＮＤ２へ",*08_000,"ＥＮＤ３へ",*09_000,"ＥＮＤ４へ",*10_000')#選択分岐処理実装面倒だったので
+			nsc_str10 = r'cv\brandcall01.ogg'
+			nsc_str11 = r'cv\titlecall01.ogg'
+			nsc_str12 = r'bgm\bgm15.ogg'
+			nsc_num10 = 1
+			nsc_num11 = 0
 
-		end_pic = 6900
-		end_snd = 116
+			end_pic = 6900
+			end_snd = 116
 
-	elif add0txt_title[0]=='曾':#138
-		txt = txt.replace(r'goto *b05_000', r'select "ＧＯＯＤＥＮＤへ",*c05_000,"ＢＡＤＥＮＤへ",*b05_000')#選択分岐処理実装面倒だったので
-		nsc_str10 = r'cv\brandcall.ogg'
-		nsc_str11 = r'cv\titlecall.ogg'
-		nsc_str12 = r'bgm\bgm19.ogg'
-		nsc_num10 = 0
-		nsc_num11 = 1
+		case 138:
+			txt = txt.replace(r'goto *b05_000', r'select "ＧＯＯＤＥＮＤへ",*c05_000,"ＢＡＤＥＮＤへ",*b05_000')#選択分岐処理実装面倒だったので
+			nsc_str10 = r'cv\brandcall.ogg'
+			nsc_str11 = r'cv\titlecall.ogg'
+			nsc_str12 = r'bgm\bgm19.ogg'
+			nsc_num10 = 0
+			nsc_num11 = 1
 
-		end_pic = 6600
-		end_snd = 97
+			end_pic = 6600
+			end_snd = 97
 
-	elif add0txt_title[:2]=='孫の':#155
-		txt = txt.replace(r'goto *c01_000', r'select "ＧＯＯＤＥＮＤへ",*c01_000,"ＢＡＤＥＮＤへ",*test'+'\n*test')#選択分岐処理実装面倒だったので
-		nsc_str10 = r'cv\brandcall00.ogg'
-		nsc_str11 = r'cv\titlecall00.ogg'
-		nsc_str12 = r'bgm\bgm20.ogg'
-		nsc_num10 = 1
-		nsc_num11 = 0
+		case 155:
+			txt = txt.replace(r'goto *c01_000', r'select "ＧＯＯＤＥＮＤへ",*c01_000,"ＢＡＤＥＮＤへ",*test'+'\n*test')#選択分岐処理実装面倒だったので
+			nsc_str10 = r'cv\brandcall00.ogg'
+			nsc_str11 = r'cv\titlecall00.ogg'
+			nsc_str12 = r'bgm\bgm20.ogg'
+			nsc_num10 = 1
+			nsc_num11 = 0
 
-		end_pic = 6700
-		end_snd = 84
+			end_pic = 6700
+			end_snd = 84
 
-	elif add0txt_title[:2]=='まご':#173
-		nsc_str10 = r'cv\brandcall00.ogg'
-		nsc_str11 = r'cv\titlecall00.ogg'
-		nsc_str12 = r'bgm\bgm20.ogg'
-		nsc_num10 = 1
-		nsc_num11 = 0
+		case 173:
+			nsc_str10 = r'cv\brandcall00.ogg'
+			nsc_str11 = r'cv\titlecall00.ogg'
+			nsc_str12 = r'bgm\bgm20.ogg'
+			nsc_num10 = 1
+			nsc_num11 = 0
 
-		end_pic = 6700
-		end_snd = 106
-
-	else:
-		txt = False
+			end_pic = 6700
+			end_snd = 106
 
 	if txt:
 		#設定反映

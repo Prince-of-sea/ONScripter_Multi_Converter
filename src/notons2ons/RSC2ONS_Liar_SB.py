@@ -3,7 +3,7 @@ from PIL import Image, ImageEnhance
 from pathlib import Path
 import concurrent.futures
 import subprocess as sp
-import soundfile, chardet, shutil, glob, os, re
+import soundfile, shutil, glob, os, re
 
 # めんどいので昔作ったソースできるだけ使いまわしてます
 # 記法滅茶苦茶だけど多分動くからゆるして
@@ -533,11 +533,8 @@ def text_cnv(PATH_D):
 
 	for p in glob.glob(os.path.join(PATH_D['DIR_SCR_DEC'], '*.txt')):
 		line_mode = False
-		
-		with open(p, 'rb') as f:
-			char_code = chardet.detect(f.read())['encoding']
 
-		with open(p, encoding=char_code, errors='ignore') as f:
+		with open(p, encoding='SHIFT_JIS', errors='ignore') as f:
 
 			name = os.path.splitext(os.path.basename(p))[0]
 			txt += '\n;--------------- '+ name +' ---------------\n*'+ name.replace('.', '_') +'\n\n'

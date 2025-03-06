@@ -2,7 +2,7 @@
 from pathlib import Path
 from PIL import Image
 import concurrent.futures
-import chardet, shutil, glob, os, re
+import shutil, glob, os, re
 
 # めんどいので昔作ったソースできるだけ使いまわしてます
 # 記法滅茶苦茶だけど多分動くからゆるして
@@ -428,12 +428,9 @@ def text_cnv(same_hierarchy, scenario_dir, image_dir, sound_dict):
 
 	txt = default_txt()
 
-	for ks_path in glob.glob(os.path.join(scenario_dir, '*')):
-		
-		with open(ks_path, 'rb') as f:
-			char_code =chardet.detect(f.read())['encoding']
+	for ks_path in glob.glob(os.path.join(scenario_dir, '*.ks')):
 
-		with open(ks_path, encoding=char_code, errors='ignore') as f:
+		with open(ks_path, encoding='SHIFT_JIS', errors='ignore') as f:
 			#ks名をそのままonsのgoto先のラベルとして使い回す
 			txt += 'end\n*' + os.path.splitext(os.path.basename(ks_path))[0] + '_ks\n'
 

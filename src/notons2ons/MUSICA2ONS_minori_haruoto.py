@@ -4,7 +4,6 @@ import concurrent.futures
 import glob
 import os
 import re
-import chardet
 
 
 # ONScripter_Multi_Converter用タイトル情報管理関数
@@ -620,10 +619,7 @@ def main(values: dict = {}, values_ex: dict = {}, pre_converted_dir: Path = Path
 
 	for snr_path in pathlist:
 
-		with open(snr_path, 'rb') as f:
-			char_code =chardet.detect(f.read())['encoding']
-
-		with open(snr_path, encoding=char_code, errors='ignore') as f:
+		with open(snr_path, encoding='SHIFT_JIS', errors='ignore') as f:
 			
 			txt += 'cspchar\ngoto *title\n;--------------- '+ os.path.splitext(os.path.basename(snr_path))[0] +' ---------------\nend\n*' + os.path.splitext(os.path.basename(snr_path))[0] + '\nlookbackflush\n'
 			txt = txt.replace('//', ';;;')

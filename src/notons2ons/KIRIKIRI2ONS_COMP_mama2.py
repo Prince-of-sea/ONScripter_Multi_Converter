@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from pathlib import Path
 import concurrent.futures
-import chardet, glob, os, re
+import glob, os, re
 
 # めんどいので昔作ったソースできるだけ使いまわしてます
 # 記法滅茶苦茶だけど多分動くからゆるして
@@ -293,11 +293,8 @@ def main(values: dict = {}, values_ex: dict = {}, pre_converted_dir: Path = Path
 	pathlist.extend(glob.glob(os.path.join(scenario_dir, '*.snr')))
 
 	for snr_path in pathlist:
-		
-		with open(snr_path, 'rb') as f:
-			char_code =chardet.detect(f.read())['encoding']
 
-		with open(snr_path, encoding=char_code, errors='ignore') as f:
+		with open(snr_path, encoding='SHIFT_JIS', errors='ignore') as f:
 			#memo
 			txt += '\n;--------------- '+ os.path.splitext(os.path.basename(snr_path))[0] +' ---------------\nend\n\n'
 			txt = txt.replace('//', ';;;')

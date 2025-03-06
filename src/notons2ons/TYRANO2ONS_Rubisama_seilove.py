@@ -3,7 +3,7 @@ from pathlib import Path
 from PIL import Image
 from asarPy import extract_asar
 import concurrent.futures
-import subprocess, tempfile, chardet, shutil, glob, os, re
+import subprocess, tempfile, shutil, glob, os, re
 
 # めんどいので昔作ったソースできるだけ使いまわしてます
 # 記法滅茶苦茶だけど多分動くからゆるして
@@ -366,11 +366,8 @@ def text_cnv(s2v_d, s2v_n, same_hierarchy, bgimage_dir, fgimage_dir):
 	pathlist = glob.glob(os.path.join(same_hierarchy,'data','scenario', 'scene_all_v110.ks'))#listにする意味(めんどくさくてコピペしてきた)
 
 	for snr_path in pathlist:
-		
-		with open(snr_path, 'rb') as f:
-			char_code = chardet.detect(f.read())['encoding']
 
-		with open(snr_path, encoding=char_code, errors='ignore') as f:
+		with open(snr_path, encoding='utf-8', errors='ignore') as f:
 			#memo
 			txt += '\n;--------------- '+ os.path.splitext(os.path.basename(snr_path))[0] +' ---------------\nend\n\n'
 			txt = txt.replace('//', ';;;')
