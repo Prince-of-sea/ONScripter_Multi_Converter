@@ -91,6 +91,7 @@ if __name__ == "__main__":
 	#無視するやつをここに記載
 	ignore_list = [
 		'pyinstaller',
+		'pyinstaller-hooks-contrib',
 	]
 
 	#取得出来ないやつはここに記載
