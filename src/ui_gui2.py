@@ -118,7 +118,7 @@ def open_repositorieslink():
 	webbrowser.open(url, new=1, autoraise=True)
 	return
 
-def open_repositorieslink():
+def open_licensespy():
 	webbrowser.open(get_licensespypath(), new=1, autoraise=True)
 	return
 

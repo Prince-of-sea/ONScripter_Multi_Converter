@@ -12,6 +12,7 @@ from ui_gui2 import (  #最低限以外のui周りはui_gui2でやる
 	copyrights,
 	open_garbro,
 	open_repositorieslink,
+	open_licensespy,
 	open_input,
 	open_select,
 	open_output,
@@ -74,7 +75,7 @@ def gui_main(version: str, hw_key: str, input_dir_param: str, output_dir_param: 
 			with dpg.menu(label='このソフトについて'):
 				dpg.add_menu_item(label='サイトを開く', callback=open_repositorieslink)
 				dpg.add_menu_item(label='権利者表記', callback=copyrights)
-				if get_licensespypath().is_file(): dpg.add_menu_item(label='ライセンス', callback=open_repositorieslink)
+				if get_licensespypath().is_file(): dpg.add_menu_item(label='ライセンス', callback=open_licensespy)
 
 		with dpg.group(horizontal=True):
 			dpg.add_text('入力元：　')
