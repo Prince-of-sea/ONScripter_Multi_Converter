@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # windows only
-import click, os
+import ctypes, click, os
 
 from hardwarevalues_config import gethardwarevalues_full
 from process_notons import get_titledict
@@ -17,13 +17,13 @@ from ui_cli import cli_main
 @click.option('-o', '--output_dir', type=click.Path(), default='', prompt=False, help='出力フォルダのパスを指定します')
 
 
-def main(use_cli, hardware, input_dir, output_dir, title_setting):
+def main(use_cli: bool, hardware: str, input_dir: str, output_dir: str, title_setting: str):
 	'''ONS向け画像/音源/動画&シナリオ変換ツール'''
 	version = '2.3.9'
 
 	#起動前print
 	print(
-		'------------------------------------------------------------\n'\
+		'------------------------------------------------------------\n'
 		f'ONScripter Multi Converter for {hardware} ver.{version}\n'
 		'------------------------------------------------------------'
 	)
@@ -32,13 +32,25 @@ def main(use_cli, hardware, input_dir, output_dir, title_setting):
 	input_dir = str(input_dir).replace('\\', '/')
 	output_dir = str(output_dir).replace('\\', '/')
 
-	#起動
+	#Windows以外はここで弾く
 	if os.name != 'nt': raise Exception('Windows以外では起動できません')
+
+	#mutex作成
+	mutex_name = "Global\\ONScripterMultiConverter"
+	mutex = ctypes.windll.kernel32.CreateMutexW(None, False, mutex_name)
+
+	#多重起動チェック
+	if ctypes.windll.kernel32.GetLastError() == 183: print('プログラムは既に起動しています')
+
+	#起動
 	elif use_cli: cli_main(version, hardware, input_dir, output_dir, title_setting)
 	else: gui_main(version, hardware, input_dir, output_dir, title_setting)
 
 	#終了前print
 	print('------------------------------------------------------------\n')
+
+	#mutex解放
+	ctypes.windll.kernel32.ReleaseMutex(mutex)
 
 
 if __name__ == '__main__':
