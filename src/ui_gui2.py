@@ -13,7 +13,7 @@ from pathlib import Path
 from hardwarevalues_config import gethardwarevalues_full
 from requiredfile_locations import exist, location
 from utils import message_box, openread0x84bitxor, configure_progress_bar
-from misc import get_programslist, exepath2icon
+from misc import get_programslist, exepath2icon, get_licensespypath
 from process_notons import get_titledict
 from conversion import convert_start
 
@@ -116,6 +116,10 @@ def open_garbro():
 def open_repositorieslink():
 	url = 'https://github.com/Prince-of-sea/ONScripter_Multi_Converter'
 	webbrowser.open(url, new=1, autoraise=True)
+	return
+
+def open_repositorieslink():
+	webbrowser.open(get_licensespypath(), new=1, autoraise=True)
 	return
 
 

@@ -19,7 +19,7 @@ from ui_cli import cli_main
 
 def main(use_cli, hardware, input_dir, output_dir, title_setting):
 	'''ONS向け画像/音源/動画&シナリオ変換ツール'''
-	version = '2.3.8'
+	version = '2.3.9'
 
 	#起動前print
 	print(

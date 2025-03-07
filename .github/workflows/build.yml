@@ -26,10 +26,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install -U https://github.com/Prince-of-sea/pyinstaller-builder/releases/download/snapshot/pyinstaller-6.11.1-py3-none-any.whl
           pip install -r requirements.txt
+          
+      - name: Run Python - create_licenses_txt
+        run: python '.github/workflows/create_licenses_txt.py'
 
       - name: Build EXE
         run: |
-          pyinstaller src/_main.py --hidden-import=_cffi_backend --add-data 'src/__icon.ico;./' --onefile --icon src/__icon.ico --name ONScripter_Multi_Converter.exe
+          pyinstaller src/_main.py --hidden-import=_cffi_backend --add-data 'src/__icon.ico;./' --add-data 'licenses_py.txt;./' --onefile --icon src/__icon.ico --name ONScripter_Multi_Converter.exe
 
       - name: Upload EXE to GitHub Release
         uses: softprops/action-gh-release@6034af24fba4e5a8e975aaa6056554efe4c794d0

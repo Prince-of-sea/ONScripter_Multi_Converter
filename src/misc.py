@@ -92,7 +92,14 @@ def get_uiiconpath():
 	if hasattr(sys, '_MEIPASS'): base_dir =  Path(sys._MEIPASS)
 	else: base_dir = Path('.')
 	uiicon = Path(base_dir / '__icon.ico')
-	return str(uiicon)
+	return uiicon
+
+
+def get_licensespypath():
+	if hasattr(sys, '_MEIPASS'): base_dir =  Path(sys._MEIPASS)
+	else: base_dir = Path('.')
+	licensespy = Path(base_dir / 'licenses_py.txt')
+	return licensespy
 
 
 def in_out_dir_check(values: dict):
