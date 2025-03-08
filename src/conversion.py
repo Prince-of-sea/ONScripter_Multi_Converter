@@ -10,7 +10,7 @@ from pathlib import Path
 import dearpygui.dearpygui as dpg
 from conversion_etc import create_cnvsetdict, tryconvert
 from conversion_video import convert_video_renban2, getvidrenbanres
-from hardwarevalues_config import gethardwarevalues, gethardwarevalues_full
+from hardwarevalues_config import gethardwarevalues
 from misc import (
 	create_0txt,
 	create_configfile,

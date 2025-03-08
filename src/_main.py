@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # windows only
-import ctypes, click, os
+import ctypes, click, sys, os
 
 from hardwarevalues_config import gethardwarevalues_full
 from process_notons import get_titledict
@@ -20,6 +20,9 @@ from ui_cli import cli_main
 def main(use_cli: bool, hardware: str, input_dir: str, output_dir: str, title_setting: str):
 	'''ONS向け画像/音源/動画&シナリオ変換ツール'''
 	version = '2.3.9'
+
+	#開発版判定
+	if not hasattr(sys, '_MEIPASS'): version += ' (dev)'
 
 	#起動前print
 	print(

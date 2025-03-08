@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import os
+import sys, os
 import shutil
 import subprocess as sp
 from pathlib import Path
@@ -10,6 +10,13 @@ from process_notons import get_titledict
 from utils2 import (
 	subprocess_args, #これ書いとけば他から"from utils import subprocess_args"されても普通に動く
 )
+
+
+def get_meipass(p: Path):
+	if hasattr(sys, '_MEIPASS'): base_dir =  Path(sys._MEIPASS)
+	else: base_dir = Path('.')
+	base_path = Path(base_dir / p)
+	return base_path
 
 
 def get_titlesettingfull(param: str):

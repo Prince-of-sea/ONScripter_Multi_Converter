@@ -12,8 +12,8 @@ from pathlib import Path
 
 from hardwarevalues_config import gethardwarevalues_full
 from requiredfile_locations import exist, location
-from utils import message_box, openread0x84bitxor, configure_progress_bar
-from misc import get_programslist, exepath2icon, get_licensespypath
+from utils import get_meipass, message_box, openread0x84bitxor, configure_progress_bar
+from misc import get_programslist, exepath2icon
 from process_notons import get_titledict
 from conversion import convert_start
 
@@ -119,7 +119,7 @@ def open_repositorieslink():
 	return
 
 def open_licensespy():
-	webbrowser.open(get_licensespypath(), new=1, autoraise=True)
+	webbrowser.open(get_meipass('licenses_py.txt'), new=1, autoraise=True)
 	return
 
 

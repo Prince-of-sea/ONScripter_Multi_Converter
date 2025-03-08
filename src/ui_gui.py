@@ -3,8 +3,7 @@ import win32console, win32gui
 import dearpygui.dearpygui as dpg
 
 from hardwarevalues_config import gethardwarevalues_full
-from utils import get_titlesettingfull
-from misc import get_uiiconpath, get_licensespypath
+from utils import get_titlesettingfull, get_meipass
 from ui_gui2 import (  #最低限以外のui周りはui_gui2でやる
 	ask_create_disabledvideofile,
 	ask_decode_nscriptdat,
@@ -55,7 +54,7 @@ def gui_main(version: str, hw_key: str, input_dir_param: str, output_dir_param: 
 		dpg.bind_font(default_font)
 
 	window_title = hardwarevalues_full[hw_key]['values_default']['window_title']
-	dpg.create_viewport(title=window_title, width=640, height=400, small_icon=str(get_uiiconpath()), large_icon=str(get_uiiconpath()), resizable=False)
+	dpg.create_viewport(title=window_title, width=640, height=400, small_icon=str(get_meipass('__icon.ico')), large_icon=str(get_meipass('__icon.ico')), resizable=False)
 
 	with dpg.window(label='Main Window', tag='Main Window', no_resize=True) as window:
 		with dpg.menu_bar():
@@ -75,7 +74,7 @@ def gui_main(version: str, hw_key: str, input_dir_param: str, output_dir_param: 
 			with dpg.menu(label='このソフトについて'):
 				dpg.add_menu_item(label='サイトを開く', callback=open_repositorieslink)
 				dpg.add_menu_item(label='権利者表記', callback=copyrights)
-				if get_licensespypath().is_file(): dpg.add_menu_item(label='ライセンス', callback=open_licensespy)
+				if get_meipass('licenses_py.txt').is_file(): dpg.add_menu_item(label='ライセンス', callback=open_licensespy)
 
 		with dpg.group(horizontal=True):
 			dpg.add_text('入力元：　')
