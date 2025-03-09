@@ -2,7 +2,7 @@
 from pathlib import Path
 import subprocess as sp
 import concurrent.futures
-import tempfile, shutil, re
+import tempfile, shutil, i18n, re
 
 from requiredfile_locations import location
 from utils import configure_progress_bar, extract_archive_garbro, subprocess_args, dir_allmove
@@ -68,7 +68,7 @@ def extract_nsa(values: dict, values_ex: dict, extracted_dir: Path, useGUI: bool
 
 		#nbzリスト作成
 		values_ex['nbzlist'] = []
-		if (values['etc_0txtnbz_radio'] == '変換後のファイルを拡張子nbzとwavで両方用意しておく'):
+		if (values['etc_0txtnbz_radio'] == i18n.t('var.convert_and_keep_both')):
 			for nsasar_path in nsasar_pathlist:
 				values_ex['nbzlist'] += checknbz_nsa(nsasar_path)
 

@@ -223,11 +223,11 @@ def convert_video_renban(values: dict, values_ex: dict, f_dict: dict):
 		match values['vid_renbanaudset_radio']:
 
 			#bgm判定時
-			case 'BGMに合わせる':
+			case i18n.t('var.bgm_match'):
 
 				match values['aud_bgmch_radio']:
-					case 'ステレオ': dummy_dict['ch'] = '2'
-					case 'モノラル': dummy_dict['ch'] = '1'
+					case i18n.t('var.stereo'): dummy_dict['ch'] = '2'
+					case i18n.t('var.mono'): dummy_dict['ch'] = '1'
 					case _: raise ValueError(i18n.t('ui.Video_sequential_audio_bgm_channel_not_selected'))
 
 				match values['aud_bgmfmt_radio']:
@@ -257,11 +257,11 @@ def convert_video_renban(values: dict, values_ex: dict, f_dict: dict):
 					case _: raise ValueError(i18n.t('ui.Video_sequential_audio_bgm_format_not_found'))
 
 			#se判定時
-			case 'SE/VOICEに合わせる':
+			case i18n.t('var.se_voice_match'):
 
 				match values['aud_sech_radio']:
-					case 'ステレオ': dummy_dict['ch'] = '2'
-					case 'モノラル': dummy_dict['ch'] = '1'
+					case i18n.t('var.stereo'): dummy_dict['ch'] = '2'
+					case i18n.t('var.mono'): dummy_dict['ch'] = '1'
 					case _: raise ValueError(i18n.t('ui.Video_sequential_audio_se_channel_not_selected'))
 
 				match values['aud_sefmt_radio']:
@@ -338,10 +338,10 @@ def convert_video(values: dict, values_ex: dict, f_dict: dict):
 
 	#ビデオの変換フォーマットによる分岐
 	match values['vid_movfmt_radio']:
-		case '連番画像': convert_video_renban(values, values_ex, f_dict)
+		case i18n.t('var.numbered_images'): convert_video_renban(values, values_ex, f_dict)
 		case 'MJPEG': convert_video_mjpeg(values, values_ex, f_dict)
 		case 'MP4': convert_video_mp4(values, values_ex, f_dict)
-		case '変換しない': pass
+		case i18n.t('var.do_not_convert'): pass
 		case _: raise ValueError(i18n.t('ui.Video_conversion_format_not_selected'))
 
 

@@ -36,7 +36,7 @@ def convert_files(values: dict, values_ex: dict, cnvset_dict: dict, extracted_di
 	compchklist = []
 
 	#連番かな
-	isrenban = bool(values['vid_movfmt_radio'] == '連番画像')
+	isrenban = bool(values['vid_movfmt_radio'] == i18n.t('var.numbered_images'))
 
 	#先にパスの代入&ディレクトリ作成
 	for f_path_re, f_dict in cnvset_dict.items():
@@ -220,7 +220,7 @@ def convert_start(values):
 				raise Exception(i18n.t('ui.Unsupported_video_for_hardware'))
 
 			#連番変換時画像サイズ先に代入
-			if (values['vid_movfmt_radio'] == '連番画像'):
+			if (values['vid_movfmt_radio'] == i18n.t('var.numbered_images')):
 				configure_progress_bar(0.02, i18n.t('ui.Progress_set_sequential_images'), useGUI)
 				values_ex['renbanresper'] = getvidrenbanres(values)
 

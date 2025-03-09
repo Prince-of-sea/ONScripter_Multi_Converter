@@ -124,15 +124,15 @@ def create_configfile(values: dict, values_ex:dict, compressed_dir: Path):
 			#cp932の場合
 			if charset == 'cp932':
 				#surface/aspect
-				if (etc_iniscreen == '拡大(フルサイズ)') or (not output_resolution in select_resolution):#フルor解像度無視変換
+				if (etc_iniscreen == i18n.t('var.full_size')) or (not output_resolution in select_resolution):#フルor解像度無視変換
 					surface = 'SOFTWARE'
 					aspect = 'OFF'
 
-				elif (etc_iniscreen == '拡大(比率維持)'):#アス比維持
+				elif (etc_iniscreen == i18n.t('var.maintain_ratio')):#アス比維持
 					surface = 'SOFTWARE'
 					aspect = 'ON'
 				
-				elif (etc_iniscreen == '拡大しない'):#拡大しない
+				elif (etc_iniscreen == i18n.t('var.no_expansion')):#拡大しない
 					surface = 'HARDWARE'
 					aspect = 'OFF'
 
@@ -172,7 +172,7 @@ ALDOWN=275
 '''
 			#gbkの場合
 			elif charset == 'gbk':#Based on 20080121-zh04
-				screensize = 'full' if (etc_iniscreen == '拡大(フルサイズ)') else 'normal'
+				screensize = 'full' if (etc_iniscreen == i18n.t('var.full_size')) else 'normal'
 				cfg = f'''resolution={output_resolution[0]}
 screensize={screensize}
 cpuclock=333
