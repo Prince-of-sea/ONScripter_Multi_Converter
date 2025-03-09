@@ -12,7 +12,7 @@ from pathlib import Path
 from process_notons import get_titledict
 
 
-def get_programslist(icotemp_dir: Path):
+def get_programslist(icotemp_dir: Path, charset: str):
 	titledict = get_titledict()
 	programs_list = []
 
@@ -48,10 +48,10 @@ def get_programslist(icotemp_dir: Path):
 				#存在する場合はprograms_listに追加
 				programs_list.append( {'name': program_name, 'exe_path': target_path, 'icon_path': icon_path, 'overwrite_title_setting': False} )
 			
-			#存在しない場合はタイトル名を取得し、titledictからtitleを取得
+			#個別変換 - 日本語のみ対応
 			# [追記]この仕様「.lnkの親フォルダ名(ない場合.lnk本体の名前)」と「リンク先の.exe名」でチェック掛けてるので両方一致すると別プログラムでも元作品と誤認します
 			# 今のところは意図的に合わせないと被らないような名前だけだが、将来的にはもっと厳格な仕様に変えたほうが良いかも
-			else:
+			elif (charset == 'cp932'):
 
 				#個別変換一致確認
 				for k,v in titledict.items():
@@ -115,32 +115,35 @@ def create_configfile(values: dict, values_ex:dict, compressed_dir: Path):
 	etc_iniscreen = values['etc_iniscreen']
 	select_resolution = values_ex['select_resolution']
 	configfile = values_ex['configfile']
+	charset = values['charset']
 
 	match configfile:
 		case 'ons.ini':#実質PSP専用?
 
-			#surface/aspect
-			if (etc_iniscreen == '拡大(フルサイズ)') or (not output_resolution in select_resolution):#フルor解像度無視変換
-				surface = 'SOFTWARE'
-				aspect = 'OFF'
+			#cp932の場合
+			if charset == 'cp932':
+				#surface/aspect
+				if (etc_iniscreen == '拡大(フルサイズ)') or (not output_resolution in select_resolution):#フルor解像度無視変換
+					surface = 'SOFTWARE'
+					aspect = 'OFF'
 
-			elif (etc_iniscreen == '拡大(比率維持)'):#アス比維持
-				surface = 'SOFTWARE'
-				aspect = 'ON'
-			
-			elif (etc_iniscreen == '拡大しない'):#拡大しない
-				surface = 'HARDWARE'
-				aspect = 'OFF'
+				elif (etc_iniscreen == '拡大(比率維持)'):#アス比維持
+					surface = 'SOFTWARE'
+					aspect = 'ON'
+				
+				elif (etc_iniscreen == '拡大しない'):#拡大しない
+					surface = 'HARDWARE'
+					aspect = 'OFF'
 
-			else: raise ValueError('ons.iniの拡大設定が見つかりません')
+				else: raise ValueError('ons.iniの拡大設定が見つかりません')
 
-			#fontmemory
-			fontmemory = 'ON' if etc_iniramfont_chk else 'OFF'
+				#fontmemory
+				fontmemory = 'ON' if etc_iniramfont_chk else 'OFF'
 
-			#analogkey
-			analogkey = 'ON2' if etc_inicursor_chk else 'ON1'
+				#analogkey
+				analogkey = 'ON2' if etc_inicursor_chk else 'ON1'
 
-			cfg = f'''SURFACE={surface}
+				cfg = f'''SURFACE={surface}
 WIDTH={output_resolution[0]}
 HEIGHT={output_resolution[1]}
 ASPECT={aspect}
@@ -166,9 +169,18 @@ START=97
 ALUP=276
 ALDOWN=275
 '''
+			#gbkの場合
+			elif charset == 'gbk':#Based on 20080121-zh04
+				screensize = 'full' if (etc_iniscreen == '拡大(フルサイズ)') else 'normal'
+				cfg = f'''resolution={output_resolution[0]}
+screensize={screensize}
+cpuclock=333
+busclock=166
+'''
 		
 		case 'sittings.txt':#現時点ではvita専用 おそらくyuri系列大体この仕様
-			cfg = r'--window --fontcache --textbox --enc:sjis'
+			cfg = r'--window --fontcache --textbox'
+			if charset == 'cp932': cfg += r' --enc:sjis'
 			
 		case _: return
 
@@ -213,14 +225,15 @@ def create_0txt(values: dict, values_ex: dict, compressed_dir: Path):
 	ztxtscript = values_ex['0txtscript']
 	allerrlog = values_ex['allerrlog']
 	version = values['version']
+	charset = values['charset']
 
 	#0.txt書き出し
 	ztxtscript += (f'\nend\n\n;\tConverted by "ONScripter Multi Converter ver.{version}"\n;\thttps://github.com/Prince-of-sea/ONScripter_Multi_Converter\n')
-	with open(Path(compressed_dir / '0.txt'), 'w', encoding='cp932', errors='ignore') as s: s.write(ztxtscript)
+	with open(Path(compressed_dir / '0.txt'), 'w', encoding=charset, errors='ignore') as s: s.write(ztxtscript)
 
 	#ついでにエラーログがあれば書き出し
 	if allerrlog:
-		with open(Path(compressed_dir / 'errorlog.tsv'), 'w', encoding='cp932', errors='ignore') as s: s.write(allerrlog)
+		with open(Path(compressed_dir / 'errorlog.tsv'), 'w', encoding='utf-8', errors='ignore') as s: s.write(allerrlog)
 
 	return
 

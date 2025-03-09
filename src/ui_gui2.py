@@ -53,7 +53,7 @@ def create_disabledvideofile(sender, app_data, user_data):
 	return
 
 
-def ask_decode_nscriptdat():
+def ask_decode_nscriptdat(sender, app_data, charset):
 	with dpg.mutex():
 		with dpg.window(label='nscript.dat復号化', modal=True) as msg_ask:
 			dpg.add_text('そのままでは読めない形式になっているnscript.datを復号化します\n' +\
@@ -65,8 +65,8 @@ def ask_decode_nscriptdat():
 						'特殊な作業を行う場合にのみ使ってください\n\n' +\
 						'復号化するnscript.datを選択しますか？')
 			with dpg.group(horizontal=True):
-				dpg.add_button(label='OK', user_data=(msg_ask, True), callback=decode_nscriptdat)
-				dpg.add_button(label='キャンセル', user_data=(msg_ask, False), callback=decode_nscriptdat)
+				dpg.add_button(label='OK', user_data=(msg_ask, charset, True), callback=decode_nscriptdat)
+				dpg.add_button(label='キャンセル', user_data=(msg_ask, charset, False), callback=decode_nscriptdat)
 	dpg.split_frame()
 	dpg.set_item_pos(msg_ask, [dpg.get_viewport_client_width() // 2 - dpg.get_item_width(msg_ask) // 2, dpg.get_viewport_client_height() // 2 - dpg.get_item_height(msg_ask) // 2])
 	return
@@ -74,8 +74,9 @@ def ask_decode_nscriptdat():
 
 def decode_nscriptdat(sender, app_data, user_data):
 	dpg.configure_item(user_data[0], show=False)
-	if not user_data[1]:
-		return
+	if not user_data[2]: return
+	charset = user_data[1]
+
 	root = tkinter.Tk()
 	root.withdraw()
 	_path = filedialog.askopenfilename(filetypes=[('NScripter script','nscript.dat;*.scp')])#どうせ同じなので旧Scripterもできるようにしておく
@@ -101,7 +102,7 @@ def decode_nscriptdat(sender, app_data, user_data):
 
 		txtpath.rename(bakpath)
 
-	with open(txtpath, 'w', encoding='cp932', errors='ignore') as s: s.write(openread0x84bitxor(_path))
+	with open(txtpath, 'w', encoding=charset, errors='ignore') as s: s.write(openread0x84bitxor(_path, charset))
 	
 	message_box('完了', '復号化しました', 'info', True)
 	return
@@ -123,8 +124,8 @@ def open_licensespy():
 	return
 
 
-def copyrights():
-	message_box('copyrights', f'ONScripter Multi Converter ver.{dpg.get_value('version')}\n(C) 2021-2025 Prince-of-sea / PC-CNT / RightHand', 'info', True)
+def copyrights(sender, app_data, user_data):
+	message_box('copyrights', f'ONScripter Multi Converter ver.{user_data}\n(C) 2021-2025 Prince-of-sea / PC-CNT / RightHand', 'info', True)
 	return
 
 
@@ -136,7 +137,7 @@ def open_input():
 	dpg.set_value('input_dir', _path)
 
 
-def open_select():
+def open_select(sender, app_data, user_data):
 	with dpg.window(label=f'インストール済みゲーム一覧', height=360, width=628, modal=True, no_move=True) as opsel:
 
 		#ローディング
@@ -149,7 +150,7 @@ def open_select():
 			icotemp_dir = Path(icotemp_dir)
 
 			#programs_list取得
-			programs_list = get_programslist(icotemp_dir)
+			programs_list = get_programslist(icotemp_dir, user_data)
 
 			#ローディング削除
 			dpg.delete_item('loading')
@@ -186,7 +187,7 @@ def open_select_main(sender, app_data, user_data):
 	dpg.set_value('input_dir', _path)
 
 	if d['overwrite_title_setting']: dpg.set_value('title_setting', d['overwrite_title_setting'])
-	else: dpg.set_value('title_setting', '未指定')
+	else: dpg.set_value('title_setting', 'None')
 
 	return
 
@@ -209,8 +210,16 @@ def close_dpg():
 	dpg.stop_dearpygui()
 
 
-def ask_convert_start(arg):
+def ask_convert_start(sender, app_data, user_data):
 	configure_progress_bar(0, '変換開始...')
+
+	#入力値事前取得
+	values = {
+		'useGUI':True,
+		'hardware':user_data[0],
+		'version':user_data[1],
+		'charset':user_data[2],
+	}
 
 	titledict = get_titledict()
 
@@ -257,12 +266,12 @@ def ask_convert_start(arg):
 					dpg.add_text(s)
 				dpg.add_text('以上を確認したうえで、変換を開始しますか？')
 				with dpg.group(horizontal=True):
-					dpg.add_button(label='OK', user_data=(msg_askconv, True, arg), callback=askconv_callback)
-					dpg.add_button(label='キャンセル', user_data=(msg_askconv, False, arg), callback=askconv_callback)
+					dpg.add_button(label='OK', user_data=(msg_askconv, True, values), callback=askconv_callback)
+					dpg.add_button(label='キャンセル', user_data=(msg_askconv, False, values), callback=askconv_callback)
 		dpg.split_frame()
-	# 未指定なら確認を飛ばして変換開始
+	# Noneなら確認を飛ばして変換開始
 	else:
-		return convert_start(arg)
+		return convert_start(values)
 	return
 
 

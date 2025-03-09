@@ -5,6 +5,7 @@ hardwarevalues_dict = {
 	'PSP': {
 		'values_ex': {
 			'hardware_full': 'SONY PlayStation Portable',
+			'support_charset': ('cp932', 'gbk'),
 			'select_resolution': ((360, 270), (320, 240)),
 			'disable_video': ('MP4'),
 			'aspect_4:3only': True,
@@ -58,6 +59,7 @@ hardwarevalues_dict = {
 	'PSVITA': {
 		'values_ex': {
 			'hardware_full': 'SONY PlayStation Vita',
+			'support_charset': ('cp932', 'gbk'),
 			'select_resolution': (),
 			'disable_video': ('MJPEG', 'MP4'),
 			'aspect_4:3only': False,
@@ -111,6 +113,7 @@ hardwarevalues_dict = {
 	'Brain': {
 		'values_ex': {
 			'hardware_full': 'SHARP Brain(Windows CE 6.0)',
+			'support_charset': ('cp932'),
 			'select_resolution': ((424, 318), (320, 240)),
 			'disable_video': ('MJPEG', 'MP4'),
 			'aspect_4:3only': True,
@@ -164,6 +167,7 @@ hardwarevalues_dict = {
 	'Android': {
 		'values_ex': {
 			'hardware_full': 'Android OS',
+			'support_charset': ('cp932', 'gbk'),
 			'select_resolution': (),
 			'disable_video': ('MJPEG'),
 			'aspect_4:3only': False,

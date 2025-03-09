@@ -111,19 +111,18 @@ def convert_files(values: dict, values_ex: dict, cnvset_dict: dict, extracted_di
 	#エラーログ収集
 	allerrlog = ''
 	for errlogpath in converted_dir.glob('ERROR*'):
-		with open(errlogpath, 'r', encoding='cp932') as er: allerrlog += er.read()
+		with open(errlogpath, 'r', encoding='utf-8') as er: allerrlog += er.read()
 	
 	values_ex['allerrlog'] = allerrlog
 	return values_ex
 
 
-def convert_start(arg):
+def convert_start(values):
 	start_time = time.perf_counter()
-	useGUI = bool(arg == r'convert_button')
+	useGUI = values['useGUI']
 	
 	#GUI時
 	if (useGUI):
-		values = {}
 		
 		#一旦全要素入力不可に
 		for i in dpg.get_aliases():
@@ -134,8 +133,6 @@ def convert_start(arg):
 			values[i] = dpg.get_value(i)
 		
 		configure_progress_bar(0, '変換開始...')
-	
-	else: values = arg
 
 	#ここから処理
 	try:
@@ -291,7 +288,7 @@ def convert_start(arg):
 
 			#入出力初期化
 			dpg.set_value('input_dir', '')
-			dpg.set_value('title_setting', '未指定')
+			dpg.set_value('title_setting', 'None')
 		
 		else:
 			print(cnvmsg)

@@ -20,7 +20,7 @@ def get_meipass(p: Path):
 
 
 def get_titlesettingfull(param: str):
-	title_setting = '未指定'
+	title_setting = 'None'
 	for k,v in get_titledict().items():
 		if (param == v['cli_arg']):
 			title_setting = k
@@ -59,14 +59,14 @@ def extract_archive_garbro(p: Path, e: Path, f: str = ''):
 	return
 
 
-def openread0x84bitxor(p: Path):
+def openread0x84bitxor(p: Path, charset: str = 'cp932'):
 	data = open(p,'rb').read()#復号化前のtxt読み込み用変数
 	bin_list = []#復号したバイナリを格納する配列の作成
 		
 	for b in range(len(data)):#復号 0x84でbitxorしてるんだけどいまいち自分でもよく分かってない
 		bin_list.append(bytes.fromhex(str((hex(int(data[b]) ^ int(0x84))[2:].zfill(2)))))
 		
-	decode_text = (b''.join(bin_list)).decode('cp932', errors='ignore')
+	decode_text = (b''.join(bin_list)).decode(charset, errors='ignore')
 	return decode_text
 
 

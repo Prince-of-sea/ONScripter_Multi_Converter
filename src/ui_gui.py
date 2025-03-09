@@ -2,7 +2,7 @@
 import win32console, win32gui
 import dearpygui.dearpygui as dpg
 
-from hardwarevalues_config import gethardwarevalues_full
+from hardwarevalues_config import gethardwarevalues_full, gethardwarevalues
 from utils import get_titlesettingfull, get_meipass
 from ui_gui2 import (  #最低限以外のui周りはui_gui2でやる
 	ask_create_disabledvideofile,
@@ -22,13 +22,14 @@ from process_notons import get_titledict
 
 
 def refresh_state(sender, app_data, user_data):
-	state = user_data.copy()
-	if state.get('window_title'): dpg.set_viewport_title(state.pop('window_title'))
-	for key, value in state.items(): dpg.set_value(key, value)
+	dpg.set_viewport_title(f'ONScripter Multi Converter for {user_data[0]} ver.{user_data[1]}')
+	
+	for key, value in gethardwarevalues(user_data[0], 'values_default').items():
+		dpg.set_value(key, value)
 	return	
 
 
-def gui_main(version: str, hw_key: str, input_dir_param: str, output_dir_param: str, title_setting_param: str):
+def gui_main(version: str, charset_param: str, hw_key: str, input_dir_param: str, output_dir_param: str, title_setting_param: str):
 
 	#コマンドプロンプトのウィンドウハンドルを取得
 	console_window = win32console.GetConsoleWindow()
@@ -39,12 +40,11 @@ def gui_main(version: str, hw_key: str, input_dir_param: str, output_dir_param: 
 
 	#ハードウェア値取得
 	hardwarevalues_full = gethardwarevalues_full()
-	values_default = hardwarevalues_full[hw_key]['values_default']
+	values_default = gethardwarevalues(hw_key, 'values_default')
 
-	#ハード変更用
-	for k in hardwarevalues_full.keys():
-		hardwarevalues_full[k]['values_default']['window_title'] = f'ONScripter Multi Converter for {k} ver.{version}'
-		hardwarevalues_full[k]['values_default']['hardware'] = str(k)
+	#個別設定名登録
+	title_setting_list = ['None']
+	if (charset_param == 'cp932'): title_setting_list += list(get_titledict().keys())#個別設定はcp932時のみ有効
 	
 	dpg.create_context()
 
@@ -53,7 +53,8 @@ def gui_main(version: str, hw_key: str, input_dir_param: str, output_dir_param: 
 			dpg.add_font_range_hint(dpg.mvFontRangeHint_Japanese)
 		dpg.bind_font(default_font)
 
-	window_title = hardwarevalues_full[hw_key]['values_default']['window_title']
+	window_title = f'ONScripter Multi Converter for {hw_key} ver.{version}'
+
 	dpg.create_viewport(title=window_title, width=640, height=400, small_icon=str(get_meipass('__icon.ico')), large_icon=str(get_meipass('__icon.ico')), resizable=False)
 
 	with dpg.window(label='Main Window', tag='Main Window', no_resize=True) as window:
@@ -62,25 +63,26 @@ def gui_main(version: str, hw_key: str, input_dir_param: str, output_dir_param: 
 				dpg.add_menu_item(label='CPU使用率低減モード', check=True, default_value=False, tag='lower_cpu_usage')
 				with dpg.menu(label='ハード変更'):
 					for hwk, hwv in hardwarevalues_full.items():
-						dpg.add_menu_item(label=hwv['values_ex']['hardware_full'], callback=refresh_state, user_data=hardwarevalues_full[hwk]['values_default'])
+						if (charset_param in hwv['values_ex']['support_charset']):
+							dpg.add_menu_item(label=hwv['values_ex']['hardware_full'], user_data=(hwk, version), callback=refresh_state)
 
 				dpg.add_menu_item(label='終了', callback=close_dpg)
 
 			with dpg.menu(label='ツール'):
 				dpg.add_menu_item(label='連番動画無効化ファイル作成', callback=ask_create_disabledvideofile)
-				dpg.add_menu_item(label='nscript.dat復号化', callback=ask_decode_nscriptdat)
+				dpg.add_menu_item(label='nscript.dat復号化', user_data=(charset_param), callback=ask_decode_nscriptdat)
 				dpg.add_menu_item(label='GARbroを起動', callback=open_garbro)
 
 			with dpg.menu(label='このソフトについて'):
 				dpg.add_menu_item(label='サイトを開く', callback=open_repositorieslink)
-				dpg.add_menu_item(label='権利者表記', callback=copyrights)
+				dpg.add_menu_item(label='権利者表記', user_data=(version), callback=copyrights)
 				if get_meipass('licenses_py.txt').is_file(): dpg.add_menu_item(label='ライセンス', callback=open_licensespy)
 
 		with dpg.group(horizontal=True):
 			dpg.add_text('入力元：　')
 			dpg.add_input_text(tag='input_dir', readonly=True)
 			dpg.add_button(label='Browse', callback=open_input, tag='input_browse_btn')
-			dpg.add_button(label='一覧から選択', callback=open_select, tag='input_select_btn')
+			dpg.add_button(label='一覧から選択', user_data=(charset_param), callback=open_select, tag='input_select_btn')
 
 		with dpg.group(horizontal=True):
 			dpg.add_text('出力先：　')
@@ -92,8 +94,8 @@ def gui_main(version: str, hw_key: str, input_dir_param: str, output_dir_param: 
 			dpg.add_text('個別設定：')
 			dpg.add_combo(
 				tag='title_setting',
-				default_value=get_titlesettingfull(title_setting_param),
-				items=(['未指定'] + list(get_titledict().keys())),
+				default_value=(get_titlesettingfull(title_setting_param) if charset_param=='cp932' else 'None'),
+				items=title_setting_list,
 			)
 
 		# with dpg.child_window(height=220, border=False):
@@ -648,13 +650,9 @@ def gui_main(version: str, hw_key: str, input_dir_param: str, output_dir_param: 
 								)
 		with dpg.group(horizontal=True):
 			dpg.add_progress_bar(default_value=0, tag='progress_bar', overlay='0%')
-			dpg.add_button(label='Convert', callback=ask_convert_start, tag='convert_button')
+			dpg.add_button(label='Convert', user_data=(hw_key, version, charset_param),
+					callback=ask_convert_start, tag='convert_button')
 			dpg.add_text(default_value='', tag='progress_msg')
-
-			#!!!ここもっと良い書き方募集中!!!
-			dpg.add_text(default_value=' '*1000)#↓を画面に見せないようにするための無意味スペース
-			dpg.add_text(default_value=values_default['hardware'], tag='hardware')#関数convertにhardwareを飛ばすため仕方なくこんな感じに
-			dpg.add_text(default_value=version, tag='version')#同様
 
 	dpg.set_value('input_dir', input_dir_param)
 	dpg.set_value('output_dir', output_dir_param)

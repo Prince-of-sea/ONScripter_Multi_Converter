@@ -7,6 +7,7 @@ from utils import openread0x84bitxor, lower_AtoZ
 
 def onsscript_decode(values: dict):
 	input_dir = Path(values['input_dir'])
+	charset = values['charset']
 
 	#優先順位は00.txt > 0.txt > nscript.dat
 	ztxt_path = Path(input_dir / '0.txt')
@@ -19,7 +20,7 @@ def onsscript_decode(values: dict):
 		for i in range(0, 100):
 			zzrange_path = Path(input_dir / (str(i).zfill(2) + '.txt'))
 			if zzrange_path.exists():				
-				with open(zzrange_path, 'r', encoding='cp932', errors='ignore') as zzrangetext:
+				with open(zzrange_path, 'r', encoding=charset, errors='ignore') as zzrangetext:
 					text += zzrangetext.read()
 					text += f'\n\n;##\n;{zzrange_path.name} end\n;##\n\n'
 	
@@ -27,12 +28,12 @@ def onsscript_decode(values: dict):
 		for i in range(0, 10):
 			zrange_path = Path(input_dir / (str(i) + '.txt'))
 			if zrange_path.exists():				
-				with open(zrange_path, 'r', encoding='cp932', errors='ignore') as zrangetext:
+				with open(zrange_path, 'r', encoding=charset, errors='ignore') as zrangetext:
 					text += zrangetext.read()
 					text += f'\n\n;##\n;{zrange_path.name} end\n;##\n\n'
 
 	elif nsdat_path.exists():
-		text += openread0x84bitxor(nsdat_path)
+		text += openread0x84bitxor(nsdat_path, charset)
 	
 	else:
 		raise FileNotFoundError('00.txt/0.txt/nscript.datが見つかりません')
@@ -43,6 +44,7 @@ def onsscript_decode(values: dict):
 def onsscript_check_resolution(values: dict, values_ex: dict, ztxtscript: str, override_resolution: list):
 	hardware = values['hardware']
 	aspect_43only = values_ex['aspect_4:3only']
+	charset = values['charset']
 
 	#解像度表記抽出
 	oldnsc_mode = (r';[Mm][Oo][Dd][Ee](320|400|800)')#ONS解像度旧表記
@@ -91,7 +93,7 @@ def onsscript_check_resolution(values: dict, values_ex: dict, ztxtscript: str, o
 
 	if (aspect_43only) and (newnsc_search):
 		#チェック&変換
-		if (hardware == 'PSP') and (override_resolution):
+		if (hardware == 'PSP') and (override_resolution) and (charset == 'cp932'):#日本語版PSPのみ
 			if   (alternative_w == 800): ztxtscript = re.sub(newnsc_mode, r';mode800,value\2', ztxtscript, 1)#ほぼ800変換時
 			elif (alternative_w == 640): ztxtscript = re.sub(newnsc_mode, r';value\2', ztxtscript, 1)#ほぼ640変換時
 			else: ztxtscript = re.sub(newnsc_mode, r';value\2', ztxtscript, 1)#解像度無視時
