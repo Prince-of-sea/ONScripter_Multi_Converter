@@ -398,6 +398,6 @@ def convert_video_renban2(values: dict, values_ex: dict, f_dict: dict, startbarn
 			futures.append(executor.submit(convert_video_renban2_main, values, imgpath))
 	
 		for i,ft in enumerate(concurrent.futures.as_completed(futures)):
-			if useGUI: configure_progress_bar(startbarnum + (float(i / convertedpath_glob_png_num) * addbarnum),'')#進捗 0.35→0.95(繰り返しの合計)
+			configure_progress_bar(startbarnum + (float(i / convertedpath_glob_png_num) * addbarnum),'', useGUI)#進捗 0.35→0.95(繰り返しの合計)
 
 	return

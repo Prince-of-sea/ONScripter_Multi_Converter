@@ -30,22 +30,29 @@ def get_titlesettingfull(param: str):
 
 
 def message_box(msg_title: str, msg: str, msg_type: str, useGUI: bool):
-	if not useGUI:
-		return
-	with dpg.mutex():
-		with dpg.window(label=msg_title, modal=True) as msg_window:
-			dpg.add_text(msg)
-			dpg.add_button(label='OK', callback=lambda: dpg.configure_item(msg_window, show=False))
-	dpg.split_frame()
-	dpg.set_item_pos(msg_window, [dpg.get_viewport_client_width() // 2 - dpg.get_item_width(msg_window) // 2, dpg.get_viewport_client_height() // 2 - dpg.get_item_height(msg_window) // 2])
+
+	if useGUI:		
+		with dpg.mutex():
+			with dpg.window(label=msg_title, modal=True) as msg_window:
+				dpg.add_text(msg)
+				dpg.add_button(label='OK', callback=lambda: dpg.configure_item(msg_window, show=False))
+		dpg.split_frame()
+		dpg.set_item_pos(msg_window, [dpg.get_viewport_client_width() // 2 - dpg.get_item_width(msg_window) // 2, dpg.get_viewport_client_height() // 2 - dpg.get_item_height(msg_window) // 2])
+
+	else:
+		print(f'{msg_type}: {msg}')
+
 	return
 
 
-def configure_progress_bar(per: float, msg: str):
+def configure_progress_bar(per: float, msg: str, useGUI: bool):
+	if useGUI:
+		if msg: dpg.set_value('progress_msg', msg)
+		dpg.set_value('progress_bar', per)
+		dpg.configure_item('progress_bar', overlay=f'{int(per * 100)}%')
 
-	if msg: dpg.set_value('progress_msg', msg)
-	dpg.set_value('progress_bar', per)
-	dpg.configure_item('progress_bar', overlay=f'{int(per * 100)}%')
+	elif msg:
+		print(f'message: {msg} [{int(per * 100)}/100]')
 
 	return
 

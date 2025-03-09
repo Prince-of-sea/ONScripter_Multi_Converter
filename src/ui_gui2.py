@@ -211,7 +211,7 @@ def close_dpg():
 
 
 def ask_convert_start(sender, app_data, user_data):
-	configure_progress_bar(0, '変換開始...')
+	configure_progress_bar(0, '変換開始...', True)
 
 	#入力値事前取得
 	values = {
@@ -226,7 +226,7 @@ def ask_convert_start(sender, app_data, user_data):
 	#個別選択時
 	if dpg.get_value('title_setting') in titledict.keys():
 		title_info = titledict[ dpg.get_value('title_setting') ]
-		configure_progress_bar(0, '個別設定変換確認...')
+		configure_progress_bar(0, '個別設定変換確認...', True)
 		title = title_info['title']
 		requiredsoft = title_info['requiredsoft']
 		version = title_info['version']
@@ -280,5 +280,5 @@ def askconv_callback(sender, app_data, user_data):
 	if user_data[1]:
 		return convert_start(user_data[2])
 	else:
-		configure_progress_bar(0, '変換がキャンセルされました')
+		configure_progress_bar(0, '変換がキャンセルされました', True)
 	return

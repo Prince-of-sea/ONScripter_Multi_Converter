@@ -65,7 +65,7 @@ def convert_files(values: dict, values_ex: dict, cnvset_dict: dict, extracted_di
 			futures.append(executor.submit(tryconvert, values, values_ex, f_dict, f_path_re, converted_dir))
 		
 		for i,ft in enumerate(concurrent.futures.as_completed(futures)):
-			if useGUI: configure_progress_bar(0.05 + (float(i / len(list(cnvset_dict))) * cnvbarnum),'')#進捗 0.05→0.95(連番時0.35)
+			configure_progress_bar(0.05 + (float(i / len(list(cnvset_dict))) * cnvbarnum),'', useGUI)#進捗 0.05→0.95(連番時0.35)
 
 	#連番動画利用時はその画像を並列圧縮
 	if isrenban:
@@ -132,7 +132,7 @@ def convert_start(values):
 			#ついでに辞書に入力値取得
 			values[i] = dpg.get_value(i)
 		
-		configure_progress_bar(0, '変換開始...')
+	configure_progress_bar(0, '変換開始...', useGUI)
 
 	#ここから処理
 	try:
@@ -182,7 +182,7 @@ def convert_start(values):
 			compressed_dir.mkdir()
 
 			#元valuesから計算処理かけて作った結果いれるところ+0.txt(&他)からすくい上げるもの
-			if useGUI: configure_progress_bar(0.005, '機種固有設定取得...')
+			configure_progress_bar(0.005, '機種固有設定取得...', useGUI)
 			values_ex = gethardwarevalues(values['hardware'], 'values_ex')
 			
 			#並列処理用スレッド設定
@@ -204,7 +204,7 @@ def convert_start(values):
 				pre_converted_dir.mkdir()
 
 				#個別変換用事前変換
-				if useGUI: configure_progress_bar(0.01, '個別設定を元に事前変換...')
+				configure_progress_bar(0.01, '個別設定を元に事前変換...', useGUI)
 				pre_convert(values, values_ex, pre_converted_dir)
 
 				#画像解像度がスクリプト側と一致しない時用
@@ -219,60 +219,59 @@ def convert_start(values):
 
 			#連番変換時画像サイズ先に代入
 			if (values['vid_movfmt_radio'] == '連番画像'):
-				if useGUI: configure_progress_bar(0.02, '連番画像設定...')
+				configure_progress_bar(0.02, '連番画像設定...', useGUI)
 				values_ex['renbanresper'] = getvidrenbanres(values)
 
 			#0.txtのテキスト取得
-			if useGUI: configure_progress_bar(0.023, 'シナリオテキスト取得...')
+			configure_progress_bar(0.023, 'シナリオテキスト取得...', useGUI)
 			values_ex['0txtscript'] = onsscript_decode(values)
 
 			#0.txtのテキストから各種情報取得
-			if useGUI: configure_progress_bar(0.026, 'シナリオ情報取得...')
+			configure_progress_bar(0.026, 'シナリオ情報取得...', useGUI)
 			values_ex = onsscript_check(values, values_ex)
 
 			#0.txtのコメントアウト削除
 			if values['etc_0txtremovecommentout_chk']:
-				if useGUI: configure_progress_bar(0.029, 'シナリオコメント削除...')
+				configure_progress_bar(0.029, 'シナリオコメント削除...', useGUI)
 				values_ex['0txtscript'] = remove_0txtcommentout(values_ex)
 
 			#nsa/sar展開
-			if useGUI: configure_progress_bar(0.03, 'アーカイブ展開...')
+			configure_progress_bar(0.03, 'アーカイブ展開...', useGUI)
 			values_ex = extract_nsa(values, values_ex, extracted_dir, useGUI)#進捗 0.03→0.045
 
 			#画像/音楽/動画/その他のファイルを仕分け
-			if useGUI: configure_progress_bar(0.048, '展開データ設定...')
+			configure_progress_bar(0.048, '展開データ設定...', useGUI)
 			cnvset_dict = create_cnvsetdict(values, values_ex, extracted_dir)
 
 			#変換本処理
-			if useGUI: configure_progress_bar(0.05, '展開データ変換...')
+			configure_progress_bar(0.05, '展開データ変換...', useGUI)
 			values_ex = convert_files(values, values_ex, cnvset_dict, extracted_dir, converted_dir, useGUI)#進捗 0.05→0.95
 			
 			#変換済ファイルをnsaに圧縮
-			if useGUI: configure_progress_bar(0.95, 'アーカイブ再構築...')
+			configure_progress_bar(0.95, 'アーカイブ再構築...', useGUI)
 			compressed_nsa(converted_dir, compressed_dir, useGUI)#進捗 0.95→0.98
 			
 			#savedataフォルダ作成(無いとエラー出す作品向け)
 			create_savedatadir(values_ex, compressed_dir)
 			
 			#機種固有コンフィグファイル作成
-			if useGUI: configure_progress_bar(0.98, 'コンフィグ作成...')
+			configure_progress_bar(0.98, 'コンフィグ作成...', useGUI)
 			create_configfile(values, values_ex, compressed_dir)
 
 			#0.txt書き出し
-			if useGUI: configure_progress_bar(0.982, '変換済みシナリオ書込み...')
+			configure_progress_bar(0.982, '変換済みシナリオ書込み...', useGUI)
 			create_0txt(values, values_ex, compressed_dir)
 
 			#完成品移動
-			if useGUI: configure_progress_bar(0.985, '全データ移動...')
+			configure_progress_bar(0.985, '全データ移動...', useGUI)
 			debug_copy(values, compressed_dir)
 			result_move(result_dir, compressed_dir)
 
 			#まもなく完了します
-			if useGUI: configure_progress_bar(0.99, 'まもなく完了します...')
+			configure_progress_bar(0.99, 'まもなく完了します...', useGUI)
 
 	except Exception as e:
-		if (useGUI): message_box('エラー', e, 'error', useGUI)
-		else: print('Error: ' + str(e))
+		message_box('エラー', e, 'error', useGUI)
 	
 	else:
 		end_time = time.perf_counter()
@@ -282,20 +281,19 @@ def convert_start(values):
 		
 		cnvmsg = f'変換処理が終了しました\n処理時間: {m}分{s}秒'
 
+		message_box('変換完了', cnvmsg, 'info', useGUI)
+
 		if (useGUI):
-			configure_progress_bar(1, '変換完了')
-			message_box('変換完了', cnvmsg, 'info', useGUI)
+			configure_progress_bar(1, '変換完了', True)
+			
 
 			#入出力初期化
 			dpg.set_value('input_dir', '')
 			dpg.set_value('title_setting', 'None')
-		
-		else:
-			print(cnvmsg)
 
 	#GUI時
 	if (useGUI):
-		configure_progress_bar(0, ' ')
+		configure_progress_bar(0, ' ', True)
 
 		#再び全要素入力可能に
 		for i in dpg.get_aliases():

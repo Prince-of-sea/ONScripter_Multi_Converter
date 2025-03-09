@@ -80,7 +80,7 @@ def extract_nsa(values: dict, values_ex: dict, extracted_dir: Path, useGUI: bool
 				futures.append(executor.submit(extract_archive_garbro, nsasar_path, deftempnsasar_path))#nsaやsarを展開
 
 			for i,ft in enumerate(concurrent.futures.as_completed(futures)):
-				if useGUI: configure_progress_bar(0.03 + float(i / len(nsasar_pathlist) * 0.012), '')#進捗 0.03→0.042
+				configure_progress_bar(0.03 + float(i / len(nsasar_pathlist) * 0.012), '', useGUI)#進捗 0.03→0.042
 		
 			concurrent.futures.as_completed(futures)
 		
@@ -98,7 +98,7 @@ def extract_nsa(values: dict, values_ex: dict, extracted_dir: Path, useGUI: bool
 					elif (values['etc_fileexdb_chk']) and (str(f_movedpath.name) == 'thumbs.db'): pass#thumbs.db無視
 					else: shutil.move(f_path, f_movedpath)
 		
-		if useGUI: configure_progress_bar(0.045, '')#進捗 0.042→0.045
+		configure_progress_bar(0.045, '', useGUI)#進捗 0.042→0.045
 
 	return values_ex
 
@@ -130,7 +130,7 @@ def compressed_nsa(converted_dir: Path, compressed_dir: Path, useGUI: bool):
 			futures.append(executor.submit(compressed_nsa_main, arc_dir, compressed_dir))
 
 		for i,ft in enumerate(concurrent.futures.as_completed(futures)):
-			if useGUI: configure_progress_bar(0.95 + float(i / len(list(converted_dir.glob('arc*'))) * 0.03), '')#進捗 0.95→0.98
+			configure_progress_bar(0.95 + float(i / len(list(converted_dir.glob('arc*'))) * 0.03), '', useGUI)#進捗 0.95→0.98
 			
 		concurrent.futures.as_completed(futures)
 
