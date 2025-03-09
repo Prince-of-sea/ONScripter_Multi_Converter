@@ -216,9 +216,8 @@ def ask_convert_start(sender, app_data, user_data):
 	#入力値事前取得
 	values = {
 		'useGUI':True,
-		'hardware':user_data[0],
-		'version':user_data[1],
-		'charset':user_data[2],
+		'version':user_data[0],
+		'charset':user_data[1],
 	}
 
 	titledict = get_titledict()

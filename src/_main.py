@@ -8,19 +8,19 @@ from ui_gui import gui_main
 from ui_cli import cli_main
 
 @click.command()
-@click.option('-chrs', '--charset', type=click.Choice(['cp932', 'gbk'], case_sensitive=False),
-				default='cp932', prompt=False, help='文字コードを指定します / Specifies character code.')
 @click.option('-t', '--title_setting', type=click.Choice(['']+[s['cli_arg'] for s in get_titledict().values()], case_sensitive=False),
-				default='', prompt=False, help='特定タイトル向けの個別設定を指定します')
+				default='', prompt=False, help='特定タイトル向けの個別設定を指定します(Japanese language only.)')
 @click.option('-hw', '--hardware', type=click.Choice(list(gethardwarevalues_full().keys()), case_sensitive=False),
-				default=str(list(gethardwarevalues_full().keys())[0]), prompt=False, help='変換先ハードウェアを指定します')
-@click.option('-cl', '--use_cli', is_flag=True, default=False, help='コマンドラインでの自動変換モードを有効化します')
-@click.option('-i', '--input_dir', type=click.Path(), default='', prompt=False, help='入力フォルダのパスを指定します')
-@click.option('-o', '--output_dir', type=click.Path(), default='', prompt=False, help='出力フォルダのパスを指定します')
+				default=str(list(gethardwarevalues_full().keys())[0]), prompt=False, help='Specify for which hardware to convert.')
+@click.option('-chrs', '--charset', type=click.Choice(['cp932', 'gbk'], case_sensitive=False),
+				default='cp932', prompt=False, help='Specifies character code.')
+@click.option('-i', '--input_dir', type=click.Path(), default='', prompt=False, help='Specify the path of the input folder.')
+@click.option('-o', '--output_dir', type=click.Path(), default='', prompt=False, help='Specify the path of the output folder.')
+@click.option('-cl', '--use_cli', is_flag=True, default=False, help='Enable automatic conversion in the CLI.')
 
 
 def main(charset: str, use_cli: bool, hardware: str, input_dir: str, output_dir: str, title_setting: str):
-	'''ONS向け画像/音源/動画&シナリオ変換ツール'''
+	'''Image/sound/video & scenario conversion tool for ONS'''
 	version = '2.3.9'
 
 	#文字コード表示
@@ -32,7 +32,7 @@ def main(charset: str, use_cli: bool, hardware: str, input_dir: str, output_dir:
 	#起動前print
 	print(
 		'------------------------------------------------------------\n'
-		f'ONScripter Multi Converter for {hardware} ver.{version}\n'
+		f'ONScripter Multi Converter ver.{version}\n'
 		'------------------------------------------------------------'
 	)
 

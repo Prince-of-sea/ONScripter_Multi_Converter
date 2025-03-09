@@ -23,6 +23,7 @@ from process_notons import get_titledict
 
 def refresh_state(sender, app_data, user_data):
 	dpg.set_viewport_title(f'ONScripter Multi Converter for {user_data[0]} ver.{user_data[1]}')
+	dpg.set_value('hardware', user_data[0])
 	
 	for key, value in gethardwarevalues(user_data[0], 'values_default').items():
 		dpg.set_value(key, value)
@@ -650,10 +651,13 @@ def gui_main(version: str, charset_param: str, hw_key: str, input_dir_param: str
 								)
 		with dpg.group(horizontal=True):
 			dpg.add_progress_bar(default_value=0, tag='progress_bar', overlay='0%')
-			dpg.add_button(label='Convert', user_data=(hw_key, version, charset_param),
+			dpg.add_button(label='Convert', user_data=(version, charset_param),
 					callback=ask_convert_start, tag='convert_button')
 			dpg.add_text(default_value='', tag='progress_msg')
-
+			#!!!ここもっと良い書き方募集中!!!
+			dpg.add_text(default_value=' '*1000)#↓を画面に見せないようにするための無意味スペース
+			dpg.add_text(default_value=hw_key, tag='hardware')#関数convertにhardwareを飛ばすため仕方なくこんな感じに
+			
 	dpg.set_value('input_dir', input_dir_param)
 	dpg.set_value('output_dir', output_dir_param)
 
