@@ -42,6 +42,8 @@ ja:
   savescreenshot_setting_error: "「screenshot命令無効化」未選択エラー"
 
   Progress_start_conversion: "変換開始..."
+  Progress_check_individual_settings_conversion: "個別設定変換確認..."
+  Progress_cancel_conversion: "変換がキャンセルされました"
   Progress_get_hardware_settings: "機種固有設定取得..."
   Progress_pre_conversion: "個別設定を元に事前変換..."
   Progress_set_sequential_images: "連番画像設定..."
@@ -151,3 +153,6 @@ ja:
   label_0txt_rndtornd2: "rnd2命令->rnd命令変換"
   label_0txt_disabletextgosub: "textgosub命令無効化"
   label_0txt_removecommentout: "コメントアウト部分を削除"
+
+  label_check_individual_settings_conversion: "個別設定変換確認 - {title}"
+  label_confirm_conversion: "以上を確認したうえで、変換を開始しますか？"

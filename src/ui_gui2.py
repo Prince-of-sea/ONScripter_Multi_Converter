@@ -11,8 +11,6 @@ import dearpygui.dearpygui as dpg
 
 from pathlib import Path
 
-import i18n.formatters
-
 from hardwarevalues_config import gethardwarevalues_full
 from requiredfile_locations import exist, location
 from utils import get_meipass, message_box, openread0x84bitxor, configure_progress_bar
@@ -201,7 +199,6 @@ def close_dpg():
 	dpg.stop_dearpygui()
 
 
-##### 個別設定は日本語のみ #####
 def ask_convert_start(sender, app_data, user_data):
 	configure_progress_bar(0, i18n.t('ui.Progress_start_conversion'), True)
 
@@ -217,7 +214,7 @@ def ask_convert_start(sender, app_data, user_data):
 	#個別選択時
 	if dpg.get_value('title_setting') in titledict.keys():
 		title_info = titledict[ dpg.get_value('title_setting') ]
-		configure_progress_bar(0, '個別設定変換確認...', True)
+		configure_progress_bar(0, i18n.t('ui.Progress_check_individual_settings_conversion'), True)
 		title = title_info['title']
 		requiredsoft = title_info['requiredsoft']
 		version = title_info['version']
@@ -250,12 +247,17 @@ def ask_convert_start(sender, app_data, user_data):
 			f'[注意事項]{n_txt}\n\n'\
 			'=================================================================\n'\
 			)
+		
+		if i18n.t('var.default_language') != 'ja': s = (
+			'=================================================================\n'\
+			f'Note: This feature is for japanese/cp932 only!\n{s}'
+			)
 
 		with dpg.mutex():
-			with dpg.window(label=f'個別設定変換確認 - {title}', modal=True, no_close=True, no_move=True) as msg_askconv:
+			with dpg.window(label=i18n.t('ui.label_check_individual_settings_conversion').replace(r'{title}', title), modal=True, no_close=True, no_move=True) as msg_askconv:
 				with dpg.child_window(height=270, width=620):
 					dpg.add_text(s)
-				dpg.add_text('以上を確認したうえで、変換を開始しますか？')
+				dpg.add_text(i18n.t('ui.label_confirm_conversion'))
 				with dpg.group(horizontal=True):
 					dpg.add_button(label='OK', user_data=(msg_askconv, True, values), callback=askconv_callback)
 					dpg.add_button(label='Cancel', user_data=(msg_askconv, False, values), callback=askconv_callback)
@@ -271,5 +273,5 @@ def askconv_callback(sender, app_data, user_data):
 	if user_data[1]:
 		return convert_start(user_data[2])
 	else:
-		configure_progress_bar(0, '変換がキャンセルされました', True)
+		configure_progress_bar(0, i18n.t('ui.Progress_cancel_conversion'), True)
 	return

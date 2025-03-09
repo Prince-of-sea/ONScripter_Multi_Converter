@@ -13,26 +13,34 @@ from ui_cli import cli_main
 				default='', prompt=False, help='特定タイトル向けの個別設定を指定します(Japanese language only.)')
 @click.option('-hw', '--hardware', type=click.Choice(list(gethardwarevalues_full().keys()), case_sensitive=False),
 				default=str(list(gethardwarevalues_full().keys())[0]), prompt=False, help='Specify for which hardware to convert.')
-@click.option('-chrs', '--charset', type=click.Choice(['cp932', 'gbk'], case_sensitive=False),
-				default='cp932', prompt=False, help='Specifies character code.')
+@click.option('-lang', '--language', type=click.Choice(['', 'ja', 'zh'], case_sensitive=False),
+				default='', prompt=False, help='Specify the language of the UI.')
+@click.option('-chrs', '--charset', type=click.Choice(['', 'cp932', 'gbk'], case_sensitive=False),
+				default='', prompt=False, help='Specifies character code.')
 @click.option('-i', '--input_dir', type=click.Path(), default='', prompt=False, help='Specify the path of the input folder.')
 @click.option('-o', '--output_dir', type=click.Path(), default='', prompt=False, help='Specify the path of the output folder.')
 @click.option('-cl', '--use_cli', is_flag=True, default=False, help='Enable automatic conversion in the CLI.')
 
 
-def main(charset: str, use_cli: bool, hardware: str, input_dir: str, output_dir: str, title_setting: str):
+def main(language: str, charset: str, use_cli: bool, hardware: str, input_dir: str, output_dir: str, title_setting: str):
 	'''Image/sound/video & scenario conversion tool for ONS'''
 	version = '2.3.9'
 
-	#文字コード表示
+	#languageが空の場合は日本語判定
+	if language == '': language = 'ja'
+	
+	#i18n設定
+	i18n.load_path.append(get_meipass('lang'))
+	i18n.set('locale', language)
+
+	#文字コードが空の場合はデフォルト文字コードを設定
+	if charset == '': charset = i18n.t('var.default_charset')
+
+	#文字コードがcp932以外の場合はバージョンに追記
 	if (charset != 'cp932'): version += f' [{charset}]'
 
 	#開発版判定
 	if not hasattr(sys, '_MEIPASS'): version += ' (dev)'
-
-	#i18n設定
-	i18n.load_path.append(get_meipass('lang'))
-	i18n.set('locale', 'ja')
 
 	#起動前print
 	print(
