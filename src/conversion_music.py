@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from pathlib import Path
 import subprocess as sp
-import tempfile, shutil
+import tempfile, shutil, i18n
 
 from requiredfile_locations import location_env
 from utils import subprocess_args
@@ -53,7 +53,7 @@ def convert_music(f_dict: dict):
 					mustemppath,
 				]
 
-			case _: raise ValueError('音声の変換フォーマットが選択されていません')
+			case _: raise ValueError(i18n.t('ui.Audio_format_not_selected'))
 		
 		sp.run(cmd, **subprocess_args())
 		shutil.move(mustemppath, convertedpath)

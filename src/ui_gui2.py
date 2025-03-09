@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import os
+import i18n
 import shutil
 import tempfile
 import subprocess as sp
@@ -9,6 +10,8 @@ import webbrowser
 import dearpygui.dearpygui as dpg
 
 from pathlib import Path
+
+import i18n.formatters
 
 from hardwarevalues_config import gethardwarevalues_full
 from requiredfile_locations import exist, location
@@ -20,16 +23,11 @@ from conversion import convert_start
 
 def ask_create_disabledvideofile():
 	with dpg.mutex():
-		with dpg.window(label='連番動画無効化ファイル作成', modal=True) as msg_ask:
-			dpg.add_text('一部作品では、連番画像に変換した動画が再生されずに\n' +\
-						'操作不能になって先に進めなくなることがあります\n\n' +\
-						'本機能で作成した無効化ファイルを置くことで\n' +\
-						'再生をスキップし、不具合を回避することが出来ます\n' +\
-						'(ver.2.3.1以降で変換した作品でのみ有効です)\n\n' +\
-						'無効化ファイルを作成しますか？')
+		with dpg.window(label=i18n.t('ui.label_numbered_video_disable'), modal=True) as msg_ask:
+			dpg.add_text(i18n.t('ui.Message_numbered_video_disable'))
 			with dpg.group(horizontal=True):
 				dpg.add_button(label='OK', user_data=(msg_ask, True), callback=create_disabledvideofile)
-				dpg.add_button(label='キャンセル', user_data=(msg_ask, False), callback=create_disabledvideofile)
+				dpg.add_button(label='Cancel', user_data=(msg_ask, False), callback=create_disabledvideofile)
 	dpg.split_frame()
 	dpg.set_item_pos(msg_ask, [dpg.get_viewport_client_width() // 2 - dpg.get_item_width(msg_ask) // 2, dpg.get_viewport_client_height() // 2 - dpg.get_item_height(msg_ask) // 2])
 	return
@@ -49,24 +47,17 @@ def create_disabledvideofile(sender, app_data, user_data):
 	_path = Path(_path)
 	with open(Path(_path / '_DISABLED_VIDEO'), 'wb') as s: s.write(b'\xff')
 	
-	message_box('完了', '無効化ファイルを作成しました', 'info', True)
+	message_box(i18n.t('ui.Completed'), i18n.t('ui.Created_disabled_files'), 'info', True)
 	return
 
 
 def ask_decode_nscriptdat(sender, app_data, charset):
 	with dpg.mutex():
-		with dpg.window(label='nscript.dat復号化', modal=True) as msg_ask:
-			dpg.add_text('そのままでは読めない形式になっているnscript.datを復号化します\n' +\
-						'普通はゲームを選択し[Convert]ボタンを押せば自動で復号化されるため、\n' +\
-						'本機能は使う必要がありません\n' +\
-						'また、普通のConvertで復号化が失敗するnscript.datは、\n' +\
-						'本機能でも復号化に失敗します\n\n' +\
-						'Convert前に0.txtを手動で編集する必要がある時など、\n' +\
-						'特殊な作業を行う場合にのみ使ってください\n\n' +\
-						'復号化するnscript.datを選択しますか？')
+		with dpg.window(label=i18n.t('ui.label_decoding_nscript_dat'), modal=True) as msg_ask:
+			dpg.add_text(i18n.t('ui.Message_decoding_nscript_dat'))
 			with dpg.group(horizontal=True):
 				dpg.add_button(label='OK', user_data=(msg_ask, charset, True), callback=decode_nscriptdat)
-				dpg.add_button(label='キャンセル', user_data=(msg_ask, charset, False), callback=decode_nscriptdat)
+				dpg.add_button(label='Cancel', user_data=(msg_ask, charset, False), callback=decode_nscriptdat)
 	dpg.split_frame()
 	dpg.set_item_pos(msg_ask, [dpg.get_viewport_client_width() // 2 - dpg.get_item_width(msg_ask) // 2, dpg.get_viewport_client_height() // 2 - dpg.get_item_height(msg_ask) // 2])
 	return
@@ -104,13 +95,13 @@ def decode_nscriptdat(sender, app_data, user_data):
 
 	with open(txtpath, 'w', encoding=charset, errors='ignore') as s: s.write(openread0x84bitxor(_path, charset))
 	
-	message_box('完了', '復号化しました', 'info', True)
+	message_box(i18n.t('ui.Completed'), i18n.t('ui.Decrypted_nscript_dat'), 'info', True)
 	return
 
 
 def open_garbro():
 	if exist('GARbro_GUI'): sp.Popen([location('GARbro_GUI')])
-	else: message_box('警告', 'GARbro_GUIが見つかりません', 'warning', True)
+	else: message_box(i18n.t('ui.Warning'), i18n.t('ui.Not_found_GARbro_GUI'), 'warning', True)
 	return
 
 
@@ -138,7 +129,7 @@ def open_input():
 
 
 def open_select(sender, app_data, user_data):
-	with dpg.window(label=f'インストール済みゲーム一覧', height=360, width=628, modal=True, no_move=True) as opsel:
+	with dpg.window(label=i18n.t('ui.Installed_game_list'), height=360, width=628, modal=True, no_move=True) as opsel:
 
 		#ローディング
 		with dpg.group(horizontal=True, tag='loading'):
@@ -210,8 +201,9 @@ def close_dpg():
 	dpg.stop_dearpygui()
 
 
+##### 個別設定は日本語のみ #####
 def ask_convert_start(sender, app_data, user_data):
-	configure_progress_bar(0, '変換開始...', True)
+	configure_progress_bar(0, i18n.t('ui.Progress_start_conversion'), True)
 
 	#入力値事前取得
 	values = {
@@ -266,7 +258,7 @@ def ask_convert_start(sender, app_data, user_data):
 				dpg.add_text('以上を確認したうえで、変換を開始しますか？')
 				with dpg.group(horizontal=True):
 					dpg.add_button(label='OK', user_data=(msg_askconv, True, values), callback=askconv_callback)
-					dpg.add_button(label='キャンセル', user_data=(msg_askconv, False, values), callback=askconv_callback)
+					dpg.add_button(label='Cancel', user_data=(msg_askconv, False, values), callback=askconv_callback)
 		dpg.split_frame()
 	# Noneなら確認を飛ばして変換開始
 	else:

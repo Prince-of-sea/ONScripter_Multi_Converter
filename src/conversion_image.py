@@ -5,7 +5,7 @@ import mozjpeg_lossless_optimization as mozj
 import imagequant as iq
 import zopfli as zf
 import numpy as np
-import base64, shutil, math
+import base64, shutil, math, i18n
 
 from b64_data import get_cur_dict
 
@@ -83,7 +83,7 @@ def convert_image(values: dict, values_ex: dict, f_dict: dict):
 			case _: 
 				if   (input_img.mode == 'RGB') : trans_px = (0, 0, 0)
 				elif (input_img.mode == 'RGBA'): trans_px = (0, 0, 0, 0)
-				else: raise ValueError('RGBでもRGBAでもありません 変換ミスでは?')
+				else: raise ValueError(i18n.t('ui.Not_RGB_or_RGBA'))
 
 		
 		#通常処理(カーソル比較モード抜けた後)
@@ -120,7 +120,7 @@ def convert_image(values: dict, values_ex: dict, f_dict: dict):
 						if  (i, j) == (a_px):#背景色設定元
 							msk_img_np[i, j] = np.array([0, 0, 0])
 
-						elif np.all(cropped_img_np[i, j] == cropped_img_np[a_px]):#背景色と一致	
+						elif np.all(cropped_img_np[i, j] == cropped_img_np[a_px]):#背景色と一致
 							cropped_img_np[i, j] = np.array([128, 128, 128])#灰色に
 							msk_img_np[i, j] = np.array([0, 0, 0])
 
@@ -196,7 +196,7 @@ def convert_image(values: dict, values_ex: dict, f_dict: dict):
 			io_img.seek(0)
 			with open(convertedpath, 'wb') as c: c.write(zf.ZopfliPNG().optimize(io_img.read()))
 
-		case _: raise ValueError('画像保存フォーマットが選択されていません')
+		case _: raise ValueError(i18n.t('ui.Image_save_format_not_selected'))
 
 	#元nbz用コビー
 	if (f_dict['nbz']) and (convertedpath.suffix.lower() != '.nbz'): shutil.copy(convertedpath, convertedpath.with_suffix('.nbz'))

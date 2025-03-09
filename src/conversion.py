@@ -5,9 +5,11 @@ import os
 import shutil
 import tempfile
 import time
+import i18n
 from pathlib import Path
 
 import dearpygui.dearpygui as dpg
+
 from conversion_etc import create_cnvsetdict, tryconvert
 from conversion_video import convert_video_renban2, getvidrenbanres
 from hardwarevalues_config import gethardwarevalues
@@ -65,7 +67,7 @@ def convert_files(values: dict, values_ex: dict, cnvset_dict: dict, extracted_di
 			futures.append(executor.submit(tryconvert, values, values_ex, f_dict, f_path_re, converted_dir))
 		
 		for i,ft in enumerate(concurrent.futures.as_completed(futures)):
-			configure_progress_bar(0.05 + (float(i / len(list(cnvset_dict))) * cnvbarnum),'', useGUI)#進捗 0.05→0.95(連番時0.35)
+			configure_progress_bar(0.05 + (float(i / len(list(cnvset_dict))) * cnvbarnum), '', useGUI)#進捗 0.05→0.95(連番時0.35)
 
 	#連番動画利用時はその画像を並列圧縮
 	if isrenban:
@@ -94,7 +96,7 @@ def convert_files(values: dict, values_ex: dict, cnvset_dict: dict, extracted_di
 					p_moved.parent.mkdir(parents=True, exist_ok=True)#移動先ディレクトリ作成
 					shutil.move(p, p_moved)
 			
-			shutil.rmtree(arc_dir)#ディレクトリ削除			
+			shutil.rmtree(arc_dir)#ディレクトリ削除            
 
 	#圧縮先チェック1 - arc1かarc2があるのにarcが無いなら
 	if (not 'arc' in compchklist) and ( ('arc1' in compchklist) or ('arc2' in compchklist)):
@@ -132,7 +134,7 @@ def convert_start(values):
 			#ついでに辞書に入力値取得
 			values[i] = dpg.get_value(i)
 		
-	configure_progress_bar(0, '変換開始...', useGUI)
+	configure_progress_bar(0, i18n.t('ui.Progress_start_conversion'), useGUI)
 
 	#ここから処理
 	try:
@@ -143,24 +145,24 @@ def convert_start(values):
 
 		#個別選択時
 		if values['title_setting'] in titledict.keys():
-			title_info = titledict[ values['title_setting'] ]
+			title_info = titledict[values['title_setting']]
 
 			#必要ソフトを配列に代入
 			required_soft_list += title_info['requiredsoft']
 
 		#必要ソフトチェック
-		if not exist_env('ffmpeg'): raise FileNotFoundError('ffmpegが用意されていません')
-		if not exist_env('ffprobe'): raise FileNotFoundError('ffprobeが用意されていません')
-		if not exist_all(required_soft_list): raise FileNotFoundError('必要なソフトが用意されていません')
-		
+		if not exist_env('ffmpeg'): raise FileNotFoundError(i18n.t('ui.ffmpeg_not_found'))
+		if not exist_env('ffprobe'): raise FileNotFoundError(i18n.t('ui.ffprobe_not_found'))
+		if not exist_all(required_soft_list): raise FileNotFoundError(i18n.t('ui.required_software_not_found'))
+
 		#入出力ディレクトリチェック
 		in_out_dir_check(values)
 
 		#Path型に変換
 		values['input_dir'] = Path(values['input_dir'])
 		values['output_dir'] = Path(values['output_dir'])
-		
-		#一時ディレクトリ作成	
+
+		#一時ディレクトリ作成    
 		with tempfile.TemporaryDirectory() as temp_dir:
 			temp_dir = Path(temp_dir)
 
@@ -182,9 +184,9 @@ def convert_start(values):
 			compressed_dir.mkdir()
 
 			#元valuesから計算処理かけて作った結果いれるところ+0.txt(&他)からすくい上げるもの
-			configure_progress_bar(0.005, '機種固有設定取得...', useGUI)
+			configure_progress_bar(0.005, i18n.t('ui.Progress_get_hardware_settings'), useGUI)
 			values_ex = gethardwarevalues(values['hardware'], 'values_ex')
-			
+
 			#並列処理用スレッド設定
 			values_ex['num_workers'] = math.ceil(os.cpu_count() / 4) if (values.get('lower_cpu_usage')) else (os.cpu_count() + 4)#low時スレッド数/4繰り上げ、通常時スレッド数+4(初期値)
 
@@ -195,7 +197,7 @@ def convert_start(values):
 				if (not title_info['is_4:3']) and (values_ex['aspect_4:3only']) and (values['hardware'] != 'PSP'):
 
 					#非対応解像度エラー
-					raise Exception('非対応解像度のため、このソフトは変換できません')
+					raise Exception(i18n.t('ui.Unsupported_resolution'))
 
 				#事前変換用ディレクトリパス
 				pre_converted_dir = Path(temp_dir / 'pre_converted')
@@ -204,7 +206,7 @@ def convert_start(values):
 				pre_converted_dir.mkdir()
 
 				#個別変換用事前変換
-				configure_progress_bar(0.01, '個別設定を元に事前変換...', useGUI)
+				configure_progress_bar(0.01, i18n.t('ui.Progress_pre_conversion'), useGUI)
 				pre_convert(values, values_ex, pre_converted_dir)
 
 				#画像解像度がスクリプト側と一致しない時用
@@ -215,63 +217,63 @@ def convert_start(values):
 
 			#選択不可の動画形式選んでたらエラー
 			if (values['vid_movfmt_radio'] in values_ex['disable_video']):
-				raise Exception(f'{values['hardware']}は動画を{values['vid_movfmt_radio']}形式に変換できません')
+				raise Exception(i18n.t('ui.Unsupported_video_for_hardware'))
 
 			#連番変換時画像サイズ先に代入
 			if (values['vid_movfmt_radio'] == '連番画像'):
-				configure_progress_bar(0.02, '連番画像設定...', useGUI)
+				configure_progress_bar(0.02, i18n.t('ui.Progress_set_sequential_images'), useGUI)
 				values_ex['renbanresper'] = getvidrenbanres(values)
 
 			#0.txtのテキスト取得
-			configure_progress_bar(0.023, 'シナリオテキスト取得...', useGUI)
+			configure_progress_bar(0.023, i18n.t('ui.Progress_get_scenario_text'), useGUI)
 			values_ex['0txtscript'] = onsscript_decode(values)
 
 			#0.txtのテキストから各種情報取得
-			configure_progress_bar(0.026, 'シナリオ情報取得...', useGUI)
+			configure_progress_bar(0.026, i18n.t('ui.Progress_get_scenario_info'), useGUI)
 			values_ex = onsscript_check(values, values_ex)
 
 			#0.txtのコメントアウト削除
 			if values['etc_0txtremovecommentout_chk']:
-				configure_progress_bar(0.029, 'シナリオコメント削除...', useGUI)
+				configure_progress_bar(0.029, i18n.t('ui.Progress_remove_scenario_comments'), useGUI)
 				values_ex['0txtscript'] = remove_0txtcommentout(values_ex)
 
 			#nsa/sar展開
-			configure_progress_bar(0.03, 'アーカイブ展開...', useGUI)
+			configure_progress_bar(0.03, i18n.t('ui.Progress_extract_archive'), useGUI)
 			values_ex = extract_nsa(values, values_ex, extracted_dir, useGUI)#進捗 0.03→0.045
 
 			#画像/音楽/動画/その他のファイルを仕分け
-			configure_progress_bar(0.048, '展開データ設定...', useGUI)
+			configure_progress_bar(0.048, i18n.t('ui.Progress_set_extracted_data'), useGUI)
 			cnvset_dict = create_cnvsetdict(values, values_ex, extracted_dir)
 
 			#変換本処理
-			configure_progress_bar(0.05, '展開データ変換...', useGUI)
+			configure_progress_bar(0.05, i18n.t('ui.Progress_convert_extracted_data'), useGUI)
 			values_ex = convert_files(values, values_ex, cnvset_dict, extracted_dir, converted_dir, useGUI)#進捗 0.05→0.95
-			
+
 			#変換済ファイルをnsaに圧縮
-			configure_progress_bar(0.95, 'アーカイブ再構築...', useGUI)
+			configure_progress_bar(0.95, i18n.t('ui.Progress_rebuild_archive'), useGUI)
 			compressed_nsa(converted_dir, compressed_dir, useGUI)#進捗 0.95→0.98
-			
+
 			#savedataフォルダ作成(無いとエラー出す作品向け)
 			create_savedatadir(values_ex, compressed_dir)
-			
+
 			#機種固有コンフィグファイル作成
-			configure_progress_bar(0.98, 'コンフィグ作成...', useGUI)
+			configure_progress_bar(0.98, i18n.t('ui.Progress_create_config'), useGUI)
 			create_configfile(values, values_ex, compressed_dir)
 
 			#0.txt書き出し
-			configure_progress_bar(0.982, '変換済みシナリオ書込み...', useGUI)
+			configure_progress_bar(0.982, i18n.t('ui.Progress_write_converted_scenario'), useGUI)
 			create_0txt(values, values_ex, compressed_dir)
 
 			#完成品移動
-			configure_progress_bar(0.985, '全データ移動...', useGUI)
+			configure_progress_bar(0.985, i18n.t('ui.Progress_move_all_data'), useGUI)
 			debug_copy(values, compressed_dir)
 			result_move(result_dir, compressed_dir)
 
 			#まもなく完了します
-			configure_progress_bar(0.99, 'まもなく完了します...', useGUI)
+			configure_progress_bar(0.99, i18n.t('ui.Progress_almost_done'), useGUI)
 
 	except Exception as e:
-		message_box('エラー', e, 'error', useGUI)
+		message_box(i18n.t('ui.Error'), e, 'error', useGUI)
 	
 	else:
 		end_time = time.perf_counter()
@@ -279,12 +281,12 @@ def convert_start(values):
 		m = str(c_time // 60).zfill(2)
 		s = str(c_time % 60).zfill(2)
 		
-		cnvmsg = f'変換処理が終了しました\n処理時間: {m}分{s}秒'
+		cnvmsg = i18n.t('ui.Conversion_complete_time').replace(r'{m}', m).replace(r'{s}', s)
 
-		message_box('変換完了', cnvmsg, 'info', useGUI)
+		message_box(i18n.t('ui.Conversion_complete_title'), cnvmsg, 'info', useGUI)
 
 		if (useGUI):
-			configure_progress_bar(1, '変換完了', True)
+			configure_progress_bar(1, i18n.t('ui.Conversion_complete_title'), True)
 			
 
 			#入出力初期化

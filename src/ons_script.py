@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from pathlib import Path
-import math, re
+import math, i18n, re
 
 from utils import openread0x84bitxor, lower_AtoZ
 
@@ -36,7 +36,7 @@ def onsscript_decode(values: dict):
 		text += openread0x84bitxor(nsdat_path, charset)
 	
 	else:
-		raise FileNotFoundError('00.txt/0.txt/nscript.datが見つかりません')
+		raise FileNotFoundError(i18n.t('ui.No_script_file_found'))
 
 	return text
 
@@ -102,7 +102,7 @@ def onsscript_check_resolution(values: dict, values_ex: dict, ztxtscript: str, o
 			if (script_resolution[0] == 640): ztxtscript = re.sub(newnsc_mode, r';value\2', ztxtscript, 1)#640x480
 			else: ztxtscript = re.sub(newnsc_mode, r';mode\3,value\2', ztxtscript, 1)#通常時
 		
-		else: raise ValueError('非対応解像度のため、このソフトは変換できません')
+		else: raise ValueError(i18n.t('ui.Unsupported_resolution'))
 	
 	return script_resolution, override_resolution, ztxtscript
 
@@ -217,7 +217,7 @@ def onsscript_check_txtmodify_adddefsub(ztxtscript: str, pre_txt: str, aft_txt: 
 				  f'\n{pre_txt}\ngame\n{aft_txt}\n', ztxtscript, 1)
 	
 	if (ztxtscript == ztxtscript_old):
-		raise ValueError('game命令追加エラー')
+		raise ValueError(i18n.t('ui.game_command_addition_error'))
 	
 	return ztxtscript
 
@@ -245,7 +245,7 @@ def onsscript_check_txtmodify(values: dict, values_ex: dict, ztxtscript: str, ov
 	match values['etc_0txtnbz_radio']:
 		case '0.txtを".nbz"->".wav"で一括置換': ztxtscript = re.sub(r'\.[Nn][Bb][Zz]', r'.wav', ztxtscript)
 		case '変換後のファイルを拡張子nbzとwavで両方用意しておく': pass
-		case _: raise ValueError('「nbz変換設定」未選択エラー')
+		case _: raise ValueError(i18n.t('ui.nbz_conversion_setting_error'))
 	
 	#avi命令→mpegplay命令変換
 	adddefsubavi = False
@@ -263,7 +263,7 @@ def onsscript_check_txtmodify(values: dict, values_ex: dict, ztxtscript: str, ov
 		case '利用しない': pass
 
 		#未選択エラー
-		case _: raise ValueError('「avi/mpegplay命令変換」未選択エラー')
+		case _: raise ValueError(i18n.t('ui.avi_conversion_setting_error'))
 
 	#動画連番画像利用時強制avi命令→mpegplay命令変換
 	if (values['vid_movfmt_radio'] == '連番画像') and (not adddefsubavi):
@@ -284,7 +284,7 @@ def onsscript_check_txtmodify(values: dict, values_ex: dict, ztxtscript: str, ov
 		case '利用しない': pass
 
 		#未選択エラー
-		case _: raise ValueError('「screenshot命令無効化」未選択エラー')
+		case _: raise ValueError(i18n.t('ui.savescreenshot_setting_error'))
 	
 	#最大回想ページ数設定
 	if values['etc_0txtmaxkaisoupage_chk']:

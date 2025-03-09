@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 # windows only
-import ctypes, click, sys, os
+import ctypes, click, i18n, sys, os
 
 from hardwarevalues_config import gethardwarevalues_full
 from process_notons import get_titledict
+from utils import get_meipass
 from ui_gui import gui_main
 from ui_cli import cli_main
 
@@ -29,6 +30,10 @@ def main(charset: str, use_cli: bool, hardware: str, input_dir: str, output_dir:
 	#開発版判定
 	if not hasattr(sys, '_MEIPASS'): version += ' (dev)'
 
+	#i18n設定
+	i18n.load_path.append(get_meipass('lang'))
+	i18n.set('locale', 'ja')
+
 	#起動前print
 	print(
 		'------------------------------------------------------------\n'
@@ -41,14 +46,14 @@ def main(charset: str, use_cli: bool, hardware: str, input_dir: str, output_dir:
 	output_dir = str(output_dir).replace('\\', '/')
 
 	#Windows以外はここで弾く
-	if os.name != 'nt': raise Exception('Windows以外では起動できません')
+	if os.name != 'nt': raise Exception(i18n.t('ui.Cannot_be_started_on_non_Windows_systems'))
 
 	#mutex作成
 	mutex_name = "Global\\ONScripterMultiConverter"
 	mutex = ctypes.windll.kernel32.CreateMutexW(None, False, mutex_name)
 
 	#多重起動チェック
-	if ctypes.windll.kernel32.GetLastError() == 183: print('プログラムは既に起動しています')
+	if ctypes.windll.kernel32.GetLastError() == 183: print(i18n.t('ui.This_application_is_already_running'))
 
 	#起動
 	elif use_cli: cli_main(version, charset, hardware, input_dir, output_dir, title_setting)

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import win32console, win32gui
+import win32console, win32gui, i18n
 import dearpygui.dearpygui as dpg
 
 from hardwarevalues_config import gethardwarevalues_full, gethardwarevalues
@@ -37,7 +37,7 @@ def gui_main(version: str, charset_param: str, hw_key: str, input_dir_param: str
 
 	#ウィンドウを最小化
 	win32gui.ShowWindow(console_window, 6) #SW_MINIMIZE
-	print('GUIモード起動中...\nこのウィンドウを閉じないようにしてください')
+	print(i18n.t('ui.This_application_is_already_running'))
 
 	#ハードウェア値取得
 	hardwarevalues_full = gethardwarevalues_full()
@@ -60,39 +60,39 @@ def gui_main(version: str, charset_param: str, hw_key: str, input_dir_param: str
 
 	with dpg.window(label='Main Window', tag='Main Window', no_resize=True) as window:
 		with dpg.menu_bar():
-			with dpg.menu(label='設定'):
-				dpg.add_menu_item(label='CPU使用率低減モード', check=True, default_value=False, tag='lower_cpu_usage')
-				with dpg.menu(label='ハード変更'):
+			with dpg.menu(label=i18n.t('ui.label_settings')):
+				dpg.add_menu_item(label=i18n.t('ui.label_cpu_usage_reduction_mode'), check=True, default_value=False, tag='lower_cpu_usage')
+				with dpg.menu(label=i18n.t('ui.label_hardware_selection')):
 					for hwk, hwv in hardwarevalues_full.items():
 						if (charset_param in hwv['values_ex']['support_charset']):
 							dpg.add_menu_item(label=hwv['values_ex']['hardware_full'], user_data=(hwk, version), callback=refresh_state)
 
-				dpg.add_menu_item(label='終了', callback=close_dpg)
+				dpg.add_menu_item(label=i18n.t('ui.label_end'), callback=close_dpg)
 
-			with dpg.menu(label='ツール'):
-				dpg.add_menu_item(label='連番動画無効化ファイル作成', callback=ask_create_disabledvideofile)
-				dpg.add_menu_item(label='nscript.dat復号化', user_data=(charset_param), callback=ask_decode_nscriptdat)
-				dpg.add_menu_item(label='GARbroを起動', callback=open_garbro)
+			with dpg.menu(label=i18n.t('ui.label_tools')):
+				dpg.add_menu_item(label=i18n.t('ui.label_numbered_video_disable'), callback=ask_create_disabledvideofile)
+				dpg.add_menu_item(label=i18n.t('ui.label_decoding_nscript_dat'), user_data=(charset_param), callback=ask_decode_nscriptdat)
+				dpg.add_menu_item(label=i18n.t('ui.label_open_garbro'), callback=open_garbro)
 
-			with dpg.menu(label='このソフトについて'):
-				dpg.add_menu_item(label='サイトを開く', callback=open_repositorieslink)
-				dpg.add_menu_item(label='権利者表記', user_data=(version), callback=copyrights)
-				if get_meipass('licenses_py.txt').is_file(): dpg.add_menu_item(label='ライセンス', callback=open_licensespy)
+			with dpg.menu(label=i18n.t('ui.label_about')):
+				dpg.add_menu_item(label=i18n.t('ui.label_open_web'), callback=open_repositorieslink)
+				dpg.add_menu_item(label=i18n.t('ui.label_copyrights'), user_data=(version), callback=copyrights)
+				if get_meipass('licenses_py.txt').is_file(): dpg.add_menu_item(label=i18n.t('ui.label_license'), callback=open_licensespy)
 
 		with dpg.group(horizontal=True):
-			dpg.add_text('入力元：　')
+			dpg.add_text(i18n.t('ui.label_input'))
 			dpg.add_input_text(tag='input_dir', readonly=True)
 			dpg.add_button(label='Browse', callback=open_input, tag='input_browse_btn')
-			dpg.add_button(label='一覧から選択', user_data=(charset_param), callback=open_select, tag='input_select_btn')
+			dpg.add_button(label=i18n.t('ui.label_select_from_list'), user_data=(charset_param), callback=open_select, tag='input_select_btn')
 
 		with dpg.group(horizontal=True):
-			dpg.add_text('出力先：　')
+			dpg.add_text(i18n.t('ui.label_output'))
 			dpg.add_input_text(tag='output_dir', readonly=True)
 			dpg.add_button(label='Browse', callback=open_output, tag='output_browse_btn')
-			dpg.add_button(label='既定値に設定', callback=desktop_output, tag='output_desktop_btn')
+			dpg.add_button(label=i18n.t('ui.label_set_to_default'), callback=desktop_output, tag='output_desktop_btn')
 
 		with dpg.group(horizontal=True):
-			dpg.add_text('個別設定：')
+			dpg.add_text(i18n.t('ui.label_individual_settings'))
 			dpg.add_combo(
 				tag='title_setting',
 				default_value=(get_titlesettingfull(title_setting_param) if charset_param=='cp932' else 'None'),
@@ -101,19 +101,19 @@ def gui_main(version: str, charset_param: str, hw_key: str, input_dir_param: str
 
 		# with dpg.child_window(height=220, border=False):
 		with dpg.tab_bar():
-			with dpg.tab(label='画像'):
+			with dpg.tab(label=i18n.t('ui.label_image')):
 				with dpg.child_window(height=200, border=False):
-					with dpg.tree_node(label='基本設定', default_open=True):
+					with dpg.tree_node(label=i18n.t('ui.label_basic_settings'), default_open=True):
 						with dpg.group(horizontal=True):
-							dpg.add_text('変換する際の解像度が複数選択可能な場合：')
+							dpg.add_text(i18n.t('ui.label_image_preferred_format'))
 							dpg.add_radio_button(
-								items=('高解像度優先', '低解像度優先'),
+								items=(i18n.t('var.high_resolution_priority'), i18n.t('var.low_resolution_priority')),
 								default_value=values_default['preferred_resolution'],
 								horizontal=True,
 								tag='preferred_resolution',
 							)
 						with dpg.group(horizontal=True):
-							dpg.add_text('JPEG品質：')
+							dpg.add_text(i18n.t('ui.label_image_quality'))
 							dpg.add_slider_int(
 								label='',
 								default_value=values_default['img_jpgquality_bar'],
@@ -122,28 +122,28 @@ def gui_main(version: str, charset_param: str, hw_key: str, input_dir_param: str
 								tag='img_jpgquality_bar',
 							)
 						with dpg.group(horizontal=True):
-							dpg.add_checkbox(label='PNGを減色：', default_value=values_default['img_pngquantize_chk'], tag='img_pngquantize_chk')
+							dpg.add_checkbox(label=i18n.t('ui.label_png_reduction'), default_value=values_default['img_pngquantize_chk'], tag='img_pngquantize_chk')
 							dpg.add_combo(
-								label='色',
+								label=i18n.t('ui.label_color'),
 								items=('256', '192', '128'),
 								default_value=values_default['img_pngquantize_num'],
 								fit_width=True,
 								tag='img_pngquantize_num',
 							)
-					with dpg.tree_node(label='詳細設定', default_open=True):
+					with dpg.tree_node(label=i18n.t('ui.label_advanced_settings'), default_open=True):
 						dpg.add_checkbox(
-							label='''透過形式"l","r"以外のBMPを検出しJPEGへ変換''',
+							label=i18n.t('ui.label_image_transparent'),
 							default_value=values_default['img_bmptojpg_chk'],
 							tag='img_bmptojpg_chk',
 						)
 						with dpg.group(horizontal=True):
 							dpg.add_checkbox(
-								label='''一般的な非PNGの横解像度を特定の倍数にする：''',
+								label=i18n.t('ui.label_png_multi'),
 								default_value=values_default['img_multi_chk'],
 								tag='img_multi_chk',
 							)
 							dpg.add_combo(
-								label='の倍数',
+								label=i18n.t('ui.label_png_multiple_size'),
 								items=(
 									'1',
 									'2',
@@ -155,11 +155,11 @@ def gui_main(version: str, charset_param: str, hw_key: str, input_dir_param: str
 								tag='img_multi_num',
 							)
 
-			with dpg.tab(label='音楽'):
+			with dpg.tab(label=i18n.t('ui.label_audio')):
 				with dpg.child_window(height=200, border=False):
-					with dpg.tree_node(label='基本設定', default_open=True):
+					with dpg.tree_node(label=i18n.t('ui.label_basic_settings'), default_open=True):
 						with dpg.group(horizontal=True):
-							dpg.add_text('BGMフォーマット：')
+							dpg.add_text(i18n.t('ui.label_bgm_format'))
 							dpg.add_radio_button(
 								items=('OGG', 'MP3', 'WAV'),
 								default_value=values_default['aud_bgmfmt_radio'],
@@ -167,7 +167,7 @@ def gui_main(version: str, charset_param: str, hw_key: str, input_dir_param: str
 								tag='aud_bgmfmt_radio',
 							)
 						with dpg.group(horizontal=True):
-							dpg.add_text('SE/VOICEフォーマット：')
+							dpg.add_text(i18n.t('ui.label_se_format'))
 							dpg.add_radio_button(
 								items=('OGG', 'MP3', 'WAV'),
 								default_value=values_default['aud_sefmt_radio'],
@@ -175,25 +175,25 @@ def gui_main(version: str, charset_param: str, hw_key: str, input_dir_param: str
 								tag='aud_sefmt_radio',
 							)
 						with dpg.group(horizontal=True):
-							dpg.add_text('SE/BGMチャンネル数：')
+							dpg.add_text(i18n.t('ui.label_bgm_channel'))
 							dpg.add_radio_button(
-								items=('ステレオ', 'モノラル'),
+								items=(i18n.t('var.stereo'), i18n.t('var.mono')),
 								default_value=values_default['aud_bgmch_radio'],
 								horizontal=True,
 								tag='aud_bgmch_radio',
 							)
 						with dpg.group(horizontal=True):
-							dpg.add_text('SE/VOICEチャンネル数：')
+							dpg.add_text(i18n.t('ui.label_se_channel'))
 							dpg.add_radio_button(
-								items=('ステレオ', 'モノラル'),
+								items=(i18n.t('var.stereo'), i18n.t('var.mono')),
 								default_value=values_default['aud_sech_radio'],
 								horizontal=True,
 								tag='aud_sech_radio',
 							)
-					with dpg.tree_node(label='詳細設定', default_open=True):
-						with dpg.tree_node(label='OGG変換時', default_open=True):
+					with dpg.tree_node(label=i18n.t('ui.label_advanced_settings'), default_open=True):
+						with dpg.tree_node(label=i18n.t('ui.label_ogg_conversion'), default_open=True):
 							with dpg.group(horizontal=True):
-								dpg.add_text('BGMビットレート：')
+								dpg.add_text(i18n.t('ui.label_bgm_bitrate'))
 								dpg.add_combo(
 									label='kbps',
 									items=(
@@ -219,7 +219,7 @@ def gui_main(version: str, charset_param: str, hw_key: str, input_dir_param: str
 									tag='aud_oggbgm_hz',
 								)
 							with dpg.group(horizontal=True):
-								dpg.add_text('SE/VOICEビットレート：')
+								dpg.add_text(i18n.t('ui.label_se_bitrate'))
 								dpg.add_combo(
 									label='kbps',
 									items=(
@@ -244,9 +244,9 @@ def gui_main(version: str, charset_param: str, hw_key: str, input_dir_param: str
 									fit_width=True,
 									tag='aud_oggse_hz',
 								)
-						with dpg.tree_node(label='MP3変換時', default_open=True):
+						with dpg.tree_node(label=i18n.t('ui.label_mp3_conversion'), default_open=True):
 							with dpg.group(horizontal=True):
-								dpg.add_text('BGMビットレート：')
+								dpg.add_text(i18n.t('ui.label_bgm_bitrate'))
 								dpg.add_combo(
 									label='kbps',
 									items=(
@@ -272,7 +272,7 @@ def gui_main(version: str, charset_param: str, hw_key: str, input_dir_param: str
 									tag='aud_mp3bgm_hz',
 								)
 							with dpg.group(horizontal=True):
-								dpg.add_text('SE/VOICEビットレート：')
+								dpg.add_text(i18n.t('ui.label_se_bitrate'))
 								dpg.add_combo(
 									label='kbps',
 									items=(
@@ -298,7 +298,7 @@ def gui_main(version: str, charset_param: str, hw_key: str, input_dir_param: str
 									tag='aud_mp3se_hz',
 								)
 							with dpg.group(horizontal=True):
-								dpg.add_text('BGMカットオフ周波数：')
+								dpg.add_text(i18n.t('ui.label_bgm_cutoff_frequency'))
 								dpg.add_combo(
 									label='Hz',
 									items=(
@@ -316,7 +316,7 @@ def gui_main(version: str, charset_param: str, hw_key: str, input_dir_param: str
 									tag='aud_mp3bgm_cutoff',
 								)
 							with dpg.group(horizontal=True):
-								dpg.add_text('SE/VOICEカットオフ周波数：')
+								dpg.add_text(i18n.t('ui.label_se_cutoff_frequency'))
 								dpg.add_combo(
 									label='Hz',
 									items=(
@@ -333,9 +333,9 @@ def gui_main(version: str, charset_param: str, hw_key: str, input_dir_param: str
 									fit_width=True,
 									tag='aud_mp3se_cutoff',
 								)
-						with dpg.tree_node(label='WAV変換時', default_open=True):
+						with dpg.tree_node(label=i18n.t('ui.label_wav_conversion'), default_open=True):
 							with dpg.group(horizontal=True):
-								dpg.add_text('BGMビットレート：')
+								dpg.add_text(i18n.t('ui.label_bgm_bitrate'))
 								dpg.add_combo(
 									label='Hz',
 									items=('44100', '22050', '11025'),
@@ -344,7 +344,7 @@ def gui_main(version: str, charset_param: str, hw_key: str, input_dir_param: str
 									tag='aud_wavbgm_hz',
 								)
 							with dpg.group(horizontal=True):
-								dpg.add_text('SE/VOICEビットレート：')
+								dpg.add_text(i18n.t('ui.label_se_bitrate'))
 								dpg.add_combo(
 									label='Hz',
 									items=('44100', '22050', '11025'),
@@ -353,7 +353,7 @@ def gui_main(version: str, charset_param: str, hw_key: str, input_dir_param: str
 									tag='aud_wavse_hz',
 								)
 							with dpg.group(horizontal=True):
-								dpg.add_text('BGMコーデック：')
+								dpg.add_text(i18n.t('ui.label_bgm_codec'))
 								dpg.add_radio_button(
 									items=('pcm_s16le', 'pcm_u8'),
 									default_value=values_default['aud_bgmcodec_radio'],
@@ -361,7 +361,7 @@ def gui_main(version: str, charset_param: str, hw_key: str, input_dir_param: str
 									tag='aud_bgmcodec_radio',
 								)
 							with dpg.group(horizontal=True):
-								dpg.add_text('SEコーデック：')
+								dpg.add_text(i18n.t('ui.label_se_codec'))
 								dpg.add_radio_button(
 									items=('pcm_s16le', 'pcm_u8'),
 									default_value=values_default['aud_secodec_radio'],
@@ -369,21 +369,21 @@ def gui_main(version: str, charset_param: str, hw_key: str, input_dir_param: str
 									tag='aud_secodec_radio',
 								)
 
-			with dpg.tab(label='動画'):
+			with dpg.tab(label=i18n.t('ui.label_video')):
 				with dpg.child_window(height=200, border=False):
-					with dpg.tree_node(label='基本設定', default_open=True):
+					with dpg.tree_node(label=i18n.t('ui.label_basic_settings'), default_open=True):
 						with dpg.group(horizontal=True):
-							dpg.add_text('動画フォーマット：')
+							dpg.add_text(i18n.t('ui.label_video_format'))
 							dpg.add_radio_button(
-								items=('連番画像', 'MJPEG', 'MP4', '変換しない'),
+								items=(i18n.t('var.numbered_images'), 'MJPEG', 'MP4', i18n.t('var.do_not_convert')),
 								default_value=values_default['vid_movfmt_radio'],
 								horizontal=True,
 								tag='vid_movfmt_radio',
 							)
-					with dpg.tree_node(label='詳細設定', default_open=True):
-						with dpg.tree_node(label='連番画像変換時', default_open=True):
+					with dpg.tree_node(label=i18n.t('ui.label_advanced_settings'), default_open=True):
+						with dpg.tree_node(label=i18n.t('ui.label_video_numbered'), default_open=True):
 							with dpg.group(horizontal=True):
-								dpg.add_text('画像フォーマット：')
+								dpg.add_text(i18n.t('ui.label_video_numbered_format'))
 								dpg.add_radio_button(
 									items=('PNG', 'JPEG'),
 									default_value=values_default['vid_renbanfmt_radio'],
@@ -391,7 +391,7 @@ def gui_main(version: str, charset_param: str, hw_key: str, input_dir_param: str
 									tag='vid_renbanfmt_radio',
 								)
 							with dpg.group(horizontal=True):
-								dpg.add_text('解像度 - %指定：')
+								dpg.add_text(i18n.t('ui.label_video_numbered_resolution'))
 								dpg.add_radio_button(
 									items=(
 										'100%(1/1)',
@@ -406,16 +406,16 @@ def gui_main(version: str, charset_param: str, hw_key: str, input_dir_param: str
 									tag='vid_renbanres_radio',
 								)
 							with dpg.group(horizontal=True):
-								dpg.add_checkbox(label='連番PNGを減色：',default_value=values_default['vid_renbanpngquantize_chk'], tag='vid_renbanpngquantize_chk')
+								dpg.add_checkbox(label=i18n.t('ui.label_video_numbered_reduction'), default_value=values_default['vid_renbanpngquantize_chk'], tag='vid_renbanpngquantize_chk')
 								dpg.add_combo(
-									label='色',
+									label=i18n.t('ui.label_color'),
 									items=('256', '192', '128', '96', '64', '32'),
 									default_value=values_default['vid_renbanpngquantize_num'],
 									fit_width=True,
 									tag='vid_renbanpngquantize_num',
 								)
 							with dpg.group(horizontal=True):
-								dpg.add_text('JPEG利用時品質：')
+								dpg.add_text(i18n.t('ui.label_video_numbered_jpeg_quality'))
 								dpg.add_slider_int(
 									label='',
 									default_value=values_default['vid_renbanjpgquality_bar'],
@@ -424,16 +424,16 @@ def gui_main(version: str, charset_param: str, hw_key: str, input_dir_param: str
 									tag='vid_renbanjpgquality_bar',
 								)
 							with dpg.group(horizontal=True):
-								dpg.add_text('音声変換時の設定：')
+								dpg.add_text(i18n.t('ui.label_video_numbered_audio_setting'))
 								dpg.add_radio_button(
-									items=('BGMに合わせる', 'SE/VOICEに合わせる'),
+									items=(i18n.t('var.bgm_match'), i18n.t('var.se_voice_match')),
 									default_value=values_default['vid_renbanaudset_radio'],
 									horizontal=False,
 									tag='vid_renbanaudset_radio',
 								)
-						with dpg.tree_node(label='MJPEG変換時', default_open=True):
+						with dpg.tree_node(label=i18n.t('ui.label_video_mjpeg'), default_open=True):
 							with dpg.group(horizontal=False):
-								dpg.add_text('動画品質 - 数字が少ないほど高品質：')
+								dpg.add_text(i18n.t('ui.label_video_quality'))
 								dpg.add_slider_int(
 									label='',
 									default_value=values_default['vid_mjpegquality_bar'],
@@ -441,9 +441,9 @@ def gui_main(version: str, charset_param: str, hw_key: str, input_dir_param: str
 									max_value=30,
 									tag='vid_mjpegquality_bar',
 								)
-						with dpg.tree_node(label='MP4変換時', default_open=True):
+						with dpg.tree_node(label=i18n.t('ui.label_video_mp4'), default_open=True):
 							with dpg.group(horizontal=False):
-								dpg.add_text('動画品質 - 数字が少ないほど高品質：')
+								dpg.add_text(i18n.t('ui.label_video_quality'))
 								dpg.add_slider_int(
 									label='',
 									default_value=values_default['vid_mp4quality_bar'],
@@ -452,7 +452,7 @@ def gui_main(version: str, charset_param: str, hw_key: str, input_dir_param: str
 									tag='vid_mp4quality_bar',
 								)
 							with dpg.group(horizontal=True):
-								dpg.add_text('音声ビットレート：')
+								dpg.add_text(i18n.t('ui.label_video_audio_bitrate'))
 								dpg.add_combo(
 									label='kbps',
 									items=(
@@ -478,112 +478,112 @@ def gui_main(version: str, charset_param: str, hw_key: str, input_dir_param: str
 									tag='vid_mp4aud_hz',
 								)
 
-			with dpg.tab(label='その他'):
+			with dpg.tab(label=i18n.t('ui.label_other')):
 				with dpg.child_window(height=200, border=False):
-					with dpg.tree_node(label='基本設定', default_open=True):
-						with dpg.tree_node(label='ファイル関連', default_open=True):
+					with dpg.tree_node(label=i18n.t('ui.label_basic_settings'), default_open=True):
+						with dpg.tree_node(label=i18n.t('ui.label_file'), default_open=True):
 							with dpg.group(horizontal=True):
-								dpg.add_text('画像圧縮先：')
+								dpg.add_text(i18n.t('ui.label_image_compression'))
 								dpg.add_combo(
 									label='',
-									items=('arc.nsa', 'arc1.nsa', 'arc2.nsa', '圧縮しない'),
+									items=('arc.nsa', 'arc1.nsa', 'arc2.nsa', i18n.t('var.do_not_compress')),
 									default_value=values_default['etc_filecompimg_nsa'],
 									fit_width=True,
 									tag='etc_filecompimg_nsa',
 								)
 							with dpg.group(horizontal=True):
-								dpg.add_text('BGM圧縮先：')
+								dpg.add_text(i18n.t('ui.label_bgm_compression'))
 								dpg.add_combo(
 									label='',
-									items=('arc.nsa', 'arc1.nsa', 'arc2.nsa', '圧縮しない'),
+									items=('arc.nsa', 'arc1.nsa', 'arc2.nsa', i18n.t('var.do_not_compress')),
 									default_value=values_default['etc_filecompbgm_nsa'],
 									fit_width=True,
 									tag='etc_filecompbgm_nsa',
 								)
 							with dpg.group(horizontal=True):
-								dpg.add_text('SE/VOICE圧縮先：')
+								dpg.add_text(i18n.t('ui.label_se_compression'))
 								dpg.add_combo(
 									label='',
-									items=('arc.nsa', 'arc1.nsa', 'arc2.nsa', '圧縮しない'),
+									items=('arc.nsa', 'arc1.nsa', 'arc2.nsa', i18n.t('var.do_not_compress')),
 									default_value=values_default['etc_filecompse_nsa'],
 									fit_width=True,
 									tag='etc_filecompse_nsa',
 								)
 							with dpg.group(horizontal=True):
-								dpg.add_text('連番利用時動画圧縮先：')
+								dpg.add_text(i18n.t('ui.label_numvideo_compression'))
 								dpg.add_combo(
 									label='',
-									items=('arc.nsa', 'arc1.nsa', 'arc2.nsa', '圧縮しない'),
+									items=('arc.nsa', 'arc1.nsa', 'arc2.nsa', i18n.t('var.do_not_compress')),
 									default_value=values_default['etc_filecomprenban_nsa'],
 									fit_width=True,
 									tag='etc_filecomprenban_nsa',
 								)
 							with dpg.group(horizontal=True):
 								dpg.add_checkbox(
-									label='''拡張子".dll"のファイルを全て除外''',
+									label=i18n.t('ui.label_dll_exclude'),
 									default_value=values_default['etc_fileexdll_chk'],
 									tag='etc_fileexdll_chk',
 								)
 							with dpg.group(horizontal=True):
 								dpg.add_checkbox(
-									label='''ファイル"Thumbs.db"を全て除外''',
+									label=i18n.t('ui.label_exdb_exclude'),
 									default_value=values_default['etc_fileexdb_chk'],
 									tag='etc_fileexdb_chk',
 								)
-						with dpg.tree_node(label='ons.ini関連(PSP用)', default_open=True):
+						with dpg.tree_node(label=i18n.t('ui.label_onsini'), default_open=True):
 							with dpg.group(horizontal=True):
-								dpg.add_text('画面表示：')
+								dpg.add_text(i18n.t('ui.label_onsini_expansion'))
 								dpg.add_combo(
 									label='',
-									items=('拡大しない', '拡大(比率維持)', '拡大(フルサイズ)'),
+									items=(i18n.t('var.no_expansion'), i18n.t('var.maintain_ratio'), i18n.t('var.full_size')),
 									default_value=values_default['etc_iniscreen'],
 									fit_width=True,
 									tag='etc_iniscreen',
 								)
 							with dpg.group(horizontal=True):
 								dpg.add_checkbox(
-									label='常にメモリ内にフォントを読み込んでおく',
+									label=i18n.t('ui.label_ini_font'),
 									default_value=values_default['etc_iniramfont_chk'],
 									tag='etc_iniramfont_chk',
 								)
 							with dpg.group(horizontal=True):
 								dpg.add_checkbox(
-									label='マウスカーソルを利用',
+									label=i18n.t('ui.label_ini_cursor'),
 									default_value=values_default['etc_inicursor_chk'],
 									tag='etc_inicursor_chk',
 								)
-					with dpg.tree_node(label='詳細設定', default_open=True):
-						with dpg.tree_node(label='0.txt関連', default_open=True):
+					with dpg.tree_node(label=i18n.t('ui.label_advanced_settings'), default_open=True):
+						with dpg.tree_node(label=i18n.t('ui.label_0txt'), default_open=True):
 							with dpg.group(horizontal=True):
-								dpg.add_text('nbz変換設定：')
+								dpg.add_text(i18n.t('ui.label_0txt_nbzconversion'))
 								dpg.add_radio_button(
 									items=(
-										'変換後のファイルを拡張子nbzとwavで両方用意しておく',
-										'''0.txtを".nbz"->".wav"で一括置換''',
+										i18n.t('var.convert_and_keep_both'),
+										i18n.t('var.replace_all_nbz_to_wav'),
 									),
 									default_value=values_default['etc_0txtnbz_radio'],
 									horizontal=False,
 									tag='etc_0txtnbz_radio',
 								)
 							with dpg.group(horizontal=True):
-								dpg.add_text('avi命令->mpegplay命令変換：')
+								dpg.add_text(i18n.t('ui.label_0txt_avitompegplay'))
 								dpg.add_combo(
 									items=(
-										'利用する(関数上書き)',
-										'利用する(正規表現置換)',
-										'利用しない',
+										i18n.t('var.use_function_override'),
+										i18n.t('var.use_regex_replace'),
+										i18n.t('var.do_not_use'),
 									),
 									default_value=values_default['etc_0txtavitompegplay'],
 									fit_width=True,
 									tag='etc_0txtavitompegplay',
 								)
 							with dpg.group(horizontal=True):
-								dpg.add_text('screenshot系命令無効化：')
+								dpg.add_text(i18n.t('ui.label_0txt_noscreenshot'))
 								dpg.add_combo(
 									items=(
-										'利用する(関数上書き)',
-										'利用する(正規表現置換)',
-										'利用しない',
+										i18n.t('var.use_function_override'),
+										i18n.t('var.use_regex_replace'),
+										i18n.t('var.do_not_use'),
 									),
 									default_value=values_default['etc_0txtnoscreenshot'],
 									fit_width=True,
@@ -591,7 +591,7 @@ def gui_main(version: str, charset_param: str, hw_key: str, input_dir_param: str
 								)
 							with dpg.group(horizontal=True):
 								dpg.add_checkbox(
-									label='maxkaisoupage最大値指定：',
+									label=i18n.t('ui.label_0txt_maxkaisoupage'),
 									default_value=values_default['etc_0txtmaxkaisoupage_chk'],
 									tag='etc_0txtmaxkaisoupage_chk',
 								)
@@ -603,7 +603,7 @@ def gui_main(version: str, charset_param: str, hw_key: str, input_dir_param: str
 								)
 							with dpg.group(horizontal=True):
 								dpg.add_checkbox(
-									label='savenumber上書き：',
+									label=i18n.t('ui.label_0txt_overwritesavenumber'),
 									default_value=values_default['etc_0txtoverwritesavenumber_chk'],
 									tag='etc_0txtoverwritesavenumber_chk',
 								)
@@ -615,37 +615,37 @@ def gui_main(version: str, charset_param: str, hw_key: str, input_dir_param: str
 								)
 							with dpg.group(horizontal=True):
 								dpg.add_checkbox(
-									label='setwindow/setwindow3文字潰れ防止',
+									label=i18n.t('ui.label_0txt_setwindowbigfont'),
 									default_value=values_default['etc_0txtsetwindowbigfont_chk'],
 									tag='etc_0txtsetwindowbigfont_chk',
 								)
 							with dpg.group(horizontal=True):
 								dpg.add_checkbox(
-									label='okcancelbox命令強制ok',
+									label=i18n.t('ui.label_0txt_skipokcancelbox'),
 									default_value=values_default['etc_0txtskipokcancelbox_chk'],
 									tag='etc_0txtskipokcancelbox_chk',
 								)
 							with dpg.group(horizontal=True):
 								dpg.add_checkbox(
-									label='yesnobox命令強制yes',
+									label=i18n.t('ui.label_0txt_skipyesnobox'),
 									default_value=values_default['etc_0txtskipyesnobox_chk'],
 									tag='etc_0txtskipyesnobox_chk',
 								)
 							with dpg.group(horizontal=True):
 								dpg.add_checkbox(
-									label='rnd2命令->rnd命令変換',
+									label=i18n.t('ui.label_0txt_rndtornd2'),
 									default_value=values_default['etc_0txtrndtornd2_chk'],
 									tag='etc_0txtrndtornd2_chk',
 								)
 							with dpg.group(horizontal=True):
 								dpg.add_checkbox(
-									label='textgosub命令無効化',
+									label=i18n.t('ui.label_0txt_disabletextgosub'),
 									default_value=values_default['etc_0txtdisabletextgosub_chk'],
 									tag='etc_0txtdisabletextgosub_chk',
 								)
 							with dpg.group(horizontal=True):
 								dpg.add_checkbox(
-									label='コメントアウト部分を削除',
+									label=i18n.t('ui.label_0txt_removecommentout'),
 									default_value=values_default['etc_0txtremovecommentout_chk'],
 									tag='etc_0txtremovecommentout_chk',
 								)

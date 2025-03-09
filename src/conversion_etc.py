@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from pathlib import Path
-import datetime, re
+import datetime, i18n, re
 
 from conversion_video import convert_video
 from conversion_image import convert_image
@@ -32,12 +32,11 @@ def create_cnvsetdict(values: dict, values_ex: dict, extracted_dir: Path):
 						case 'arc1.nsa': cnvset_dict[f_path_re]['comp'] = 'arc1'
 						case 'arc2.nsa': cnvset_dict[f_path_re]['comp'] = 'arc2'
 						case '圧縮しない': cnvset_dict[f_path_re]['comp'] = 'no_comp'
-						case _: raise ValueError('連番画像の圧縮設定が選択されていません')
+						case _: raise ValueError(i18n.t('ui.Sequential_image_compression_not_selected'))
 
 				#通常時は(再生できなくなるので)非圧縮
-				else:		
+				else:
 					cnvset_dict[f_path_re]['comp'] = 'no_comp'
-
 
 			#[画像]
 			elif fc in ['PNG', 'BMP', 'JPEG']:
@@ -88,7 +87,7 @@ def create_cnvsetdict(values: dict, values_ex: dict, extracted_dir: Path):
 					case 'arc1.nsa': cnvset_dict[f_path_re]['comp'] = 'arc1'
 					case 'arc2.nsa': cnvset_dict[f_path_re]['comp'] = 'arc2'
 					case '圧縮しない': cnvset_dict[f_path_re]['comp'] = 'no_comp'
-					case _: raise ValueError('画像の圧縮設定が選択されていません')
+					case _: raise ValueError(i18n.t('ui.Image_compression_not_selected'))
 
 			#[音楽]
 			elif fc in ['WAV', 'OGG', 'MP3']:
@@ -102,7 +101,7 @@ def create_cnvsetdict(values: dict, values_ex: dict, extracted_dir: Path):
 					match values['aud_bgmch_radio']:
 						case 'ステレオ': cnvset_dict[f_path_re]['ch'] = '2'
 						case 'モノラル': cnvset_dict[f_path_re]['ch'] = '1'
-						case _: raise ValueError('BGMのチャンネル数が選択されていません')
+						case _: raise ValueError(i18n.t('ui.BGM_channel_not_selected'))
 
 					match values['aud_bgmfmt_radio']:
 						case 'WAV':
@@ -111,7 +110,7 @@ def create_cnvsetdict(values: dict, values_ex: dict, extracted_dir: Path):
 							match values['aud_bgmcodec_radio']:
 								case 'pcm_s16le': cnvset_dict[f_path_re]['acodec'] = 'pcm_s16le'
 								case 'pcm_u8': cnvset_dict[f_path_re]['acodec'] = 'pcm_u8'
-								case _: raise ValueError('WAVのコーデックが選択されていません')
+								case _: raise ValueError(i18n.t('ui.WAV_codec_not_selected'))
 
 						case 'OGG':
 							cnvset_dict[f_path_re]['format'] = 'OGG'
@@ -124,20 +123,20 @@ def create_cnvsetdict(values: dict, values_ex: dict, extracted_dir: Path):
 							cnvset_dict[f_path_re]['hz'] = values['aud_mp3bgm_hz']
 							cnvset_dict[f_path_re]['cutoff'] = values['aud_mp3bgm_cutoff']
 						
-						case _: raise ValueError('BGMのフォーマットが選択されていません')
+						case _: raise ValueError(i18n.t('ui.BGM_format_not_selected'))
 						
 					match values['etc_filecompbgm_nsa']:
 						case 'arc.nsa': cnvset_dict[f_path_re]['comp'] = 'arc'
 						case 'arc1.nsa': cnvset_dict[f_path_re]['comp'] = 'arc1'
 						case 'arc2.nsa': cnvset_dict[f_path_re]['comp'] = 'arc2'
 						case '圧縮しない': cnvset_dict[f_path_re]['comp'] = 'no_comp'
-						case _: raise ValueError('BGMの圧縮設定が選択されていません')
+						case _: raise ValueError(i18n.t('ui.BGM_compression_not_selected'))
 				
 				else:
 					match values['aud_sech_radio']:
 						case 'ステレオ': cnvset_dict[f_path_re]['ch'] = '2'
 						case 'モノラル': cnvset_dict[f_path_re]['ch'] = '1'
-						case _: raise ValueError('SEのチャンネル数が選択されていません')
+						case _: raise ValueError(i18n.t('ui.SE_channel_not_selected'))
 
 					match values['aud_sefmt_radio']:
 						case 'WAV':
@@ -146,7 +145,7 @@ def create_cnvsetdict(values: dict, values_ex: dict, extracted_dir: Path):
 							match values['aud_secodec_radio']:
 								case 'pcm_s16le': cnvset_dict[f_path_re]['acodec'] = 'pcm_s16le'
 								case 'pcm_u8': cnvset_dict[f_path_re]['acodec'] = 'pcm_u8'
-								case _: raise ValueError('WAVのコーデックが選択されていません')
+								case _: raise ValueError(i18n.t('ui.WAV_codec_not_selected'))
 
 						case 'OGG':
 							cnvset_dict[f_path_re]['format'] = 'OGG'
@@ -159,14 +158,14 @@ def create_cnvsetdict(values: dict, values_ex: dict, extracted_dir: Path):
 							cnvset_dict[f_path_re]['hz'] = values['aud_mp3se_hz']
 							cnvset_dict[f_path_re]['cutoff'] = values['aud_mp3se_cutoff']
 						
-						case _: raise ValueError('SEのフォーマットが選択されていません')
+						case _: raise ValueError(i18n.t('ui.SE_format_not_selected'))
 					
 					match values['etc_filecompse_nsa']:
 						case 'arc.nsa': cnvset_dict[f_path_re]['comp'] = 'arc'
 						case 'arc1.nsa': cnvset_dict[f_path_re]['comp'] = 'arc1'
 						case 'arc2.nsa': cnvset_dict[f_path_re]['comp'] = 'arc2'
 						case '圧縮しない': cnvset_dict[f_path_re]['comp'] = 'no_comp'
-						case _: raise ValueError('SEの圧縮設定が選択されていません')
+						case _: raise ValueError(i18n.t('ui.SE_compression_not_selected'))
 								
 			#[他]
 			else:
@@ -179,7 +178,7 @@ def create_cnvsetdict(values: dict, values_ex: dict, extracted_dir: Path):
 					case 'arc1.nsa': cnvset_dict[f_path_re]['comp'] = 'arc1'
 					case 'arc2.nsa': cnvset_dict[f_path_re]['comp'] = 'arc2'
 					case '圧縮しない': cnvset_dict[f_path_re]['comp'] = 'no_comp'
-					case _: raise ValueError('「その他」の圧縮設定が選択されていません')
+					case _: raise ValueError(i18n.t('ui.Other_compression_not_selected'))
 
 	return cnvset_dict
 

@@ -3,6 +3,7 @@ import os
 import re
 import shutil
 import sys
+import i18n
 import pythoncom
 import win32ui, win32gui
 import win32com.client
@@ -95,13 +96,13 @@ def in_out_dir_check(values: dict):
 	#エラーメッセージ作成
 	errmsg = ''
 	
-	if not input_dir: errmsg = '入力先が指定されていません'
-	elif Path(input_dir).is_dir() == False: errmsg = '入力先が存在しません'
+	if not input_dir: errmsg = i18n.t('ui.Input_directory_not_specified')
+	elif Path(input_dir).is_dir() == False: errmsg = i18n.t('ui.Input_directory_not_found')
 
-	elif not output_dir: errmsg = '出力先が指定されていません'
-	elif Path(output_dir).is_dir() == False: errmsg = '出力先が存在しません'
+	elif not output_dir: errmsg = i18n.t('ui.Output_directory_not_specified')
+	elif Path(output_dir).is_dir() == False: errmsg = i18n.t('ui.Output_directory_not_found')
 
-	elif os.path.normpath(input_dir).lower() in os.path.normpath(output_dir).lower(): errmsg = '入出力先が競合しています'
+	elif os.path.normpath(input_dir).lower() in os.path.normpath(output_dir).lower(): errmsg = i18n.t('ui.Input_output_conflict')
 
 	if errmsg: raise Exception(errmsg)
 	
@@ -109,7 +110,7 @@ def in_out_dir_check(values: dict):
 
 
 def create_configfile(values: dict, values_ex:dict, compressed_dir: Path):
-	output_resolution = values_ex['output_resolution']	
+	output_resolution = values_ex['output_resolution']    
 	etc_iniramfont_chk = values['etc_iniramfont_chk']
 	etc_inicursor_chk = values['etc_inicursor_chk']
 	etc_iniscreen = values['etc_iniscreen']
@@ -135,7 +136,7 @@ def create_configfile(values: dict, values_ex:dict, compressed_dir: Path):
 					surface = 'HARDWARE'
 					aspect = 'OFF'
 
-				else: raise ValueError('ons.iniの拡大設定が見つかりません')
+				else: raise i18n.t('ui.ons_ini_not_found_expansion_settings')
 
 				#fontmemory
 				fontmemory = 'ON' if etc_iniramfont_chk else 'OFF'

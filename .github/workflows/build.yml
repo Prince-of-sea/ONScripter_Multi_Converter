@@ -31,8 +31,13 @@ jobs:
         run: python '.github/workflows/create_licenses_txt.py'
 
       - name: Build EXE
-        run: |
-          pyinstaller src/_main.py --hidden-import=_cffi_backend --add-data 'src/__icon.ico;./' --add-data 'licenses_py.txt;./' --onefile --icon src/__icon.ico --name ONScripter_Multi_Converter.exe
+        run: >
+          pyinstaller src/_main.py --hidden-import=_cffi_backend
+          --add-data 'src/__icon.ico;./'
+          --add-data 'src/lang/ui.ja.yml;./lang/'
+          --add-data 'src/lang/var.ja.yml;./lang/'
+          --add-data 'licenses_py.txt;./'
+          --onefile --icon src/__icon.ico --name ONScripter_Multi_Converter.exe
 
       - name: Upload EXE to GitHub Release
         uses: softprops/action-gh-release@6034af24fba4e5a8e975aaa6056554efe4c794d0

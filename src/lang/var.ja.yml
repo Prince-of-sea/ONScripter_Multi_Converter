@@ -1,0 +1,25 @@
+ja:
+  high_resolution_priority: "高解像度優先"
+  low_resolution_priority: "低解像度優先"
+
+  stereo: "ステレオ"
+  mono: "モノラル"
+
+  numbered_images: "連番画像"
+  do_not_convert: "変換しない"
+
+  bgm_match: "BGMに合わせる"
+  se_voice_match: "SE/VOICEに合わせる"
+
+  use_function_override: "利用する(関数上書き)"
+  use_regex_replace: "利用する(正規表現置換)"
+  do_not_use: "利用しない"
+
+  convert_and_keep_both: "変換後のファイルを拡張子nbzとwavで両方用意しておく"
+  replace_all_nbz_to_wav: "0.txtを\".nbz\"->\".wav\"で一括置換"
+
+  do_not_compress: "圧縮しない"
+
+  no_expansion: "拡大しない"
+  maintain_ratio: "拡大(比率維持)"
+  full_size: "拡大(フルサイズ)"

@@ -7,7 +7,7 @@ import mozjpeg_lossless_optimization as mozj
 import subprocess as sp
 import imagequant as iq
 import zopfli as zf
-import tempfile, shutil, stat, math, os
+import tempfile, shutil, stat, math, os, i18n
 
 from requiredfile_locations import location, location_env
 from conversion_music import convert_music
@@ -23,7 +23,7 @@ def getvidrenbanres(values: dict):
 		case '50%(1/2)':  renbanresper = 0.500000
 		case '33%(1/3)':  renbanresper = 0.333333
 		case '25%(1/4)':  renbanresper = 0.250000
-		case _: raise ValueError('ビデオの連番変換時画像サイズが見つかりません')
+		case _: raise ValueError(i18n.t('ui.Video_sequential_image_size_not_found'))
 	
 	return renbanresper
 
@@ -228,7 +228,7 @@ def convert_video_renban(values: dict, values_ex: dict, f_dict: dict):
 				match values['aud_bgmch_radio']:
 					case 'ステレオ': dummy_dict['ch'] = '2'
 					case 'モノラル': dummy_dict['ch'] = '1'
-					case _: raise ValueError('ビデオの連番変換時音声bgm判定時チャンネル数が選択されていません')
+					case _: raise ValueError(i18n.t('ui.Video_sequential_audio_bgm_channel_not_selected'))
 
 				match values['aud_bgmfmt_radio']:
 					case 'OGG':
@@ -252,9 +252,9 @@ def convert_video_renban(values: dict, values_ex: dict, f_dict: dict):
 						match values['aud_bgmcodec_radio']:
 							case 'pcm_s16le': dummy_dict['acodec'] = 'pcm_s16le'
 							case 'pcm_u8': dummy_dict['acodec'] = 'pcm_u8'
-							case _: raise ValueError('ビデオの連番変換時音声bgm判定時wavコーデックが見つかりません')
+							case _: raise ValueError(i18n.t('ui.Video_sequential_audio_bgm_wav_codec_not_found'))
 					
-					case _: raise ValueError('ビデオの連番変換時音声bgm判定時変換フォーマットが見つかりません')
+					case _: raise ValueError(i18n.t('ui.Video_sequential_audio_bgm_format_not_found'))
 
 			#se判定時
 			case 'SE/VOICEに合わせる':
@@ -262,7 +262,7 @@ def convert_video_renban(values: dict, values_ex: dict, f_dict: dict):
 				match values['aud_sech_radio']:
 					case 'ステレオ': dummy_dict['ch'] = '2'
 					case 'モノラル': dummy_dict['ch'] = '1'
-					case _: raise ValueError('ビデオの連番変換時音声se判定時チャンネル数が選択されていません')
+					case _: raise ValueError(i18n.t('ui.Video_sequential_audio_se_channel_not_selected'))
 
 				match values['aud_sefmt_radio']:
 					case 'OGG':
@@ -286,12 +286,12 @@ def convert_video_renban(values: dict, values_ex: dict, f_dict: dict):
 						match values['aud_secodec_radio']:
 							case 'pcm_s16le': dummy_dict['acodec'] = 'pcm_s16le'
 							case 'pcm_u8': dummy_dict['acodec'] = 'pcm_u8'
-							case _: raise ValueError('ビデオの連番変換時音声se判定時wavコーデックが見つかりません')
+							case _: raise ValueError(i18n.t('ui.Video_sequential_audio_se_wav_codec_not_found'))
 					
-					case _: raise ValueError('ビデオの連番変換時音声se判定時変換フォーマットが見つかりません')
+					case _: raise ValueError(i18n.t('ui.Video_sequential_audio_se_format_not_found'))
 
 			#例外
-			case _: raise ValueError('ビデオの連番変換時音声フォーマットが見つかりません')
+			case _: raise ValueError(i18n.t('ui.Video_sequential_audio_format_not_found'))
 		
 		#音声抽出変換
 		convert_music(dummy_dict)
@@ -342,7 +342,7 @@ def convert_video(values: dict, values_ex: dict, f_dict: dict):
 		case 'MJPEG': convert_video_mjpeg(values, values_ex, f_dict)
 		case 'MP4': convert_video_mp4(values, values_ex, f_dict)
 		case '変換しない': pass
-		case _: raise ValueError('ビデオの変換フォーマットが選択されていません')
+		case _: raise ValueError(i18n.t('ui.Video_conversion_format_not_selected'))
 
 
 ##########################################################################################
@@ -375,7 +375,7 @@ def convert_video_renban2_main(values: dict, imgpath: Path):
 			io_img.seek(0)
 			with open(convertedpath2, 'wb') as c: c.write(zf.ZopfliPNG().optimize(io_img.read()))
 			
-		case _: raise ValueError('ビデオの連番変換時画像フォーマットが見つかりません')
+		case _: raise ValueError(i18n.t('ui.Video_sequential_image_format_not_found'))
 	
 	#変換終了後に元画像削除
 	imgpath.unlink()
