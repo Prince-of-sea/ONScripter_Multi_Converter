@@ -2,6 +2,7 @@ en:
   # Translated using GitHub Copilot. Please review the translation for accuracy.
   default_language: "en"
   default_charset: "utf-8"
+  default_font: "arial.ttf"
 
   high_resolution_priority: "High Resolution"
   low_resolution_priority: "Low Resolution"

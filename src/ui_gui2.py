@@ -164,7 +164,7 @@ def open_select(sender, app_data, user_data):
 					dpg.add_image(texture_id, width=32)
 
 					#ボタン表示
-					dpg.add_button(label=f'{d['name']}\t({d['exe_path'].parent}){'　'*50}', user_data=(opsel, d), width=560, callback=open_select_main)
+					dpg.add_button(label=f'{d['name']}\t({d['exe_path'].parent}){' '*99}', user_data=(opsel, d), width=560, callback=open_select_main)
 
 				#ここ来るたびにとりあえず画面更新(?)
 				dpg.split_frame()

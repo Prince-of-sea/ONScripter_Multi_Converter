@@ -1,6 +1,7 @@
 ja:
   default_language: "ja"
   default_charset: "cp932"
+  default_font: "meiryo.ttc"
 
   high_resolution_priority: "高解像度優先"
   low_resolution_priority: "低解像度優先"

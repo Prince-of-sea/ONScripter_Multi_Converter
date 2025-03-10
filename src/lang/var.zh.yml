@@ -2,6 +2,7 @@ zh:
   # Translated using GitHub Copilot. Please review the translation for accuracy.
   default_language: "zh"
   default_charset: "gbk"
+  default_font: "STXihei.TTF"
 
   high_resolution_priority: "高分辨率优先"
   low_resolution_priority: "低分辨率优先"

@@ -50,7 +50,7 @@ def gui_main(version: str, charset_param: str, hw_key: str, input_dir_param: str
 	dpg.create_context()
 
 	with dpg.font_registry():
-		with dpg.font(file=r'C:/Windows/Fonts/meiryo.ttc', size=16) as default_font:
+		with dpg.font(file=r'C:/Windows/Fonts/'+i18n.t('var.default_font'), size=16) as default_font:
 			dpg.add_font_range_hint(dpg.mvFontRangeHint_Japanese)#日本語フォントヒント(中国語も含む?)
 			dpg.bind_font(default_font)
 
