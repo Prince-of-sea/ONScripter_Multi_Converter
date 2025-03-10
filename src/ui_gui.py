@@ -51,8 +51,8 @@ def gui_main(version: str, charset_param: str, hw_key: str, input_dir_param: str
 
 	with dpg.font_registry():
 		with dpg.font(file=r'C:/Windows/Fonts/meiryo.ttc', size=16) as default_font:
-			dpg.add_font_range_hint(dpg.mvFontRangeHint_Japanese)
-		dpg.bind_font(default_font)
+			dpg.add_font_range_hint(dpg.mvFontRangeHint_Japanese)#日本語フォントヒント(中国語も含む?)
+			dpg.bind_font(default_font)
 
 	window_title = f'ONScripter Multi Converter for {hw_key} ver.{version}'
 
@@ -78,31 +78,37 @@ def gui_main(version: str, charset_param: str, hw_key: str, input_dir_param: str
 				dpg.add_menu_item(label=i18n.t('ui.label_open_web'), callback=open_repositorieslink)
 				dpg.add_menu_item(label=i18n.t('ui.label_copyrights'), user_data=(version), callback=copyrights)
 				if get_meipass('licenses_py.txt').is_file(): dpg.add_menu_item(label=i18n.t('ui.label_license'), callback=open_licensespy)
+		
+		with dpg.table(header_row=False, borders_innerH=False, borders_innerV=False):
+			dpg.add_table_column(no_resize=True, width_fixed=True)
+			dpg.add_table_column(no_resize=True)
+			dpg.add_table_column(no_resize=True, width_fixed=True)
+			dpg.add_table_column(no_resize=True, width_fixed=True)
 
-		with dpg.group(horizontal=True):
-			dpg.add_text(i18n.t('ui.label_input'))
-			dpg.add_input_text(tag='input_dir', readonly=True)
-			dpg.add_button(label='Browse', callback=open_input, tag='input_browse_btn')
-			dpg.add_button(label=i18n.t('ui.label_select_from_list'), user_data=(charset_param), callback=open_select, tag='input_select_btn')
+			with dpg.table_row():
+				dpg.add_text(i18n.t('ui.label_input'))
+				dpg.add_input_text(tag='input_dir', readonly=True, width=430)
+				dpg.add_button(label='Browse', callback=open_input, tag='input_browse_btn')
+				dpg.add_button(label=i18n.t('ui.label_select_from_list'), user_data=(charset_param), callback=open_select, tag='input_select_btn')
 
-		with dpg.group(horizontal=True):
-			dpg.add_text(i18n.t('ui.label_output'))
-			dpg.add_input_text(tag='output_dir', readonly=True)
-			dpg.add_button(label='Browse', callback=open_output, tag='output_browse_btn')
-			dpg.add_button(label=i18n.t('ui.label_set_to_default'), callback=desktop_output, tag='output_desktop_btn')
+			with dpg.table_row():
+				dpg.add_text(i18n.t('ui.label_output'))
+				dpg.add_input_text(tag='output_dir', readonly=True, width=430)
+				dpg.add_button(label='Browse', callback=open_output, tag='output_browse_btn')
+				dpg.add_button(label=i18n.t('ui.label_set_to_default'), callback=desktop_output, tag='output_desktop_btn')
 
-		with dpg.group(horizontal=True):
-			dpg.add_text(i18n.t('ui.label_individual_settings'))
-			dpg.add_combo(
-				tag='title_setting',
-				default_value=(get_titlesettingfull(title_setting_param) if charset_param=='cp932' else 'None'),
-				items=title_setting_list,
-			)
+			with dpg.table_row():
+				dpg.add_text(i18n.t('ui.label_individual_settings'))
+				dpg.add_combo(
+					tag='title_setting',
+					default_value=(get_titlesettingfull(title_setting_param) if charset_param=='cp932' else 'None'),
+					items=title_setting_list,
+					width=430
+				)
 
-		# with dpg.child_window(height=220, border=False):
 		with dpg.tab_bar():
 			with dpg.tab(label=i18n.t('ui.label_image')):
-				with dpg.child_window(height=200, border=False):
+				with dpg.child_window(height=195, border=False):
 					with dpg.tree_node(label=i18n.t('ui.label_basic_settings'), default_open=True):
 						with dpg.group(horizontal=True):
 							dpg.add_text(i18n.t('ui.label_image_preferred_format'))
@@ -156,7 +162,7 @@ def gui_main(version: str, charset_param: str, hw_key: str, input_dir_param: str
 							)
 
 			with dpg.tab(label=i18n.t('ui.label_audio')):
-				with dpg.child_window(height=200, border=False):
+				with dpg.child_window(height=195, border=False):
 					with dpg.tree_node(label=i18n.t('ui.label_basic_settings'), default_open=True):
 						with dpg.group(horizontal=True):
 							dpg.add_text(i18n.t('ui.label_bgm_format'))
@@ -370,7 +376,7 @@ def gui_main(version: str, charset_param: str, hw_key: str, input_dir_param: str
 								)
 
 			with dpg.tab(label=i18n.t('ui.label_video')):
-				with dpg.child_window(height=200, border=False):
+				with dpg.child_window(height=195, border=False):
 					with dpg.tree_node(label=i18n.t('ui.label_basic_settings'), default_open=True):
 						with dpg.group(horizontal=True):
 							dpg.add_text(i18n.t('ui.label_video_format'))
@@ -479,7 +485,7 @@ def gui_main(version: str, charset_param: str, hw_key: str, input_dir_param: str
 								)
 
 			with dpg.tab(label=i18n.t('ui.label_other')):
-				with dpg.child_window(height=200, border=False):
+				with dpg.child_window(height=195, border=False):
 					with dpg.tree_node(label=i18n.t('ui.label_basic_settings'), default_open=True):
 						with dpg.tree_node(label=i18n.t('ui.label_file'), default_open=True):
 							with dpg.group(horizontal=True):

@@ -175,6 +175,12 @@ def convert_video_renban(values: dict, values_ex: dict, f_dict: dict):
 	convertedpath = f_dict['convertedpath']
 	hardware = values['hardware']
 
+	#i18nのvarのみ事前代入(case対策)
+	i18n_t_var_bgm_match = i18n.t('var.bgm_match')
+	i18n_t_var_stereo = i18n.t('var.stereo')
+	i18n_t_var_mono = i18n.t('var.mono')
+	i18n_t_var_se_voice_match = i18n.t('var.se_voice_match')
+
 	#連番の場合出力パスはディレクトリ扱いなのでとりあえず作成
 	convertedpath.mkdir(exist_ok = True)
 
@@ -223,11 +229,11 @@ def convert_video_renban(values: dict, values_ex: dict, f_dict: dict):
 		match values['vid_renbanaudset_radio']:
 
 			#bgm判定時
-			case i18n.t('var.bgm_match'):
+			case str(i18n_t_var_bgm_match):
 
 				match values['aud_bgmch_radio']:
-					case i18n.t('var.stereo'): dummy_dict['ch'] = '2'
-					case i18n.t('var.mono'): dummy_dict['ch'] = '1'
+					case str(i18n_t_var_stereo): dummy_dict['ch'] = '2'
+					case str(i18n_t_var_mono): dummy_dict['ch'] = '1'
 					case _: raise ValueError(i18n.t('ui.Video_sequential_audio_bgm_channel_not_selected'))
 
 				match values['aud_bgmfmt_radio']:
@@ -257,11 +263,11 @@ def convert_video_renban(values: dict, values_ex: dict, f_dict: dict):
 					case _: raise ValueError(i18n.t('ui.Video_sequential_audio_bgm_format_not_found'))
 
 			#se判定時
-			case i18n.t('var.se_voice_match'):
+			case str(i18n_t_var_se_voice_match):
 
 				match values['aud_sech_radio']:
-					case i18n.t('var.stereo'): dummy_dict['ch'] = '2'
-					case i18n.t('var.mono'): dummy_dict['ch'] = '1'
+					case str(i18n_t_var_stereo): dummy_dict['ch'] = '2'
+					case str(i18n_t_var_mono): dummy_dict['ch'] = '1'
 					case _: raise ValueError(i18n.t('ui.Video_sequential_audio_se_channel_not_selected'))
 
 				match values['aud_sefmt_radio']:
@@ -336,12 +342,18 @@ def convert_video_mp4(values: dict, values_ex: dict, f_dict: dict):
 
 def convert_video(values: dict, values_ex: dict, f_dict: dict):
 
+	#i18nのvarのみ事前代入(case対策)
+	i18n_t = {
+		'numbered_images': str(i18n.t('var.numbered_images')),
+		'do_not_convert': str(i18n.t('var.do_not_convert')),
+	}
+
 	#ビデオの変換フォーマットによる分岐
 	match values['vid_movfmt_radio']:
-		case i18n.t('var.numbered_images'): convert_video_renban(values, values_ex, f_dict)
+		case str(i18n_t_var_numbered_images): convert_video_renban(values, values_ex, f_dict)
 		case 'MJPEG': convert_video_mjpeg(values, values_ex, f_dict)
 		case 'MP4': convert_video_mp4(values, values_ex, f_dict)
-		case i18n.t('var.do_not_convert'): pass
+		case str(i18n_t_var_do_not_convert): pass
 		case _: raise ValueError(i18n.t('ui.Video_conversion_format_not_selected'))
 
 

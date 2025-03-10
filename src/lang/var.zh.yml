@@ -1,0 +1,29 @@
+zh:
+  # Translated using GitHub Copilot. Please review the translation for accuracy.
+  default_language: "zh"
+  default_charset: "gbk"
+
+  high_resolution_priority: "高分辨率优先"
+  low_resolution_priority: "低分辨率优先"
+
+  stereo: "立体声"
+  mono: "单声道"
+
+  numbered_images: "按顺序编号的图像"
+  do_not_convert: "不转换"
+
+  bgm_match: "匹配BGM"
+  se_voice_match: "匹配SE/VOICE"
+
+  use_function_override: "使用（函数覆盖）"
+  use_regex_replace: "使用（正则表达式替换）"
+  do_not_use: "不使用"
+
+  convert_and_keep_both: "转换后保留nbz和wav两种文件"
+  replace_all_nbz_to_wav: "replace 0.txt with \".nbz\"->\".wav\""
+
+  do_not_compress: "不压缩"
+
+  no_expansion: "不扩展"
+  maintain_ratio: "保持比例扩展"
+  full_size: "全尺寸扩展"

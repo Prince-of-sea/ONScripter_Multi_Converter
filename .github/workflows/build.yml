@@ -36,6 +36,10 @@ jobs:
           --add-data 'src/__icon.ico;./'
           --add-data 'src/lang/ui.ja.yml;./lang/'
           --add-data 'src/lang/var.ja.yml;./lang/'
+          --add-data 'src/lang/ui.zh.yml;./lang/'
+          --add-data 'src/lang/var.zh.yml;./lang/'
+          --add-data 'src/lang/ui.en.yml;./lang/'
+          --add-data 'src/lang/var.en.yml;./lang/'
           --add-data 'licenses_py.txt;./'
           --onefile --icon src/__icon.ico --name ONScripter_Multi_Converter.exe
 

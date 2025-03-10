@@ -13,6 +13,11 @@ def create_cnvsetdict(values: dict, values_ex: dict, extracted_dir: Path):
 	#とにかく仕分け作業はここでやる 変換は後で
 	cnvset_dict = {}
 
+	#i18nのvarのみ事前代入(case対策)
+	i18n_t_var_do_not_compress = i18n.t('var.do_not_compress')
+	i18n_t_var_stereo = i18n.t('var.stereo')
+	i18n_t_var_mono = i18n.t('var.mono')
+
 	for f_path in extracted_dir.glob('**/*'):
 		if f_path.is_file():#ファイル(=ディレクトリではない)なら処理
 			fc = format_check(f_path)#まずフォーマットチェック
@@ -31,7 +36,7 @@ def create_cnvsetdict(values: dict, values_ex: dict, extracted_dir: Path):
 						case 'arc.nsa': cnvset_dict[f_path_re]['comp'] = 'arc'
 						case 'arc1.nsa': cnvset_dict[f_path_re]['comp'] = 'arc1'
 						case 'arc2.nsa': cnvset_dict[f_path_re]['comp'] = 'arc2'
-						case i18n.t('var.do_not_compress'): cnvset_dict[f_path_re]['comp'] = 'no_comp'
+						case str(i18n_t_var_do_not_compress): cnvset_dict[f_path_re]['comp'] = 'no_comp'
 						case _: raise ValueError(i18n.t('ui.Sequential_image_compression_not_selected'))
 
 				#通常時は(再生できなくなるので)非圧縮
@@ -86,7 +91,7 @@ def create_cnvsetdict(values: dict, values_ex: dict, extracted_dir: Path):
 					case 'arc.nsa': cnvset_dict[f_path_re]['comp'] = 'arc'
 					case 'arc1.nsa': cnvset_dict[f_path_re]['comp'] = 'arc1'
 					case 'arc2.nsa': cnvset_dict[f_path_re]['comp'] = 'arc2'
-					case i18n.t('var.do_not_compress'): cnvset_dict[f_path_re]['comp'] = 'no_comp'
+					case str(i18n_t_var_do_not_compress): cnvset_dict[f_path_re]['comp'] = 'no_comp'
 					case _: raise ValueError(i18n.t('ui.Image_compression_not_selected'))
 
 			#[音楽]
@@ -99,8 +104,8 @@ def create_cnvsetdict(values: dict, values_ex: dict, extracted_dir: Path):
 				if (f_path_re in values_ex['bgmlist']) or ('bgm' in str(f_path_re).lower()) or (re.fullmatch(r'cd[\/\\]track[0-9]{2}\.[A-z0-9]+', str(f_path_re).lower())):
 
 					match values['aud_bgmch_radio']:
-						case i18n.t('var.stereo'): cnvset_dict[f_path_re]['ch'] = '2'
-						case i18n.t('var.mono'): cnvset_dict[f_path_re]['ch'] = '1'
+						case str(i18n_t_var_stereo): cnvset_dict[f_path_re]['ch'] = '2'
+						case str(i18n_t_var_mono): cnvset_dict[f_path_re]['ch'] = '1'
 						case _: raise ValueError(i18n.t('ui.BGM_channel_not_selected'))
 
 					match values['aud_bgmfmt_radio']:
@@ -129,13 +134,13 @@ def create_cnvsetdict(values: dict, values_ex: dict, extracted_dir: Path):
 						case 'arc.nsa': cnvset_dict[f_path_re]['comp'] = 'arc'
 						case 'arc1.nsa': cnvset_dict[f_path_re]['comp'] = 'arc1'
 						case 'arc2.nsa': cnvset_dict[f_path_re]['comp'] = 'arc2'
-						case i18n.t('var.do_not_compress'): cnvset_dict[f_path_re]['comp'] = 'no_comp'
+						case str(i18n_t_var_do_not_compress): cnvset_dict[f_path_re]['comp'] = 'no_comp'
 						case _: raise ValueError(i18n.t('ui.BGM_compression_not_selected'))
 				
 				else:
 					match values['aud_sech_radio']:
-						case i18n.t('var.stereo'): cnvset_dict[f_path_re]['ch'] = '2'
-						case i18n.t('var.mono'): cnvset_dict[f_path_re]['ch'] = '1'
+						case str(i18n_t_var_stereo): cnvset_dict[f_path_re]['ch'] = '2'
+						case str(i18n_t_var_mono): cnvset_dict[f_path_re]['ch'] = '1'
 						case _: raise ValueError(i18n.t('ui.SE_channel_not_selected'))
 
 					match values['aud_sefmt_radio']:
@@ -164,7 +169,7 @@ def create_cnvsetdict(values: dict, values_ex: dict, extracted_dir: Path):
 						case 'arc.nsa': cnvset_dict[f_path_re]['comp'] = 'arc'
 						case 'arc1.nsa': cnvset_dict[f_path_re]['comp'] = 'arc1'
 						case 'arc2.nsa': cnvset_dict[f_path_re]['comp'] = 'arc2'
-						case i18n.t('var.do_not_compress'): cnvset_dict[f_path_re]['comp'] = 'no_comp'
+						case str(i18n_t_var_do_not_compress): cnvset_dict[f_path_re]['comp'] = 'no_comp'
 						case _: raise ValueError(i18n.t('ui.SE_compression_not_selected'))
 								
 			#[他]
@@ -177,7 +182,7 @@ def create_cnvsetdict(values: dict, values_ex: dict, extracted_dir: Path):
 					case 'arc.nsa': cnvset_dict[f_path_re]['comp'] = 'arc'
 					case 'arc1.nsa': cnvset_dict[f_path_re]['comp'] = 'arc1'
 					case 'arc2.nsa': cnvset_dict[f_path_re]['comp'] = 'arc2'
-					case i18n.t('var.do_not_compress'): cnvset_dict[f_path_re]['comp'] = 'no_comp'
+					case str(i18n_t_var_do_not_compress): cnvset_dict[f_path_re]['comp'] = 'no_comp'
 					case _: raise ValueError(i18n.t('ui.Other_compression_not_selected'))
 
 	return cnvset_dict

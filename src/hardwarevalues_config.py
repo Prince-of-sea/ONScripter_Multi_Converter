@@ -170,7 +170,7 @@ def gethardwarevalues_full():
 		'Android': {
 			'values_ex': {
 				'hardware_full': 'Android OS',
-				'support_charset': ('cp932', 'gbk'),
+				'support_charset': ('cp932', 'gbk', 'utf-8'),
 				'select_resolution': (),
 				'disable_video': ('MJPEG'),
 				'aspect_4:3only': False,

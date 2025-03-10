@@ -225,6 +225,15 @@ def onsscript_check_txtmodify_adddefsub(ztxtscript: str, pre_txt: str, aft_txt: 
 def onsscript_check_txtmodify(values: dict, values_ex: dict, ztxtscript: str, override_resolution: list):
 	hardware = values['hardware']
 
+	#i18nのvarのみ事前代入(case対策)
+	i18n_t_var_replace_all_nbz_to_wav = i18n.t('var.replace_all_nbz_to_wav')
+	i18n_t_var_convert_and_keep_both = i18n.t('var.convert_and_keep_both')
+	i18n_t_var_use_function_override = i18n.t('var.use_function_override')
+	i18n_t_var_use_regex_replace = i18n.t('var.use_regex_replace')
+	i18n_t_var_do_not_use = i18n.t('var.do_not_use')
+	i18n_t_var_numbered_images = i18n.t('var.numbered_images')
+	i18n_t_var_do_not_compress = i18n.t('var.do_not_compress')
+
 	#ns2/ns3命令は全部nsaへ
 	ztxtscript = re.sub(r'\n[\t\s]*[Nn][Ss][2|3][\t\s]*\n', r'\nnsa\n', ztxtscript)
 
@@ -243,45 +252,45 @@ def onsscript_check_txtmodify(values: dict, values_ex: dict, ztxtscript: str, ov
 	
 	#nbz変換設定
 	match values['etc_0txtnbz_radio']:
-		case i18n.t('var.replace_all_nbz_to_wav'): ztxtscript = re.sub(r'\.[Nn][Bb][Zz]', r'.wav', ztxtscript)
-		case i18n.t('var.convert_and_keep_both'): pass
+		case str(i18n_t_var_replace_all_nbz_to_wav): ztxtscript = re.sub(r'\.[Nn][Bb][Zz]', r'.wav', ztxtscript)
+		case str(i18n_t_var_convert_and_keep_both): pass
 		case _: raise ValueError(i18n.t('ui.nbz_conversion_setting_error'))
 	
 	#avi命令→mpegplay命令変換
 	adddefsubavi = False
 	match (values['etc_0txtavitompegplay']):
 		#利用する(関数上書き)
-		case i18n.t('var.use_function_override'):
+		case str(i18n_t_var_use_function_override):
 			ztxtscript = onsscript_check_txtmodify_adddefsub(ztxtscript, 'defsub avi', '*avi\ngetparam $multiconverteralias0,%multiconverteralias0:mpegplay $multiconverteralias0,%multiconverteralias0:return')#avi命令をmpegplay命令に変換
 			adddefsubavi = True
 
 		#利用する(正規表現置換)
-		case i18n.t('var.use_regex_replace'):
+		case str(i18n_t_var_use_regex_replace):
 			ztxtscript = re.sub(r'([\n|\t| |:])[Aa][Vv][Ii][\t\s]+"(.+?)",[\t\s]*([0|1]|%[0-9]+)', r'\1mpegplay "\2",\3', ztxtscript)
 
 		#利用しない
-		case i18n.t('var.do_not_use'): pass
+		case str(i18n_t_var_do_not_use): pass
 
 		#未選択エラー
 		case _: raise ValueError(i18n.t('ui.avi_conversion_setting_error'))
 
 	#動画連番画像利用時強制avi命令→mpegplay命令変換
-	if (values['vid_movfmt_radio'] == i18n.t('var.numbered_images')) and (not adddefsubavi):
+	if (values['vid_movfmt_radio'] == str(i18n_t_var_numbered_images)) and (not adddefsubavi):
 		ztxtscript = onsscript_check_txtmodify_adddefsub(ztxtscript, 'defsub avi', '*avi\ngetparam $multiconverteralias0,%multiconverteralias0:mpegplay $multiconverteralias0,%multiconverteralias0:return')#avi命令をmpegplay命令に変換
 			
 	#savescreenshot命令無効化
 	match values['etc_0txtnoscreenshot']:
 		#利用する(関数上書き)
-		case i18n.t('var.use_function_override'):
+		case str(i18n_t_var_use_function_override):
 			ztxtscript = onsscript_check_txtmodify_adddefsub(ztxtscript, 'defsub savescreenshot', '*savescreenshot\nreturn')#savescreenshot命令を無効化
 			ztxtscript = onsscript_check_txtmodify_adddefsub(ztxtscript, 'defsub savescreenshot2', '*savescreenshot2\nreturn')#savescreenshot2命令を無効化
 
 		#利用する(正規表現置換)
-		case i18n.t('var.use_regex_replace'):
+		case str(i18n_t_var_use_regex_replace):
 			ztxtscript = re.sub(r'([:|\n])[Ss][Aa][Vv][Ee][Ss][Cc][Rr][Ee][Ee][Nn][Ss][Hh][Oo][Tt]2?[\t\s]+"(.+?)"[\t\s]*([:|\n])', r'\1wait 0\3', ztxtscript)
 	
 		#利用しない
-		case i18n.t('var.do_not_use'): pass
+		case str(i18n_t_var_do_not_use): pass
 
 		#未選択エラー
 		case _: raise ValueError(i18n.t('ui.savescreenshot_setting_error'))
@@ -358,7 +367,7 @@ def onsscript_check_txtmodify(values: dict, values_ex: dict, ztxtscript: str, ov
 			elif not re.search(rmenu_regex, ztxtscript): ztxtscript = onsscript_check_txtmodify_adddefsub(ztxtscript, 'rmenu "セーブ",save,"ロード",load,"スキップ",skip,"タイトル",reset', '')
 
 	#連番画像利用時mpegplay命令
-	if (values['vid_movfmt_radio'] == i18n.t('var.numbered_images')):
+	if (values['vid_movfmt_radio'] == str(i18n_t_var_numbered_images)):
 		#参考: https://web.archive.org/web/20110308215321fw_/http://blog.livedoor.jp/tormtorm/archives/51356258.html
 
 		if hardware == 'PSVITA':

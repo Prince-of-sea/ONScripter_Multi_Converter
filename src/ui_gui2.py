@@ -129,10 +129,15 @@ def open_input():
 def open_select(sender, app_data, user_data):
 	with dpg.window(label=i18n.t('ui.Installed_game_list'), height=360, width=628, modal=True, no_move=True) as opsel:
 
-		#ローディング
-		with dpg.group(horizontal=True, tag='loading'):
-			dpg.add_text(' '*60)#ごまかしスペース ここもっと良い書き方募集中
-			dpg.add_loading_indicator(style=2, radius=10)
+		#ローディング - 中央に配置するために一旦テーブルで囲む
+		with dpg.table(header_row=False, borders_innerH=False, borders_innerV=False, tag='loading'):
+			dpg.add_table_column(init_width_or_weight=195)
+			dpg.add_table_column(init_width_or_weight=100)
+			dpg.add_table_column(init_width_or_weight=195)
+			with dpg.table_row():
+				dpg.add_text()
+				dpg.add_loading_indicator(style=2, radius=10)
+				dpg.add_text()
 
 		#一時ディレクトリ作成
 		with tempfile.TemporaryDirectory() as icotemp_dir:

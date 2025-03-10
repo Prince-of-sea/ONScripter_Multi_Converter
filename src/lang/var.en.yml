@@ -1,0 +1,29 @@
+en:
+  # Translated using GitHub Copilot. Please review the translation for accuracy.
+  default_language: "en"
+  default_charset: "utf-8"
+
+  high_resolution_priority: "High Resolution"
+  low_resolution_priority: "Low Resolution"
+
+  stereo: "Stereo"
+  mono: "Mono"
+
+  numbered_images: "Numbered Images"
+  do_not_convert: "Do Not Convert"
+
+  bgm_match: "Match BGM"
+  se_voice_match: "Match SE/VOICE"
+
+  use_function_override: "Use (Function Override)"
+  use_regex_replace: "Use (Regex Replace)"
+  do_not_use: "Do Not Use"
+
+  convert_and_keep_both: "Convert and Keep Both nbz and wav Files"
+  replace_all_nbz_to_wav: "Replace 0.txt with \".nbz\"->\".wav\""
+
+  do_not_compress: "Do Not Compress"
+
+  no_expansion: "No Expansion"
+  maintain_ratio: "Maintain Ratio"
+  full_size: "Full Size"
