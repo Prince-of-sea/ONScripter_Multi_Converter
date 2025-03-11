@@ -212,8 +212,12 @@ def convert_start(values):
 				#画像解像度がスクリプト側と一致しない時用
 				values_ex['input_resolution'] = title_info.get('input_resolution')
 
+				#個別変換フラグ
+				values_ex['select_individual_settings'] = True
+
 				#inputを変換済みのファイルが入ったディレクトリで上書き - 以下元のinput参照不可になるので注意
 				values['input_dir'] = pre_converted_dir
+
 
 			#選択不可の動画形式選んでたらエラー
 			if (values['vid_movfmt_radio'] in values_ex['disable_video']):

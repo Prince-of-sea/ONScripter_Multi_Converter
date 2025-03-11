@@ -45,60 +45,76 @@ def getnsasar_pathlist(input_dir: Path):
 
 def extract_nsa(values: dict, values_ex: dict, extracted_dir: Path, useGUI: bool):
 	input_dir = Path(values['input_dir'])
+	values_ex['nbzlist'] = []
 
-	#一時ディレクトリ作成	
-	with tempfile.TemporaryDirectory() as deftemp_dir:
-		deftemp_dir = Path(deftemp_dir)
-		
-		#まずnsa外、その他ファイルをコピー
-		no_archive = Path(deftemp_dir / 'no_archive')
-		shutil.copytree(input_dir, no_archive, ignore=shutil.ignore_patterns(
-			'gloval.sav', 'envdata', 'nscript.dat', 'kidoku.dat', 'NScrflog.dat', 'NScrllog.dat',
-			'*.sar', '*.nsa', '*.ns2', '*.exe', '*.txt', '*.ini', '*.ttf'))
+	#個別設定利用時
+	if values_ex.get('select_individual_settings'):
 
-		#存在するarcのパスをここで全てリスト化(もちろん上書き順は考慮)
-		nsasar_pathlist = getnsasar_pathlist(input_dir)
+		#一旦削除
+		shutil.rmtree(extracted_dir)
 
-		#arcな拡張子だけどarcとして使われてなさそうならno_archiveへコピー
-		for p in (list(input_dir.glob('**/*.ns2')) + list(input_dir.glob('**/*.nsa'))):
-			if (not p in nsasar_pathlist):	
-				pdir = (no_archive / p.parent.relative_to(input_dir))
-				pdir.mkdir(exist_ok=True)
-				shutil.copy(p, pdir)
+		#個別設定の変換物から0.txt削除(もう使わないので)
+		if Path(input_dir / '0.txt').is_file():
+			Path(input_dir / '0.txt').unlink()
 
-		#nbzリスト作成
-		values_ex['nbzlist'] = []
-		if (values['etc_0txtnbz_radio'] == i18n.t('var.convert_and_keep_both')):
+		#個別設定の変換物をそのまま移動
+		shutil.move(input_dir, extracted_dir)
+
+	#通常時
+	else:
+
+		#一時ディレクトリ作成
+		with tempfile.TemporaryDirectory() as deftemp_dir:
+			deftemp_dir = Path(deftemp_dir)
+			
+			#まずnsa外、その他ファイルをコピー
+			no_archive = Path(deftemp_dir / 'no_archive')
+			shutil.copytree(input_dir, no_archive, ignore=shutil.ignore_patterns(
+				'gloval.sav', 'envdata', 'nscript.dat', 'kidoku.dat', 'NScrflog.dat', 'NScrllog.dat',
+				'*.sar', '*.nsa', '*.ns2', '*.exe', '*.txt', '*.ini', '*.ttf'))
+
+			#存在するarcのパスをここで全てリスト化(もちろん上書き順は考慮)
+			nsasar_pathlist = getnsasar_pathlist(input_dir)
+
+			#arcな拡張子だけどarcとして使われてなさそうならno_archiveへコピー
+			for p in (list(input_dir.glob('**/*.ns2')) + list(input_dir.glob('**/*.nsa'))):
+				if (not p in nsasar_pathlist):	
+					pdir = (no_archive / p.parent.relative_to(input_dir))
+					pdir.mkdir(exist_ok=True)
+					shutil.copy(p, pdir)
+
+			#nbzリスト作成
+			if (values['etc_0txtnbz_radio'] == i18n.t('var.convert_and_keep_both')):
+				for nsasar_path in nsasar_pathlist:
+					values_ex['nbzlist'] += checknbz_nsa(nsasar_path)
+
+			#一度全て並列展開
+			with concurrent.futures.ThreadPoolExecutor() as executor:
+				futures = []
+				for nsasar_path in nsasar_pathlist:
+					deftempnsasar_path = Path(deftemp_dir / nsasar_path.name)
+					futures.append(executor.submit(extract_archive_garbro, nsasar_path, deftempnsasar_path))#nsaやsarを展開
+
+				for i,ft in enumerate(concurrent.futures.as_completed(futures)):
+					configure_progress_bar(0.03 + float(i / len(nsasar_pathlist) * 0.012), '', useGUI)#進捗 0.03→0.042
+			
+				concurrent.futures.as_completed(futures)
+			
+			#移動用に直置きファイル置き場を配列最後に追加
+			nsasar_pathlist.append(Path('no_archive'))
+
+			#展開したやつをnsa読み取り優先順に上書き移動
 			for nsasar_path in nsasar_pathlist:
-				values_ex['nbzlist'] += checknbz_nsa(nsasar_path)
-
-		#一度全て並列展開
-		with concurrent.futures.ThreadPoolExecutor() as executor:
-			futures = []
-			for nsasar_path in nsasar_pathlist:
-				deftempnsasar_path = Path(deftemp_dir / nsasar_path.name)
-				futures.append(executor.submit(extract_archive_garbro, nsasar_path, deftempnsasar_path))#nsaやsarを展開
-
-			for i,ft in enumerate(concurrent.futures.as_completed(futures)):
-				configure_progress_bar(0.03 + float(i / len(nsasar_pathlist) * 0.012), '', useGUI)#進捗 0.03→0.042
-		
-			concurrent.futures.as_completed(futures)
-		
-		#移動用に直置きファイル置き場を配列最後に追加
-		nsasar_pathlist.append(Path('no_archive'))
-
-		#展開したやつをnsa読み取り優先順に上書き移動
-		for nsasar_path in nsasar_pathlist:
-			deftempnsasar_path = Path(deftemp_dir / nsasar_path.name)	
-			for f_path in deftempnsasar_path.glob('**/*'):
-				if f_path.is_file():#ファイル(＝ディレクトリではない)なら処理
-					f_movedpath = Path(str(extracted_dir / f_path.relative_to(deftempnsasar_path)).lower())#念の為全部小文字に
-					f_movedpath.parent.mkdir(parents=True, exist_ok=True)
-					if (values['etc_fileexdll_chk']) and (str(f_movedpath.suffix) == '.dll'): pass#dll無視
-					elif (values['etc_fileexdb_chk']) and (str(f_movedpath.name) == 'thumbs.db'): pass#thumbs.db無視
-					else: shutil.move(f_path, f_movedpath)
-		
-		configure_progress_bar(0.045, '', useGUI)#進捗 0.042→0.045
+				deftempnsasar_path = Path(deftemp_dir / nsasar_path.name)	
+				for f_path in deftempnsasar_path.glob('**/*'):
+					if f_path.is_file():#ファイル(＝ディレクトリではない)なら処理
+						f_movedpath = Path(str(extracted_dir / f_path.relative_to(deftempnsasar_path)).lower())#念の為全部小文字に
+						f_movedpath.parent.mkdir(parents=True, exist_ok=True)
+						if (values['etc_fileexdll_chk']) and (str(f_movedpath.suffix) == '.dll'): pass#dll無視
+						elif (values['etc_fileexdb_chk']) and (str(f_movedpath.name) == 'thumbs.db'): pass#thumbs.db無視
+						else: shutil.move(f_path, f_movedpath)
+			
+	configure_progress_bar(0.045, '', useGUI)#進捗 0.042→0.045
 
 	return values_ex
 
