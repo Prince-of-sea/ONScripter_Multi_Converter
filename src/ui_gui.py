@@ -133,7 +133,7 @@ def gui_main(version: str, charset_param: str, hw_key: str, input_dir_param: str
 								label=i18n.t('ui.label_color'),
 								items=('256', '192', '128'),
 								default_value=values_default['img_pngquantize_num'],
-								fit_width=True,
+								width=50,
 								tag='img_pngquantize_num',
 							)
 					with dpg.tree_node(label=i18n.t('ui.label_advanced_settings'), default_open=True):
@@ -157,223 +157,237 @@ def gui_main(version: str, charset_param: str, hw_key: str, input_dir_param: str
 									'4',
 								),
 								default_value=values_default['img_multi_num'],
-								fit_width=True,
+								width=40,
 								tag='img_multi_num',
 							)
 
 			with dpg.tab(label=i18n.t('ui.label_audio')):
 				with dpg.child_window(height=195, border=False):
 					with dpg.tree_node(label=i18n.t('ui.label_basic_settings'), default_open=True):
-						with dpg.group(horizontal=True):
-							dpg.add_text(i18n.t('ui.label_bgm_format'))
-							dpg.add_radio_button(
-								items=('OGG', 'MP3', 'WAV'),
-								default_value=values_default['aud_bgmfmt_radio'],
-								horizontal=True,
-								tag='aud_bgmfmt_radio',
-							)
-						with dpg.group(horizontal=True):
-							dpg.add_text(i18n.t('ui.label_se_format'))
-							dpg.add_radio_button(
-								items=('OGG', 'MP3', 'WAV'),
-								default_value=values_default['aud_sefmt_radio'],
-								horizontal=True,
-								tag='aud_sefmt_radio',
-							)
-						with dpg.group(horizontal=True):
-							dpg.add_text(i18n.t('ui.label_bgm_channel'))
-							dpg.add_radio_button(
-								items=(i18n.t('var.stereo'), i18n.t('var.mono')),
-								default_value=values_default['aud_bgmch_radio'],
-								horizontal=True,
-								tag='aud_bgmch_radio',
-							)
-						with dpg.group(horizontal=True):
-							dpg.add_text(i18n.t('ui.label_se_channel'))
-							dpg.add_radio_button(
-								items=(i18n.t('var.stereo'), i18n.t('var.mono')),
-								default_value=values_default['aud_sech_radio'],
-								horizontal=True,
-								tag='aud_sech_radio',
-							)
+						with dpg.table(header_row=False, borders_innerH=False, borders_innerV=False):
+							dpg.add_table_column(no_resize=True, width_fixed=True)
+							dpg.add_table_column(no_resize=True, width_fixed=True)
+							with dpg.table_row():
+								dpg.add_text(i18n.t('ui.label_bgm_format'))
+								dpg.add_radio_button(
+									items=('OGG', 'MP3', 'WAV'),
+									default_value=values_default['aud_bgmfmt_radio'],
+									horizontal=True,
+									tag='aud_bgmfmt_radio',
+								)
+							with dpg.table_row():
+								dpg.add_text(i18n.t('ui.label_se_format'))
+								dpg.add_radio_button(
+									items=('OGG', 'MP3', 'WAV'),
+									default_value=values_default['aud_sefmt_radio'],
+									horizontal=True,
+									tag='aud_sefmt_radio',
+								)
+							with dpg.table_row():
+								dpg.add_text(i18n.t('ui.label_bgm_channel'))
+								dpg.add_radio_button(
+									items=(i18n.t('var.stereo'), i18n.t('var.mono')),
+									default_value=values_default['aud_bgmch_radio'],
+									horizontal=True,
+									tag='aud_bgmch_radio',
+								)
+							with dpg.table_row():
+								dpg.add_text(i18n.t('ui.label_se_channel'))
+								dpg.add_radio_button(
+									items=(i18n.t('var.stereo'), i18n.t('var.mono')),
+									default_value=values_default['aud_sech_radio'],
+									horizontal=True,
+									tag='aud_sech_radio',
+								)
 					with dpg.tree_node(label=i18n.t('ui.label_advanced_settings'), default_open=True):
 						with dpg.tree_node(label=i18n.t('ui.label_ogg_conversion'), default_open=True):
-							with dpg.group(horizontal=True):
-								dpg.add_text(i18n.t('ui.label_bgm_bitrate'))
-								dpg.add_combo(
-									label='kbps',
-									items=(
-										'192',
-										'160',
-										'128',
-										'112',
-										'96',
-										'64',
-										'56',
-										'48',
-										'32',
-									),
-									default_value=values_default['aud_oggbgm_kbps'],
-									fit_width=True,
-									tag='aud_oggbgm_kbps',
-								)
-								dpg.add_combo(
-									label='Hz',
-									items=('44100', '22050', '11025'),
-									default_value=values_default['aud_oggbgm_hz'],
-									fit_width=True,
-									tag='aud_oggbgm_hz',
-								)
-							with dpg.group(horizontal=True):
-								dpg.add_text(i18n.t('ui.label_se_bitrate'))
-								dpg.add_combo(
-									label='kbps',
-									items=(
-										'192',
-										'160',
-										'128',
-										'112',
-										'96',
-										'64',
-										'56',
-										'48',
-										'32',
-									),
-									default_value=values_default['aud_oggse_kbps'],
-									fit_width=True,
-									tag='aud_oggse_kbps',
-								)
-								dpg.add_combo(
-									label='Hz',
-									items=('44100', '22050', '11025'),
-									default_value=values_default['aud_oggse_hz'],
-									fit_width=True,
-									tag='aud_oggse_hz',
-								)
+							with dpg.table(header_row=False, borders_innerH=False, borders_innerV=False):
+								dpg.add_table_column(no_resize=True, width_fixed=True)
+								dpg.add_table_column(no_resize=True, width_fixed=True)
+								dpg.add_table_column(no_resize=True, width_fixed=True)
+								with dpg.table_row():
+									dpg.add_text(i18n.t('ui.label_bgm_bitrate'))
+									dpg.add_combo(
+										label='kbps',
+										items=(
+											'192',
+											'160',
+											'128',
+											'112',
+											'96',
+											'64',
+											'56',
+											'48',
+											'32',
+										),
+										default_value=values_default['aud_oggbgm_kbps'],
+										width=50,
+										tag='aud_oggbgm_kbps',
+									)
+									dpg.add_combo(
+										label='Hz',
+										items=('44100', '22050', '11025'),
+										default_value=values_default['aud_oggbgm_hz'],
+										width=70,
+										tag='aud_oggbgm_hz',
+									)
+								with dpg.table_row():
+									dpg.add_text(i18n.t('ui.label_se_bitrate'))
+									dpg.add_combo(
+										label='kbps',
+										items=(
+											'192',
+											'160',
+											'128',
+											'112',
+											'96',
+											'64',
+											'56',
+											'48',
+											'32',
+										),
+										default_value=values_default['aud_oggse_kbps'],
+										width=50,
+										tag='aud_oggse_kbps',
+									)
+									dpg.add_combo(
+										label='Hz',
+										items=('44100', '22050', '11025'),
+										default_value=values_default['aud_oggse_hz'],
+										width=70,
+										tag='aud_oggse_hz',
+									)
 						with dpg.tree_node(label=i18n.t('ui.label_mp3_conversion'), default_open=True):
-							with dpg.group(horizontal=True):
-								dpg.add_text(i18n.t('ui.label_bgm_bitrate'))
-								dpg.add_combo(
-									label='kbps',
-									items=(
-										'192',
-										'160',
-										'128',
-										'112',
-										'96',
-										'64',
-										'56',
-										'48',
-										'32',
-									),
-									default_value=values_default['aud_mp3bgm_kbps'],
-									fit_width=True,
-									tag='aud_mp3bgm_kbps',
-								)
-								dpg.add_combo(
-									label='Hz',
-									items=('44100', '22050', '11025'),
-									default_value=values_default['aud_mp3bgm_hz'],
-									fit_width=True,
-									tag='aud_mp3bgm_hz',
-								)
-							with dpg.group(horizontal=True):
-								dpg.add_text(i18n.t('ui.label_se_bitrate'))
-								dpg.add_combo(
-									label='kbps',
-									items=(
-										'192',
-										'160',
-										'128',
-										'112',
-										'96',
-										'64',
-										'56',
-										'48',
-										'32',
-									),
-									default_value=values_default['aud_mp3se_kbps'],
-									fit_width=True,
-									tag='aud_mp3se_kbps',
-								)
-								dpg.add_combo(
-									label='Hz',
-									items=('44100', '22050', '11025'),
-									default_value=values_default['aud_mp3se_hz'],
-									fit_width=True,
-									tag='aud_mp3se_hz',
-								)
-							with dpg.group(horizontal=True):
-								dpg.add_text(i18n.t('ui.label_bgm_cutoff_frequency'))
-								dpg.add_combo(
-									label='Hz',
-									items=(
-										'18000',
-										'16500',
-										'15000',
-										'13500',
-										'12000',
-										'10500',
-										'9000',
-										'7500',
-									),
-									default_value=values_default['aud_mp3bgm_cutoff'],
-									fit_width=True,
-									tag='aud_mp3bgm_cutoff',
-								)
-							with dpg.group(horizontal=True):
-								dpg.add_text(i18n.t('ui.label_se_cutoff_frequency'))
-								dpg.add_combo(
-									label='Hz',
-									items=(
-										'18000',
-										'16500',
-										'15000',
-										'13500',
-										'12000',
-										'10500',
-										'9000',
-										'7500',
-									),
-									default_value=values_default['aud_mp3se_cutoff'],
-									fit_width=True,
-									tag='aud_mp3se_cutoff',
-								)
+							with dpg.table(header_row=False, borders_innerH=False, borders_innerV=False):
+								dpg.add_table_column(no_resize=True, width_fixed=True)
+								dpg.add_table_column(no_resize=True, width_fixed=True)
+								dpg.add_table_column(no_resize=True, width_fixed=True)
+								with dpg.table_row():
+									dpg.add_text(i18n.t('ui.label_bgm_bitrate'))
+									dpg.add_combo(
+										label='kbps',
+										items=(
+											'192',
+											'160',
+											'128',
+											'112',
+											'96',
+											'64',
+											'56',
+											'48',
+											'32',
+										),
+										default_value=values_default['aud_mp3bgm_kbps'],
+										width=50,
+										tag='aud_mp3bgm_kbps',
+									)
+									dpg.add_combo(
+										label='Hz',
+										items=('44100', '22050', '11025'),
+										default_value=values_default['aud_mp3bgm_hz'],
+										width=70,
+										tag='aud_mp3bgm_hz',
+									)
+								with dpg.table_row():
+									dpg.add_text(i18n.t('ui.label_se_bitrate'))
+									dpg.add_combo(
+										label='kbps',
+										items=(
+											'192',
+											'160',
+											'128',
+											'112',
+											'96',
+											'64',
+											'56',
+											'48',
+											'32',
+										),
+										default_value=values_default['aud_mp3se_kbps'],
+										width=50,
+										tag='aud_mp3se_kbps',
+									)
+									dpg.add_combo(
+										label='Hz',
+										items=('44100', '22050', '11025'),
+										default_value=values_default['aud_mp3se_hz'],
+										width=70,
+										tag='aud_mp3se_hz',
+									)
+								with dpg.table_row():
+									dpg.add_text(i18n.t('ui.label_bgm_cutoff_frequency'))
+									dpg.add_combo(
+										label='Hz',
+										items=(
+											'18000',
+											'16500',
+											'15000',
+											'13500',
+											'12000',
+											'10500',
+											'9000',
+											'7500',
+										),
+										default_value=values_default['aud_mp3bgm_cutoff'],
+										width=70,
+										tag='aud_mp3bgm_cutoff',
+									)
+								with dpg.table_row():
+									dpg.add_text(i18n.t('ui.label_se_cutoff_frequency'))
+									dpg.add_combo(
+										label='Hz',
+										items=(
+											'18000',
+											'16500',
+											'15000',
+											'13500',
+											'12000',
+											'10500',
+											'9000',
+											'7500',
+										),
+										default_value=values_default['aud_mp3se_cutoff'],
+										width=70,
+										tag='aud_mp3se_cutoff',
+									)
 						with dpg.tree_node(label=i18n.t('ui.label_wav_conversion'), default_open=True):
-							with dpg.group(horizontal=True):
-								dpg.add_text(i18n.t('ui.label_bgm_bitrate'))
-								dpg.add_combo(
-									label='Hz',
-									items=('44100', '22050', '11025'),
-									default_value=values_default['aud_wavbgm_hz'],
-									fit_width=True,
-									tag='aud_wavbgm_hz',
-								)
-							with dpg.group(horizontal=True):
-								dpg.add_text(i18n.t('ui.label_se_bitrate'))
-								dpg.add_combo(
-									label='Hz',
-									items=('44100', '22050', '11025'),
-									default_value=values_default['aud_wavse_hz'],
-									fit_width=True,
-									tag='aud_wavse_hz',
-								)
-							with dpg.group(horizontal=True):
-								dpg.add_text(i18n.t('ui.label_bgm_codec'))
-								dpg.add_radio_button(
-									items=('pcm_s16le', 'pcm_u8'),
-									default_value=values_default['aud_bgmcodec_radio'],
-									horizontal=True,
-									tag='aud_bgmcodec_radio',
-								)
-							with dpg.group(horizontal=True):
-								dpg.add_text(i18n.t('ui.label_se_codec'))
-								dpg.add_radio_button(
-									items=('pcm_s16le', 'pcm_u8'),
-									default_value=values_default['aud_secodec_radio'],
-									horizontal=True,
-									tag='aud_secodec_radio',
-								)
+							with dpg.table(header_row=False, borders_innerH=False, borders_innerV=False):
+								dpg.add_table_column(no_resize=True, width_fixed=True)
+								dpg.add_table_column(no_resize=True, width_fixed=True)
+								with dpg.table_row():
+									dpg.add_text(i18n.t('ui.label_bgm_bitrate'))
+									dpg.add_combo(
+										label='Hz',
+										items=('44100', '22050', '11025'),
+										default_value=values_default['aud_wavbgm_hz'],
+										width=70,
+										tag='aud_wavbgm_hz',
+									)
+								with dpg.table_row():
+									dpg.add_text(i18n.t('ui.label_se_bitrate'))
+									dpg.add_combo(
+										label='Hz',
+										items=('44100', '22050', '11025'),
+										default_value=values_default['aud_wavse_hz'],
+										width=70,
+										tag='aud_wavse_hz',
+									)
+								with dpg.table_row():
+									dpg.add_text(i18n.t('ui.label_bgm_codec'))
+									dpg.add_radio_button(
+										items=('pcm_s16le', 'pcm_u8'),
+										default_value=values_default['aud_bgmcodec_radio'],
+										horizontal=True,
+										tag='aud_bgmcodec_radio',
+									)
+								with dpg.table_row():
+									dpg.add_text(i18n.t('ui.label_se_codec'))
+									dpg.add_radio_button(
+										items=('pcm_s16le', 'pcm_u8'),
+										default_value=values_default['aud_secodec_radio'],
+										horizontal=True,
+										tag='aud_secodec_radio',
+									)
 
 			with dpg.tab(label=i18n.t('ui.label_video')):
 				with dpg.child_window(height=195, border=False):
@@ -417,7 +431,7 @@ def gui_main(version: str, charset_param: str, hw_key: str, input_dir_param: str
 									label=i18n.t('ui.label_color'),
 									items=('256', '192', '128', '96', '64', '32'),
 									default_value=values_default['vid_renbanpngquantize_num'],
-									fit_width=True,
+									width=50,
 									tag='vid_renbanpngquantize_num',
 								)
 							with dpg.group(horizontal=True):
@@ -473,14 +487,14 @@ def gui_main(version: str, charset_param: str, hw_key: str, input_dir_param: str
 										'32',
 									),
 									default_value=values_default['vid_mp4aud_kbps'],
-									fit_width=True,
+									width=50,
 									tag='vid_mp4aud_kbps',
 								)
 								dpg.add_combo(
 									label='Hz',
 									items=('44100', '22050', '11025'),
 									default_value=values_default['vid_mp4aud_hz'],
-									fit_width=True,
+									width=70,
 									tag='vid_mp4aud_hz',
 								)
 
@@ -488,76 +502,82 @@ def gui_main(version: str, charset_param: str, hw_key: str, input_dir_param: str
 				with dpg.child_window(height=195, border=False):
 					with dpg.tree_node(label=i18n.t('ui.label_basic_settings'), default_open=True):
 						with dpg.tree_node(label=i18n.t('ui.label_file'), default_open=True):
-							with dpg.group(horizontal=True):
-								dpg.add_text(i18n.t('ui.label_image_compression'))
-								dpg.add_combo(
-									label='',
-									items=('arc.nsa', 'arc1.nsa', 'arc2.nsa', i18n.t('var.do_not_compress')),
-									default_value=values_default['etc_filecompimg_nsa'],
-									fit_width=True,
-									tag='etc_filecompimg_nsa',
-								)
-							with dpg.group(horizontal=True):
-								dpg.add_text(i18n.t('ui.label_bgm_compression'))
-								dpg.add_combo(
-									label='',
-									items=('arc.nsa', 'arc1.nsa', 'arc2.nsa', i18n.t('var.do_not_compress')),
-									default_value=values_default['etc_filecompbgm_nsa'],
-									fit_width=True,
-									tag='etc_filecompbgm_nsa',
-								)
-							with dpg.group(horizontal=True):
-								dpg.add_text(i18n.t('ui.label_se_compression'))
-								dpg.add_combo(
-									label='',
-									items=('arc.nsa', 'arc1.nsa', 'arc2.nsa', i18n.t('var.do_not_compress')),
-									default_value=values_default['etc_filecompse_nsa'],
-									fit_width=True,
-									tag='etc_filecompse_nsa',
-								)
-							with dpg.group(horizontal=True):
-								dpg.add_text(i18n.t('ui.label_numvideo_compression'))
-								dpg.add_combo(
-									label='',
-									items=('arc.nsa', 'arc1.nsa', 'arc2.nsa', i18n.t('var.do_not_compress')),
-									default_value=values_default['etc_filecomprenban_nsa'],
-									fit_width=True,
-									tag='etc_filecomprenban_nsa',
-								)
-							with dpg.group(horizontal=True):
-								dpg.add_checkbox(
-									label=i18n.t('ui.label_dll_exclude'),
-									default_value=values_default['etc_fileexdll_chk'],
-									tag='etc_fileexdll_chk',
-								)
-							with dpg.group(horizontal=True):
-								dpg.add_checkbox(
-									label=i18n.t('ui.label_exdb_exclude'),
-									default_value=values_default['etc_fileexdb_chk'],
-									tag='etc_fileexdb_chk',
-								)
+							with dpg.table(header_row=False, borders_innerH=False, borders_innerV=False):
+								dpg.add_table_column(no_resize=True, width_fixed=True)
+								dpg.add_table_column(no_resize=True, width_fixed=True)
+								with dpg.table_row():
+									dpg.add_text(i18n.t('ui.label_image_compression'))
+									dpg.add_combo(
+										label='',
+										items=('arc.nsa', 'arc1.nsa', 'arc2.nsa', i18n.t('var.do_not_compress')),
+										default_value=values_default['etc_filecompimg_nsa'],
+										width=140,
+										tag='etc_filecompimg_nsa',
+									)
+								with dpg.table_row():
+									dpg.add_text(i18n.t('ui.label_bgm_compression'))
+									dpg.add_combo(
+										label='',
+										items=('arc.nsa', 'arc1.nsa', 'arc2.nsa', i18n.t('var.do_not_compress')),
+										default_value=values_default['etc_filecompbgm_nsa'],
+										width=140,
+										tag='etc_filecompbgm_nsa',
+									)
+								with dpg.table_row():
+									dpg.add_text(i18n.t('ui.label_se_compression'))
+									dpg.add_combo(
+										label='',
+										items=('arc.nsa', 'arc1.nsa', 'arc2.nsa', i18n.t('var.do_not_compress')),
+										default_value=values_default['etc_filecompse_nsa'],
+										width=140,
+										tag='etc_filecompse_nsa',
+									)
+								with dpg.table_row():
+									dpg.add_text(i18n.t('ui.label_numvideo_compression'))
+									dpg.add_combo(
+										label='',
+										items=('arc.nsa', 'arc1.nsa', 'arc2.nsa', i18n.t('var.do_not_compress')),
+										default_value=values_default['etc_filecomprenban_nsa'],
+										width=140,
+										tag='etc_filecomprenban_nsa',
+									)
+								with dpg.table_row():
+									dpg.add_checkbox(
+										label=i18n.t('ui.label_dll_exclude'),
+										default_value=values_default['etc_fileexdll_chk'],
+										tag='etc_fileexdll_chk',
+									)
+								with dpg.table_row():
+									dpg.add_checkbox(
+										label=i18n.t('ui.label_exdb_exclude'),
+										default_value=values_default['etc_fileexdb_chk'],
+										tag='etc_fileexdb_chk',
+									)
 						with dpg.tree_node(label=i18n.t('ui.label_onsini'), default_open=True):
-							with dpg.group(horizontal=True):
-								dpg.add_text(i18n.t('ui.label_onsini_expansion'))
-								dpg.add_combo(
-									label='',
-									items=(i18n.t('var.no_expansion'), i18n.t('var.maintain_ratio'), i18n.t('var.full_size')),
-									default_value=values_default['etc_iniscreen'],
-									fit_width=True,
-									tag='etc_iniscreen',
-								)
-							with dpg.group(horizontal=True):
-								dpg.add_checkbox(
-									label=i18n.t('ui.label_ini_font'),
-									default_value=values_default['etc_iniramfont_chk'],
-									tag='etc_iniramfont_chk',
-								)
-							with dpg.group(horizontal=True):
-								dpg.add_checkbox(
-									label=i18n.t('ui.label_ini_cursor'),
-									default_value=values_default['etc_inicursor_chk'],
-									tag='etc_inicursor_chk',
-								)
+							with dpg.table(header_row=False, borders_innerH=False, borders_innerV=False):
+								dpg.add_table_column(no_resize=True, width_fixed=True)
+								dpg.add_table_column(no_resize=True, width_fixed=True)
+								with dpg.table_row():
+									dpg.add_text(i18n.t('ui.label_onsini_expansion'))
+									dpg.add_combo(
+										label='',
+										items=(i18n.t('var.no_expansion'), i18n.t('var.maintain_ratio'), i18n.t('var.full_size')),
+										default_value=values_default['etc_iniscreen'],
+										width=120,
+										tag='etc_iniscreen',
+									)
+								with dpg.table_row():
+									dpg.add_checkbox(
+										label=i18n.t('ui.label_ini_font'),
+										default_value=values_default['etc_iniramfont_chk'],
+										tag='etc_iniramfont_chk',
+									)
+								with dpg.table_row():
+									dpg.add_checkbox(
+										label=i18n.t('ui.label_ini_cursor'),
+										default_value=values_default['etc_inicursor_chk'],
+										tag='etc_inicursor_chk',
+									)
 					with dpg.tree_node(label=i18n.t('ui.label_advanced_settings'), default_open=True):
 						with dpg.tree_node(label=i18n.t('ui.label_0txt'), default_open=True):
 							with dpg.group(horizontal=True):
@@ -571,90 +591,93 @@ def gui_main(version: str, charset_param: str, hw_key: str, input_dir_param: str
 									horizontal=False,
 									tag='etc_0txtnbz_radio',
 								)
-							with dpg.group(horizontal=True):
-								dpg.add_text(i18n.t('ui.label_0txt_avitompegplay'))
-								dpg.add_combo(
-									items=(
-										i18n.t('var.use_function_override'),
-										i18n.t('var.use_regex_replace'),
-										i18n.t('var.do_not_use'),
-									),
-									default_value=values_default['etc_0txtavitompegplay'],
-									fit_width=True,
-									tag='etc_0txtavitompegplay',
-								)
-							with dpg.group(horizontal=True):
-								dpg.add_text(i18n.t('ui.label_0txt_noscreenshot'))
-								dpg.add_combo(
-									items=(
-										i18n.t('var.use_function_override'),
-										i18n.t('var.use_regex_replace'),
-										i18n.t('var.do_not_use'),
-									),
-									default_value=values_default['etc_0txtnoscreenshot'],
-									fit_width=True,
-									tag='etc_0txtnoscreenshot',
-								)
-							with dpg.group(horizontal=True):
-								dpg.add_checkbox(
-									label=i18n.t('ui.label_0txt_maxkaisoupage'),
-									default_value=values_default['etc_0txtmaxkaisoupage_chk'],
-									tag='etc_0txtmaxkaisoupage_chk',
-								)
-								dpg.add_combo(
-									items=('1', '3', '5', '10', '20'),
-									default_value=values_default['etc_0txtmaxkaisoupage_num'],
-									fit_width=True,
-									tag='etc_0txtmaxkaisoupage_num',
-								)
-							with dpg.group(horizontal=True):
-								dpg.add_checkbox(
-									label=i18n.t('ui.label_0txt_overwritesavenumber'),
-									default_value=values_default['etc_0txtoverwritesavenumber_chk'],
-									tag='etc_0txtoverwritesavenumber_chk',
-								)
-								dpg.add_combo(
-									items=[str(i) for i in range(1, 21)],#1から20をstr型で保持したlist
-									default_value=values_default['etc_0txtoverwritesavenumber_num'],
-									fit_width=True,
-									tag='etc_0txtoverwritesavenumber_num',
-								)
-							with dpg.group(horizontal=True):
-								dpg.add_checkbox(
-									label=i18n.t('ui.label_0txt_setwindowbigfont'),
-									default_value=values_default['etc_0txtsetwindowbigfont_chk'],
-									tag='etc_0txtsetwindowbigfont_chk',
-								)
-							with dpg.group(horizontal=True):
-								dpg.add_checkbox(
-									label=i18n.t('ui.label_0txt_skipokcancelbox'),
-									default_value=values_default['etc_0txtskipokcancelbox_chk'],
-									tag='etc_0txtskipokcancelbox_chk',
-								)
-							with dpg.group(horizontal=True):
-								dpg.add_checkbox(
-									label=i18n.t('ui.label_0txt_skipyesnobox'),
-									default_value=values_default['etc_0txtskipyesnobox_chk'],
-									tag='etc_0txtskipyesnobox_chk',
-								)
-							with dpg.group(horizontal=True):
-								dpg.add_checkbox(
-									label=i18n.t('ui.label_0txt_rndtornd2'),
-									default_value=values_default['etc_0txtrndtornd2_chk'],
-									tag='etc_0txtrndtornd2_chk',
-								)
-							with dpg.group(horizontal=True):
-								dpg.add_checkbox(
-									label=i18n.t('ui.label_0txt_disabletextgosub'),
-									default_value=values_default['etc_0txtdisabletextgosub_chk'],
-									tag='etc_0txtdisabletextgosub_chk',
-								)
-							with dpg.group(horizontal=True):
-								dpg.add_checkbox(
-									label=i18n.t('ui.label_0txt_removecommentout'),
-									default_value=values_default['etc_0txtremovecommentout_chk'],
-									tag='etc_0txtremovecommentout_chk',
-								)
+							with dpg.table(header_row=False, borders_innerH=False, borders_innerV=False):
+								dpg.add_table_column(no_resize=True, width_fixed=True)
+								dpg.add_table_column(no_resize=True, width_fixed=True)
+								with dpg.table_row():
+									dpg.add_text(i18n.t('ui.label_0txt_avitompegplay'))
+									dpg.add_combo(
+										items=(
+											i18n.t('var.use_function_override'),
+											i18n.t('var.use_regex_replace'),
+											i18n.t('var.do_not_use'),
+										),
+										default_value=values_default['etc_0txtavitompegplay'],
+										width=180,
+										tag='etc_0txtavitompegplay',
+									)
+								with dpg.table_row():
+									dpg.add_text(i18n.t('ui.label_0txt_noscreenshot'))
+									dpg.add_combo(
+										items=(
+											i18n.t('var.use_function_override'),
+											i18n.t('var.use_regex_replace'),
+											i18n.t('var.do_not_use'),
+										),
+										default_value=values_default['etc_0txtnoscreenshot'],
+										width=180,
+										tag='etc_0txtnoscreenshot',
+									)
+								with dpg.table_row():
+									dpg.add_checkbox(
+										label=i18n.t('ui.label_0txt_maxkaisoupage'),
+										default_value=values_default['etc_0txtmaxkaisoupage_chk'],
+										tag='etc_0txtmaxkaisoupage_chk',
+									)
+									dpg.add_combo(
+										items=[str(i) for i in range(1, 41)],#1から40をstr型で保持したlist
+										default_value=values_default['etc_0txtmaxkaisoupage_num'],
+										width=50,
+										tag='etc_0txtmaxkaisoupage_num',
+									)
+								with dpg.table_row():
+									dpg.add_checkbox(
+										label=i18n.t('ui.label_0txt_overwritesavenumber'),
+										default_value=values_default['etc_0txtoverwritesavenumber_chk'],
+										tag='etc_0txtoverwritesavenumber_chk',
+									)
+									dpg.add_combo(
+										items=[str(i) for i in range(1, 21)],#1から20をstr型で保持したlist
+										default_value=values_default['etc_0txtoverwritesavenumber_num'],
+										width=50,
+										tag='etc_0txtoverwritesavenumber_num',
+									)
+								with dpg.table_row():
+									dpg.add_checkbox(
+										label=i18n.t('ui.label_0txt_setwindowbigfont'),
+										default_value=values_default['etc_0txtsetwindowbigfont_chk'],
+										tag='etc_0txtsetwindowbigfont_chk',
+									)
+								with dpg.table_row():
+									dpg.add_checkbox(
+										label=i18n.t('ui.label_0txt_skipokcancelbox'),
+										default_value=values_default['etc_0txtskipokcancelbox_chk'],
+										tag='etc_0txtskipokcancelbox_chk',
+									)
+								with dpg.table_row():
+									dpg.add_checkbox(
+										label=i18n.t('ui.label_0txt_skipyesnobox'),
+										default_value=values_default['etc_0txtskipyesnobox_chk'],
+										tag='etc_0txtskipyesnobox_chk',
+									)
+								with dpg.table_row():
+									dpg.add_checkbox(
+										label=i18n.t('ui.label_0txt_rndtornd2'),
+										default_value=values_default['etc_0txtrndtornd2_chk'],
+										tag='etc_0txtrndtornd2_chk',
+									)
+								with dpg.table_row():
+									dpg.add_checkbox(
+										label=i18n.t('ui.label_0txt_disabletextgosub'),
+										default_value=values_default['etc_0txtdisabletextgosub_chk'],
+										tag='etc_0txtdisabletextgosub_chk',
+									)
+								with dpg.table_row():
+									dpg.add_checkbox(
+										label=i18n.t('ui.label_0txt_removecommentout'),
+										default_value=values_default['etc_0txtremovecommentout_chk'],
+										tag='etc_0txtremovecommentout_chk',
+									)
 		with dpg.group(horizontal=True):
 			dpg.add_progress_bar(default_value=0, tag='progress_bar', overlay='0%')
 			dpg.add_button(label='Convert', user_data=(version, charset_param),
