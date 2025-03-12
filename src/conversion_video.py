@@ -174,12 +174,9 @@ def convert_video_renban(values: dict, values_ex: dict, f_dict: dict):
 	extractedpath = f_dict['extractedpath']
 	convertedpath = f_dict['convertedpath']
 	hardware = values['hardware']
-
-	#i18nのvarのみ事前代入(case対策)
-	i18n_t_var_bgm_match = i18n.t('var.bgm_match')
-	i18n_t_var_stereo = i18n.t('var.stereo')
-	i18n_t_var_mono = i18n.t('var.mono')
-	i18n_t_var_se_voice_match = i18n.t('var.se_voice_match')
+	vid_renbanaudset_radio = values['vid_renbanaudset_radio']
+	aud_bgmch_radio = values['aud_bgmch_radio']
+	aud_sech_radio = values['aud_sech_radio']
 
 	#連番の場合出力パスはディレクトリ扱いなのでとりあえず作成
 	convertedpath.mkdir(exist_ok = True)
@@ -226,78 +223,78 @@ def convert_video_renban(values: dict, values_ex: dict, f_dict: dict):
 		dummy_dict = {'extractedpath': extractedpath, 'nbz': False}
 
 		#音源をBGM/SEどっち扱いしてるか
-		match values['vid_renbanaudset_radio']:
+		#bgm判定時
+		if (vid_renbanaudset_radio == i18n.t('var.bgm_match')):
+			if (aud_bgmch_radio == i18n.t('var.stereo')):
+				dummy_dict['ch'] = '2'
+			if (aud_bgmch_radio == i18n.t('var.mono')):
+				dummy_dict['ch'] = '1'
+			else:
+				raise ValueError(i18n.t('ui.Video_sequential_audio_bgm_channel_not_selected'))
 
-			#bgm判定時
-			case str(i18n_t_var_bgm_match):
+			match values['aud_bgmfmt_radio']:
+				case 'OGG':
+					dummy_dict['convertedpath'] = Path(convertedpath / 'audio.ogg')
+					dummy_dict['format'] = 'OGG'
+					dummy_dict['kbps'] = values['aud_oggbgm_kbps']
+					dummy_dict['hz'] = values['aud_oggbgm_hz']
 
-				match values['aud_bgmch_radio']:
-					case str(i18n_t_var_stereo): dummy_dict['ch'] = '2'
-					case str(i18n_t_var_mono): dummy_dict['ch'] = '1'
-					case _: raise ValueError(i18n.t('ui.Video_sequential_audio_bgm_channel_not_selected'))
+				case 'MP3':
+					dummy_dict['convertedpath'] = Path(convertedpath / 'audio.mp3')
+					dummy_dict['format'] = 'MP3'
+					dummy_dict['cutoff'] = values['aud_mp3bgm_cutoff']
+					dummy_dict['kbps'] = values['aud_mp3bgm_kbps']
+					dummy_dict['hz'] = values['aud_mp3bgm_hz']
 
-				match values['aud_bgmfmt_radio']:
-					case 'OGG':
-						dummy_dict['convertedpath'] = Path(convertedpath / 'audio.ogg')
-						dummy_dict['format'] = 'OGG'
-						dummy_dict['kbps'] = values['aud_oggbgm_kbps']
-						dummy_dict['hz'] = values['aud_oggbgm_hz']
+				case 'WAV':
+					dummy_dict['convertedpath'] = Path(convertedpath / 'audio.wav')
+					dummy_dict['format'] = 'WAV'
+					dummy_dict['hz'] = values['aud_wavbgm_hz']
 
-					case 'MP3':
-						dummy_dict['convertedpath'] = Path(convertedpath / 'audio.mp3')
-						dummy_dict['format'] = 'MP3'
-						dummy_dict['cutoff'] = values['aud_mp3bgm_cutoff']
-						dummy_dict['kbps'] = values['aud_mp3bgm_kbps']
-						dummy_dict['hz'] = values['aud_mp3bgm_hz']
+					match values['aud_bgmcodec_radio']:
+						case 'pcm_s16le': dummy_dict['acodec'] = 'pcm_s16le'
+						case 'pcm_u8': dummy_dict['acodec'] = 'pcm_u8'
+						case _: raise ValueError(i18n.t('ui.Video_sequential_audio_bgm_wav_codec_not_found'))
+				
+				case _: raise ValueError(i18n.t('ui.Video_sequential_audio_bgm_format_not_found'))
 
-					case 'WAV':
-						dummy_dict['convertedpath'] = Path(convertedpath / 'audio.wav')
-						dummy_dict['format'] = 'WAV'
-						dummy_dict['hz'] = values['aud_wavbgm_hz']
+		#se判定時
+		elif (vid_renbanaudset_radio == i18n.t('var.se_voice_match')):
+			if (aud_sech_radio == i18n.t('var.stereo')):
+				dummy_dict['ch'] = '2'
+			elif (aud_sech_radio == i18n.t('var.mono')):
+				dummy_dict['ch'] = '1'
+			else:
+				raise ValueError(i18n.t('ui.Video_sequential_audio_se_channel_not_selected'))
 
-						match values['aud_bgmcodec_radio']:
-							case 'pcm_s16le': dummy_dict['acodec'] = 'pcm_s16le'
-							case 'pcm_u8': dummy_dict['acodec'] = 'pcm_u8'
-							case _: raise ValueError(i18n.t('ui.Video_sequential_audio_bgm_wav_codec_not_found'))
-					
-					case _: raise ValueError(i18n.t('ui.Video_sequential_audio_bgm_format_not_found'))
+			match values['aud_sefmt_radio']:
+				case 'OGG':
+					dummy_dict['convertedpath'] = Path(convertedpath / 'audio.ogg')
+					dummy_dict['format'] = 'OGG'
+					dummy_dict['kbps'] = values['aud_oggse_kbps']
+					dummy_dict['hz'] = values['aud_oggse_hz']
 
-			#se判定時
-			case str(i18n_t_var_se_voice_match):
+				case 'MP3':
+					dummy_dict['convertedpath'] = Path(convertedpath / 'audio.mp3')
+					dummy_dict['format'] = 'MP3'
+					dummy_dict['cutoff'] = values['aud_mp3se_cutoff']
+					dummy_dict['kbps'] = values['aud_mp3se_kbps']
+					dummy_dict['hz'] = values['aud_mp3se_hz']
 
-				match values['aud_sech_radio']:
-					case str(i18n_t_var_stereo): dummy_dict['ch'] = '2'
-					case str(i18n_t_var_mono): dummy_dict['ch'] = '1'
-					case _: raise ValueError(i18n.t('ui.Video_sequential_audio_se_channel_not_selected'))
+				case 'WAV':
+					dummy_dict['convertedpath'] = Path(convertedpath / 'audio.wav')
+					dummy_dict['format'] = 'WAV'
+					dummy_dict['hz'] = values['aud_wavse_hz']
 
-				match values['aud_sefmt_radio']:
-					case 'OGG':
-						dummy_dict['convertedpath'] = Path(convertedpath / 'audio.ogg')
-						dummy_dict['format'] = 'OGG'
-						dummy_dict['kbps'] = values['aud_oggse_kbps']
-						dummy_dict['hz'] = values['aud_oggse_hz']
+					match values['aud_secodec_radio']:
+						case 'pcm_s16le': dummy_dict['acodec'] = 'pcm_s16le'
+						case 'pcm_u8': dummy_dict['acodec'] = 'pcm_u8'
+						case _: raise ValueError(i18n.t('ui.Video_sequential_audio_se_wav_codec_not_found'))
+				
+				case _: raise ValueError(i18n.t('ui.Video_sequential_audio_se_format_not_found'))
 
-					case 'MP3':
-						dummy_dict['convertedpath'] = Path(convertedpath / 'audio.mp3')
-						dummy_dict['format'] = 'MP3'
-						dummy_dict['cutoff'] = values['aud_mp3se_cutoff']
-						dummy_dict['kbps'] = values['aud_mp3se_kbps']
-						dummy_dict['hz'] = values['aud_mp3se_hz']
-
-					case 'WAV':
-						dummy_dict['convertedpath'] = Path(convertedpath / 'audio.wav')
-						dummy_dict['format'] = 'WAV'
-						dummy_dict['hz'] = values['aud_wavse_hz']
-
-						match values['aud_secodec_radio']:
-							case 'pcm_s16le': dummy_dict['acodec'] = 'pcm_s16le'
-							case 'pcm_u8': dummy_dict['acodec'] = 'pcm_u8'
-							case _: raise ValueError(i18n.t('ui.Video_sequential_audio_se_wav_codec_not_found'))
-					
-					case _: raise ValueError(i18n.t('ui.Video_sequential_audio_se_format_not_found'))
-
-			#例外
-			case _: raise ValueError(i18n.t('ui.Video_sequential_audio_format_not_found'))
+		#例外
+		else: raise ValueError(i18n.t('ui.Video_sequential_audio_format_not_found'))
 		
 		#音声抽出変換
 		convert_music(dummy_dict)
@@ -341,20 +338,19 @@ def convert_video_mp4(values: dict, values_ex: dict, f_dict: dict):
 
 
 def convert_video(values: dict, values_ex: dict, f_dict: dict):
-
-	#i18nのvarのみ事前代入(case対策)
-	i18n_t = {
-		'numbered_images': str(i18n.t('var.numbered_images')),
-		'do_not_convert': str(i18n.t('var.do_not_convert')),
-	}
+	vid_movfmt_radio = values['vid_movfmt_radio']
 
 	#ビデオの変換フォーマットによる分岐
-	match values['vid_movfmt_radio']:
-		case str(i18n_t_var_numbered_images): convert_video_renban(values, values_ex, f_dict)
-		case 'MJPEG': convert_video_mjpeg(values, values_ex, f_dict)
-		case 'MP4': convert_video_mp4(values, values_ex, f_dict)
-		case str(i18n_t_var_do_not_convert): pass
-		case _: raise ValueError(i18n.t('ui.Video_conversion_format_not_selected'))
+	if (vid_movfmt_radio == i18n.t('var.numbered_images')):
+		convert_video_renban(values, values_ex, f_dict)
+	elif (vid_movfmt_radio == 'MJPEG'):
+		convert_video_mjpeg(values, values_ex, f_dict)
+	elif (vid_movfmt_radio == 'MP4'):
+		convert_video_mp4(values, values_ex, f_dict)
+	elif (vid_movfmt_radio == i18n.t('var.do_not_convert')):
+		pass
+	else:
+		raise ValueError(i18n.t('ui.Video_conversion_format_not_selected'))
 
 
 ##########################################################################################

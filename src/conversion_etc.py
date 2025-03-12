@@ -10,13 +10,16 @@ from utils import format_check
 
 
 def create_cnvsetdict(values: dict, values_ex: dict, extracted_dir: Path):
+	vid_movfmt_radio = values['vid_movfmt_radio']
+	etc_filecomprenban_nsa = values['etc_filecomprenban_nsa']
+	etc_filecompimg_nsa = values['etc_filecompimg_nsa']
+	aud_bgmch_radio = values['aud_bgmch_radio']
+	etc_filecompbgm_nsa = values['etc_filecompbgm_nsa']
+	aud_sech_radio = values['aud_sech_radio']
+	etc_filecompse_nsa = values['etc_filecompse_nsa']
+
 	#とにかく仕分け作業はここでやる 変換は後で
 	cnvset_dict = {}
-
-	#i18nのvarのみ事前代入(case対策)
-	i18n_t_var_do_not_compress = i18n.t('var.do_not_compress')
-	i18n_t_var_stereo = i18n.t('var.stereo')
-	i18n_t_var_mono = i18n.t('var.mono')
 
 	for f_path in extracted_dir.glob('**/*'):
 		if f_path.is_file():#ファイル(=ディレクトリではない)なら処理
@@ -31,13 +34,17 @@ def create_cnvsetdict(values: dict, values_ex: dict, extracted_dir: Path):
 				cnvset_dict[f_path_re] = {'fileformat':'video'}
 
 				#連番のときのみ設定先に
-				if (values['vid_movfmt_radio'] == i18n.t('var.numbered_images')):
-					match values['etc_filecomprenban_nsa']:
-						case 'arc.nsa': cnvset_dict[f_path_re]['comp'] = 'arc'
-						case 'arc1.nsa': cnvset_dict[f_path_re]['comp'] = 'arc1'
-						case 'arc2.nsa': cnvset_dict[f_path_re]['comp'] = 'arc2'
-						case str(i18n_t_var_do_not_compress): cnvset_dict[f_path_re]['comp'] = 'no_comp'
-						case _: raise ValueError(i18n.t('ui.Sequential_image_compression_not_selected'))
+				if (vid_movfmt_radio == i18n.t('var.numbered_images')):
+					if (etc_filecomprenban_nsa == 'arc.nsa'):
+						cnvset_dict[f_path_re]['comp'] = 'arc'
+					elif (etc_filecomprenban_nsa == 'arc1.nsa'):
+						cnvset_dict[f_path_re]['comp'] = 'arc1'
+					elif (etc_filecomprenban_nsa == 'arc2.nsa'):
+						cnvset_dict[f_path_re]['comp'] = 'arc2'
+					elif (etc_filecomprenban_nsa == i18n.t('var.do_not_compress')):
+						cnvset_dict[f_path_re]['comp'] = 'no_comp'
+					else:
+						raise ValueError(i18n.t('ui.Sequential_image_compression_not_selected'))
 
 				#通常時は(再生できなくなるので)非圧縮
 				else:
@@ -82,17 +89,21 @@ def create_cnvsetdict(values: dict, values_ex: dict, extracted_dir: Path):
 				cnvset_dict[f_path_re]['part'] = d_part
 
 				#copy/alphaのBMPの場合はJPEGに変換
-				if (fc == 'BMP') and (d_trans in ['c', 'a']): cnvset_dict[f_path_re]['format'] = 'JPEG'
-				
-				#それ以外はそのまま
-				else: cnvset_dict[f_path_re]['format'] = fc
+				if (fc == 'BMP' and d_trans in ['c', 'a']):
+					cnvset_dict[f_path_re]['format'] = 'JPEG'
+				else:
+					cnvset_dict[f_path_re]['format'] = fc
 
-				match values['etc_filecompimg_nsa']:
-					case 'arc.nsa': cnvset_dict[f_path_re]['comp'] = 'arc'
-					case 'arc1.nsa': cnvset_dict[f_path_re]['comp'] = 'arc1'
-					case 'arc2.nsa': cnvset_dict[f_path_re]['comp'] = 'arc2'
-					case str(i18n_t_var_do_not_compress): cnvset_dict[f_path_re]['comp'] = 'no_comp'
-					case _: raise ValueError(i18n.t('ui.Image_compression_not_selected'))
+				if (etc_filecompimg_nsa == 'arc.nsa'):
+					cnvset_dict[f_path_re]['comp'] = 'arc'
+				elif (etc_filecompimg_nsa == 'arc1.nsa'):
+					cnvset_dict[f_path_re]['comp'] = 'arc1'
+				elif (etc_filecompimg_nsa == 'arc2.nsa'):
+					cnvset_dict[f_path_re]['comp'] = 'arc2'
+				elif (etc_filecompimg_nsa == i18n.t('var.do_not_compress')):
+					cnvset_dict[f_path_re]['comp'] = 'no_comp'
+				else:
+					raise ValueError(i18n.t('ui.Image_compression_not_selected'))
 
 			#[音楽]
 			elif fc in ['WAV', 'OGG', 'MP3']:
@@ -103,10 +114,12 @@ def create_cnvsetdict(values: dict, values_ex: dict, extracted_dir: Path):
 				
 				if (f_path_re in values_ex['bgmlist']) or ('bgm' in str(f_path_re).lower()) or (re.fullmatch(r'cd[\/\\]track[0-9]{2}\.[A-z0-9]+', str(f_path_re).lower())):
 
-					match values['aud_bgmch_radio']:
-						case str(i18n_t_var_stereo): cnvset_dict[f_path_re]['ch'] = '2'
-						case str(i18n_t_var_mono): cnvset_dict[f_path_re]['ch'] = '1'
-						case _: raise ValueError(i18n.t('ui.BGM_channel_not_selected'))
+					if (aud_bgmch_radio == i18n.t('var.stereo')):
+						cnvset_dict[f_path_re]['ch'] = '2'
+					elif (aud_bgmch_radio == i18n.t('var.mono')):
+						cnvset_dict[f_path_re]['ch'] = '1'
+					else:
+						raise ValueError(i18n.t('ui.BGM_channel_not_selected'))
 
 					match values['aud_bgmfmt_radio']:
 						case 'WAV':
@@ -130,18 +143,24 @@ def create_cnvsetdict(values: dict, values_ex: dict, extracted_dir: Path):
 						
 						case _: raise ValueError(i18n.t('ui.BGM_format_not_selected'))
 						
-					match values['etc_filecompbgm_nsa']:
-						case 'arc.nsa': cnvset_dict[f_path_re]['comp'] = 'arc'
-						case 'arc1.nsa': cnvset_dict[f_path_re]['comp'] = 'arc1'
-						case 'arc2.nsa': cnvset_dict[f_path_re]['comp'] = 'arc2'
-						case str(i18n_t_var_do_not_compress): cnvset_dict[f_path_re]['comp'] = 'no_comp'
-						case _: raise ValueError(i18n.t('ui.BGM_compression_not_selected'))
+					if (etc_filecompbgm_nsa == 'arc.nsa'):
+						cnvset_dict[f_path_re]['comp'] = 'arc'
+					elif (etc_filecompbgm_nsa == 'arc1.nsa'):
+						cnvset_dict[f_path_re]['comp'] = 'arc1'
+					elif (etc_filecompbgm_nsa == 'arc2.nsa'):
+						cnvset_dict[f_path_re]['comp'] = 'arc2'
+					elif (etc_filecompbgm_nsa == i18n.t('var.do_not_compress')):
+						cnvset_dict[f_path_re]['comp'] = 'no_comp'
+					else:
+						raise ValueError(i18n.t('ui.BGM_compression_not_selected'))
 				
 				else:
-					match values['aud_sech_radio']:
-						case str(i18n_t_var_stereo): cnvset_dict[f_path_re]['ch'] = '2'
-						case str(i18n_t_var_mono): cnvset_dict[f_path_re]['ch'] = '1'
-						case _: raise ValueError(i18n.t('ui.SE_channel_not_selected'))
+					if (aud_sech_radio == i18n.t('var.stereo')):
+						cnvset_dict[f_path_re]['ch'] = '2'
+					elif (aud_sech_radio == i18n.t('var.mono')):
+						cnvset_dict[f_path_re]['ch'] = '1'
+					else:
+						raise ValueError(i18n.t('ui.SE_channel_not_selected'))
 
 					match values['aud_sefmt_radio']:
 						case 'WAV':
@@ -165,12 +184,16 @@ def create_cnvsetdict(values: dict, values_ex: dict, extracted_dir: Path):
 						
 						case _: raise ValueError(i18n.t('ui.SE_format_not_selected'))
 					
-					match values['etc_filecompse_nsa']:
-						case 'arc.nsa': cnvset_dict[f_path_re]['comp'] = 'arc'
-						case 'arc1.nsa': cnvset_dict[f_path_re]['comp'] = 'arc1'
-						case 'arc2.nsa': cnvset_dict[f_path_re]['comp'] = 'arc2'
-						case str(i18n_t_var_do_not_compress): cnvset_dict[f_path_re]['comp'] = 'no_comp'
-						case _: raise ValueError(i18n.t('ui.SE_compression_not_selected'))
+					if (etc_filecompse_nsa == 'arc.nsa'):
+						cnvset_dict[f_path_re]['comp'] = 'arc'
+					elif (etc_filecompse_nsa == 'arc1.nsa'):
+						cnvset_dict[f_path_re]['comp'] = 'arc1'
+					elif (etc_filecompse_nsa == 'arc2.nsa'):
+						cnvset_dict[f_path_re]['comp'] = 'arc2'
+					elif (etc_filecompse_nsa == i18n.t('var.do_not_compress')):
+						cnvset_dict[f_path_re]['comp'] = 'no_comp'
+					else:
+						raise ValueError(i18n.t('ui.SE_compression_not_selected'))
 								
 			#[他]
 			else:
@@ -178,12 +201,16 @@ def create_cnvsetdict(values: dict, values_ex: dict, extracted_dir: Path):
 				cnvset_dict[f_path_re] = {'fileformat':'other'}
 
 				#めんどいので画像と同じ扱い(将来的に修正予定)
-				match values['etc_filecompimg_nsa']:
-					case 'arc.nsa': cnvset_dict[f_path_re]['comp'] = 'arc'
-					case 'arc1.nsa': cnvset_dict[f_path_re]['comp'] = 'arc1'
-					case 'arc2.nsa': cnvset_dict[f_path_re]['comp'] = 'arc2'
-					case str(i18n_t_var_do_not_compress): cnvset_dict[f_path_re]['comp'] = 'no_comp'
-					case _: raise ValueError(i18n.t('ui.Other_compression_not_selected'))
+				if (etc_filecompimg_nsa == 'arc.nsa'):
+					cnvset_dict[f_path_re]['comp'] = 'arc'
+				elif (etc_filecompimg_nsa == 'arc1.nsa'):
+					cnvset_dict[f_path_re]['comp'] = 'arc1'
+				elif (etc_filecompimg_nsa == 'arc2.nsa'):
+					cnvset_dict[f_path_re]['comp'] = 'arc2'
+				elif (etc_filecompimg_nsa == i18n.t('var.do_not_compress')):
+					cnvset_dict[f_path_re]['comp'] = 'no_comp'
+				else:
+					raise ValueError(i18n.t('ui.Other_compression_not_selected'))
 
 	return cnvset_dict
 
