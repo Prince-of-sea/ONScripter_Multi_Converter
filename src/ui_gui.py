@@ -4,6 +4,7 @@ import dearpygui.dearpygui as dpg
 
 from hardwarevalues_config import gethardwarevalues_full, gethardwarevalues
 from utils import get_titlesettingfull, get_meipass
+from misc import get_uifontpath
 from ui_gui2 import (  #最低限以外のui周りはui_gui2でやる
 	ask_create_disabledvideofile,
 	ask_decode_nscriptdat,
@@ -50,13 +51,12 @@ def gui_main(version: str, charset_param: str, hw_key: str, input_dir_param: str
 	dpg.create_context()
 
 	with dpg.font_registry():
-		with dpg.font(file=r'C:/Windows/Fonts/'+i18n.t('var.default_font'), size=16) as default_font:
+		with dpg.font(file=get_uifontpath(), size=16) as default_font:
 			dpg.add_font_range_hint(dpg.mvFontRangeHint_Japanese)#日本語フォントヒント(中国語も含む?)
 			dpg.bind_font(default_font)
 
-	window_title = f'ONScripter Multi Converter for {hw_key} ver.{version}'
-
-	dpg.create_viewport(title=window_title, width=640, height=400, small_icon=str(get_meipass('__icon.ico')), large_icon=str(get_meipass('__icon.ico')), resizable=False)
+	dpg.create_viewport(title=f'ONScripter Multi Converter for {hw_key} ver.{version}',
+						width=640, height=400, small_icon=str(get_meipass('__icon.ico')), large_icon=str(get_meipass('__icon.ico')), resizable=False)
 
 	with dpg.window(label='Main Window', tag='Main Window', no_resize=True) as window:
 		with dpg.menu_bar():

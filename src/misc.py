@@ -12,6 +12,16 @@ from pathlib import Path
 
 from process_notons import get_titledict
 
+def get_uifontpath():
+	p_ttf = Path('./ui.ttf')
+	p_ttc = Path('./ui.ttc')
+
+	if p_ttf.is_file(): p = str(p_ttf)
+	elif p_ttc.is_file(): p = str(p_ttc)
+	else: p = r'C:/Windows/Fonts/'+i18n.t('var.default_font')
+
+	return p
+
 
 def get_programslist(icotemp_dir: Path, charset: str):
 	titledict = get_titledict()

@@ -24,7 +24,7 @@ from ui_cli import cli_main
 
 def main(language: str, charset: str, use_cli: bool, hardware: str, input_dir: str, output_dir: str, title_setting: str):
 	'''Image/sound/video & scenario conversion tool for ONS'''
-	version = '2.4.1 alpha'
+	version = '2.4.1 beta'
 
 	#languageが空の場合は日本語判定
 	if language == '': language = 'ja'
