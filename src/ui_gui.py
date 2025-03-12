@@ -38,7 +38,7 @@ def gui_main(version: str, charset_param: str, hw_key: str, input_dir_param: str
 
 	#ウィンドウを最小化
 	win32gui.ShowWindow(console_window, 6) #SW_MINIMIZE
-	print(i18n.t('ui.This_application_is_already_running'))
+	print(i18n.t('ui.Launch_the_application'))
 
 	#ハードウェア値取得
 	hardwarevalues_full = gethardwarevalues_full()

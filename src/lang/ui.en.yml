@@ -74,7 +74,7 @@ en:
   Not_found_GARbro_GUI: "GARbro_GUI not found."
   Installed_game_list: "Installed game list."
 
-  This_application_is_already_running: "GUI mode is running...\nPlease do not close this window."
+  Launch_the_application: "GUI mode is running...\nPlease do not close this window."
   label_settings: "Settings"
   label_cpu_usage_reduction_mode: "CPU Usage Reduction Mode"
   label_hardware_selection: "Change Hardware"
