@@ -15,3 +15,4 @@ from .RSC2ONS_raiL_kagerou import title_info, main
 from .IGS2ONS_Noesis_loveesm import title_info, main
 from .MUSICA2ONS_minori_haruoto import title_info, main
 from .SC32ONS_itsumono_kanoso import title_info, main
+from .ARCX2ONS_etude_miko import title_info, main

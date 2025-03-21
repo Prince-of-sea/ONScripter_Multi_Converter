@@ -129,7 +129,7 @@ def gethardwarevalues_full():
 				'img_jpgquality_bar': 90, 'img_pngquantize_chk': True, 'img_pngquantize_num': '256',
 				'img_bmptojpg_chk': True, 'img_multi_chk': True, 'img_multi_num': '2',
 
-				'aud_bgmfmt_radio': 'MP3', 'aud_sefmt_radio': 'WAV',
+				'aud_bgmfmt_radio': 'OGG', 'aud_sefmt_radio': 'OGG',
 				'aud_bgmch_radio': i18n.t('var.stereo'), 'aud_sech_radio': i18n.t('var.mono'),
 				'aud_oggbgm_kbps': '56', 'aud_oggbgm_hz': '22050',
 				'aud_oggse_kbps': '56', 'aud_oggse_hz': '22050',
@@ -147,7 +147,7 @@ def gethardwarevalues_full():
 				'vid_mjpegquality_bar': 8,
 				'vid_mp4quality_bar': 4, 'vid_mp4aud_kbps': '160', 'vid_mp4aud_hz': '44100',
 
-				'etc_filecompimg_nsa': 'arc.nsa', 'etc_filecompbgm_nsa': i18n.t('var.do_not_compress'), 'etc_filecompse_nsa': 'arc.nsa', 'etc_filecomprenban_nsa': 'arc.nsa',
+				'etc_filecompimg_nsa': 'arc.nsa', 'etc_filecompbgm_nsa': i18n.t('var.do_not_compress'), 'etc_filecompse_nsa': 'arc.nsa', 'etc_filecomprenban_nsa': 'arc1.nsa',
 				'etc_fileexdll_chk': True, 'etc_fileexdb_chk': True,
 				'etc_iniscreen': i18n.t('var.no_expansion'), 'etc_iniramfont_chk': True, 'etc_inicursor_chk': True,
 
