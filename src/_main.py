@@ -19,10 +19,12 @@ from ui_cli import cli_main
 				default='', prompt=False, help='Specifies character code.')
 @click.option('-i', '--input_dir', type=click.Path(), default='', prompt=False, help='Specify the path of the input folder.')
 @click.option('-o', '--output_dir', type=click.Path(), default='', prompt=False, help='Specify the path of the output folder.')
+@click.option('-vl', '--value_setting', type=click.STRING, default='', prompt=False, help='Specify the value setting.')
 @click.option('-cl', '--use_cli', is_flag=True, default=False, help='Enable automatic conversion in the CLI.')
 
 
-def main(language: str, charset: str, use_cli: bool, hardware: str, input_dir: str, output_dir: str, title_setting: str):
+def main(language: str, charset: str, use_cli: bool, hardware: str, input_dir: str, output_dir: str, title_setting: str, value_setting: str):
+
 	'''Image/sound/video & scenario conversion tool for ONS'''
 	version = '2.4.2 beta'
 
@@ -72,8 +74,8 @@ def main(language: str, charset: str, use_cli: bool, hardware: str, input_dir: s
 	if ctypes.windll.kernel32.GetLastError() == 183: print(i18n.t('ui.This_application_is_already_running'))
 
 	#起動
-	elif use_cli: cli_main(version, charset, hardware, input_dir, output_dir, title_setting)
-	else: gui_main(version, charset, hardware, input_dir, output_dir, title_setting)
+	elif use_cli: cli_main(version, charset, hardware, input_dir, output_dir, title_setting, value_setting)
+	else: gui_main(version, charset, hardware, input_dir, output_dir, title_setting, value_setting)
 
 	#終了前print
 	print('------------------------------------------------------------\n')

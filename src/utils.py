@@ -12,6 +12,14 @@ from utils2 import (
 )
 
 
+def value_setting_update(values_default, value_setting):
+	for s in value_setting.split(';'):
+		k, v = s.split('=')
+		values_default[k] = type(values_default[k])(v)
+
+	return values_default
+
+
 def get_meipass(p: Path):
 	if hasattr(sys, '_MEIPASS'): base_dir =  Path(sys._MEIPASS)
 	else: base_dir = Path('.')

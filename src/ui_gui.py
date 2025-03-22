@@ -3,7 +3,7 @@ import win32console, win32gui, i18n
 import dearpygui.dearpygui as dpg
 
 from hardwarevalues_config import gethardwarevalues_full, gethardwarevalues
-from utils import get_titlesettingfull, get_meipass
+from utils import value_setting_update, get_titlesettingfull, get_meipass
 from misc import get_uifontpath
 from ui_gui2 import (  #最低限以外のui周りはui_gui2でやる
 	ask_create_disabledvideofile,
@@ -31,7 +31,7 @@ def refresh_state(sender, app_data, user_data):
 	return	
 
 
-def gui_main(version: str, charset_param: str, hw_key: str, input_dir_param: str, output_dir_param: str, title_setting_param: str):
+def gui_main(version: str, charset_param: str, hw_key: str, input_dir_param: str, output_dir_param: str, title_setting_param: str, value_setting_param: str):
 
 	#コマンドプロンプトのウィンドウハンドルを取得
 	console_window = win32console.GetConsoleWindow()
@@ -43,6 +43,7 @@ def gui_main(version: str, charset_param: str, hw_key: str, input_dir_param: str
 	#ハードウェア値取得
 	hardwarevalues_full = gethardwarevalues_full()
 	values_default = gethardwarevalues(hw_key, 'values_default')
+	values_default = value_setting_update(values_default, value_setting_param)
 
 	#個別設定名登録
 	title_setting_list = ['None']

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 from hardwarevalues_config import gethardwarevalues
 from conversion import convert_start
-from utils import get_titlesettingfull
+from utils import value_setting_update, get_titlesettingfull
 
-def cli_main(version: str, charset_param: str, hw_key: str, input_dir_param: str, output_dir_param: str, title_setting_param: str):
+def cli_main(version: str, charset_param: str, hw_key: str, input_dir_param: str, output_dir_param: str, title_setting_param: str, value_setting_param: str):
 
 	#個別設定名登録(除外は前段階でやってるので気にしなくておｋ)
 	title_setting = get_titlesettingfull(title_setting_param)
@@ -36,8 +36,12 @@ def cli_main(version: str, charset_param: str, hw_key: str, input_dir_param: str
 		'title_setting': title_setting,
 	}
 
+	#ハードウェア値取得
+	values_default = gethardwarevalues(hw_key, 'values_default')
+	values_default = value_setting_update(values_default, value_setting_param)
+
 	#とりあえず初期値突っ込んどく
-	values.update( gethardwarevalues(hw_key, 'values_default') )
+	values.update(values_default)
 
 	#変換開始
 	convert_start(values)
