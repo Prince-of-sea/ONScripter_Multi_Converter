@@ -17,6 +17,7 @@ def title_info():
 		'cli_arg': 'nana_polaris',
 		'requiredsoft': ['mjdisasm'],
 		'is_4:3': bool(not r'<ONS_RESOLUTION_CHECK_DISABLED>' in default_txt()),
+		'exe_name': ['Polaris'],
 
 		'version': [
 			'Winter Polaris STEAM DL版(1150550 - Depot_1150553)',

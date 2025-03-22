@@ -15,6 +15,7 @@ def title_info():
 		'cli_arg': 'actress_nijimite',
 		'requiredsoft': [],
 		'is_4:3': bool(not r'<ONS_RESOLUTION_CHECK_DISABLED>' in default_txt()),
+		'exe_name': ['ACTGS'],
 
 		'version': [
 			'虹を見つけたら教えて。 FANZA DL版(actress_0012)',

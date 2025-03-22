@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import zopfli as zf
 import os
 import re
 import shutil
@@ -9,6 +10,8 @@ import win32ui, win32gui
 import win32com.client
 
 from pathlib import Path
+from PIL import Image
+from io import BytesIO
 
 from process_notons import get_titledict
 
@@ -67,8 +70,11 @@ def get_programslist(icotemp_dir: Path, charset: str):
 				#個別変換一致確認
 				for k,v in titledict.items():
 
+					#タイトルが設定されていない場合はスキップ
+					if not v.get('program_name'): continue
+
 					#名前一致&ファイルが存在する場合
-					if (v.get('program_name') == program_name) and (v.get('exe_name') == target_path.stem) and (target_path.is_file()):
+					if (program_name in v['program_name']) and (target_path.stem in v['exe_name']) and (target_path.is_file()):
 
 						#存在する場合はprograms_listに追加
 						programs_list.append( {'name': v['title'], 'exe_path': target_path, 'icon_path': icon_path, 'overwrite_title_setting': k} )
@@ -76,7 +82,53 @@ def get_programslist(icotemp_dir: Path, charset: str):
 	return programs_list
 
 
-def exepath2icon(exe_path: Path, icon_path: Path):
+def get_iconexepath(values: dict, title_info: dict):
+	icon_exe_path = None
+
+	input_dir = values['input_dir']
+	exe_name = title_info['exe_name']
+
+	for n in exe_name:
+		p = Path(input_dir / f'{n}.exe')
+		if p.is_file():
+			icon_exe_path = p
+			break
+
+	return icon_exe_path
+
+
+def create_iconpng(values: dict, values_ex: dict, compressed_dir: Path):
+	icon_exe_path = values_ex.get('icon_exe_path')
+
+	# 取得できていない場合exeパスを取得する
+	if (not icon_exe_path):
+		for p in values['input_dir'].glob('*.[Ee][Xx][Ee]'):
+			with p.open('rb') as f:
+				if (b'IDI_NSCRICON' in f.read()):
+					icon_exe_path = p
+					break
+	
+	# まだ取得できていない場合諦める
+	if (not icon_exe_path): return
+
+	# ファイル名を代入する
+	result_path = Path(compressed_dir / 'icon.png')
+
+	# exeパスからまず32x32のアイコンを取得する
+	exepath2icon(icon_exe_path, result_path, error_skip=True)
+
+	# 32x32のアイコンをPNGに(zopfliPNGで圧縮して)変換する
+	if result_path.is_file():#この時点では拡張子PNGのBMPファイルになっている
+		im = Image.open(result_path)
+		io_im = BytesIO()
+		im.save(io_im, format='PNG')
+		io_im.seek(0)
+		with open(result_path, 'wb') as c: c.write(zf.ZopfliPNG().optimize(io_im.read()))
+
+	return
+
+
+def exepath2icon(exe_path: Path, icon_path: Path, error_skip: bool=False):
 	#参考: https://stackoverflow.com/questions/19760913/how-to-extract-32x32-icon-bitmap-data-from-exe-and-convert-it-into-a-pil-image-o
 
 	large, small = win32gui.ExtractIconEx(str(exe_path),0)
@@ -89,7 +141,9 @@ def exepath2icon(exe_path: Path, icon_path: Path):
 	hdc.SelectObject( hbmp )
 
 	try: hdc.DrawIcon( (0,0), large[0] )#アイコンがない場合ここでエラー
-	except: pass
+	except: 
+		if error_skip: return
+		else: pass
 
 	win32gui.DestroyIcon(large[0])
 	win32gui.DestroyIcon(small[0])

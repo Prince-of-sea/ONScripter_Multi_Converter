@@ -17,6 +17,7 @@ def title_info():
 		'cli_arg': 'charon_pachi',
 		'requiredsoft': [],
 		'is_4:3': bool(not r'<ONS_RESOLUTION_CHECK_DISABLED>' in default_txt()),
+		'exe_name': ['パチンカスロード'],
 
 		'version': [
 			'掴め、人生の右打ち!GOGO全回転 嵐を呼ぶ!炎のパチンカスロード DLsite DL版(RJ01067702 - 2023/08/13)',

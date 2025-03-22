@@ -17,6 +17,7 @@ def title_info():
 		'cli_arg': 'cuffs_wankor',
 		'requiredsoft': ['Kikiriki'],
 		'is_4:3': bool(not r'<ONS_RESOLUTION_CHECK_DISABLED>' in default_txt()),
+		'exe_name': ['wankor'],
 
 		'version': [
 			'ワンコとリリー FANZA DL版(cuffs_0023)',

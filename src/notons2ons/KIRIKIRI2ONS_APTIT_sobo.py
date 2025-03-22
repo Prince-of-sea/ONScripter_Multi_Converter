@@ -16,6 +16,7 @@ def title_info():
 		'cli_arg': 'aptit_sobo',
 		'requiredsoft': ['Kikiriki'],
 		'is_4:3': bool(not r'<ONS_RESOLUTION_CHECK_DISABLED>' in default_txt()),
+		'exe_name': ['soboku', 'bokusobo', 'mituana', 'gisobo', 'Anokoro', 'tsumanosobo', 'chouzyukuoyakodon', 'GreatGrandmother', 'mgnkykntrk', 'magokatsujukujo'],
 
 		'version': [
 			#字面終わってるので申し訳程度のutf-8エンコード

@@ -17,6 +17,7 @@ def title_info():
 		'cli_arg': 'noesis_loveesm',
 		'requiredsoft': ['igscriptD'],
 		'is_4:3': bool(not r'<ONS_RESOLUTION_CHECK_DISABLED>' in default_txt()),
+		'exe_name': ['ラブesエム'],
 		'input_resolution': (1024, 768),#スクリプトで処理する解像度と実際の画像の解像度が合致しない場合後者をここに記入
 
 		'version': [

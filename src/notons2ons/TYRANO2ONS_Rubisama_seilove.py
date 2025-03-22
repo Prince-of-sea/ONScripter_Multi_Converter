@@ -17,6 +17,7 @@ def title_info():
 		'cli_arg': 'rubisama_seilove',
 		'requiredsoft': [],
 		'is_4:3': bool(not r'<ONS_RESOLUTION_CHECK_DISABLED>' in default_txt()),
+		'exe_name': ['seira'],
 
 		'version': [
 			'ご主人様、セイラに夢みたいないちゃラブご奉仕させていただけますか DLsite DL版(RJ399143 - 2022/08/09)',

@@ -11,6 +11,7 @@ def title_info():
 		'cli_arg': 'itsumono_kanoso',
 		'requiredsoft': [],
 		'is_4:3': True,
+		'exe_name': ['カノソ'],
 		
 		'version': [
 			'Kanoso ～思い出を壊す物語～ Web DL版(kanoso.zip)',# https://web.archive.org/web/20050803042427if_/http://www.cokage.ne.jp/~hiiragi/game/kanoso.zip

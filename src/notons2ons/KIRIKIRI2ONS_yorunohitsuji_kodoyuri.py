@@ -14,6 +14,7 @@ def title_info():
 		'cli_arg': 'yorunohitsuji_kodoyuri',
 		'requiredsoft': [],
 		'is_4:3': bool(not r'<ONS_RESOLUTION_CHECK_DISABLED>' in default_txt()),
+		'exe_name': ['kodoyuri'],
 
 		'version': [
 			'孤独に効く百合 DMM GAMES DL版(iyoruno_0001)',

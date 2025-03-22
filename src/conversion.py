@@ -21,6 +21,8 @@ from misc import (
 	in_out_dir_check,
 	remove_0txtcommentout,
 	result_move,
+	get_iconexepath,
+	create_iconpng,
 )
 from nsa_operations import compressed_nsa, extract_nsa
 from ons_script import onsscript_check, onsscript_decode
@@ -212,6 +214,9 @@ def convert_start(values):
 				#画像解像度がスクリプト側と一致しない時用
 				values_ex['input_resolution'] = title_info.get('input_resolution')
 
+				#アイコン取得用exeのパスを取得
+				values_ex['icon_exe_path'] = get_iconexepath(values, title_info)
+
 				#個別変換フラグ
 				values_ex['select_individual_settings'] = True
 
@@ -263,6 +268,9 @@ def convert_start(values):
 			#機種固有コンフィグファイル作成
 			configure_progress_bar(0.98, i18n.t('ui.Progress_create_config'), useGUI)
 			create_configfile(values, values_ex, compressed_dir)
+
+			#VITA時ついでにアイコンPNG作成
+			if (values['hardware'] == 'PSVITA'): create_iconpng(values, values_ex, compressed_dir)
 
 			#0.txt書き出し
 			configure_progress_bar(0.982, i18n.t('ui.Progress_write_converted_scenario'), useGUI)

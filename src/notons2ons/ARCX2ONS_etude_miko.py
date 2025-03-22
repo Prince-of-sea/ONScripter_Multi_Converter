@@ -14,6 +14,7 @@ def title_info():
 		'cli_arg': 'etude_mikomai',
 		'requiredsoft': [],
 		'is_4:3': True,
+		'exe_name': ['mikomai'],
 
 		'version': [
 			'巫女舞 〜ただ一つの願い〜 FANZA DL版(qual_0013)',

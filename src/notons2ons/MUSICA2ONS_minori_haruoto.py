@@ -17,8 +17,8 @@ def title_info():
 		'cli_arg': 'minori_haruoto',
 		'requiredsoft': [],
 		'is_4:3': bool(not r'<ONS_RESOLUTION_CHECK_DISABLED>' in default_txt()),
-		'program_name': 'はるのあしおと',#一覧取得用
-		'exe_name': 'haruoto',#一覧取得用
+		'program_name': ['はるのあしおと'],#一覧取得用
+		'exe_name': ['haruoto'],
 
 		'version': [
 			'はるのあしおと パッケージ版(2004/07/23)',

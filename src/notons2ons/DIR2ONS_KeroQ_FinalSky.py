@@ -17,9 +17,10 @@ def title_info():
 		'cli_arg': 'keroq_finalsky',
 		'requiredsoft': ['DirectorCastRipper_D10'],
 		'is_4:3': bool(not r'<ONS_RESOLUTION_CHECK_DISABLED>' in default_txt()),
+		'exe_name': ['SETUP'],
 
 		'version': [
-			'素晴らしき日々 10th Anniversary特別仕様版 付属版',
+			'終ノ空 素晴らしき日々 10th Anniversary特別仕様版 付属版',
 		],
 
 		'notes': [

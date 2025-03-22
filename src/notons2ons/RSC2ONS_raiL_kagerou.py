@@ -17,6 +17,7 @@ def title_info():
 		'cli_arg': 'rail_kagerou',
 		'requiredsoft': ['gscScriptCompAndDecompiler-cli'],
 		'is_4:3': bool(not r'<ONS_RESOLUTION_CHECK_DISABLED>' in default_txt()),
+		'exe_name': ['kagerou'],
 
 		'version': [
 			'霞外籠逗留記 FANZA DL版(bpartner_0001)',

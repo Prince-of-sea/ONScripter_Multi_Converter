@@ -15,6 +15,7 @@ def title_info():
 		'cli_arg': 'unclesheep_mgirlm',
 		'requiredsoft': [],
 		'is_4:3': bool(not r'<ONS_RESOLUTION_CHECK_DISABLED>' in default_txt()),
+		'exe_name': ['mgirlm'],
 
 		'version': [
 			'魔女魔少魔法魔 DLsite DL版(RJ291856 - 2020/08/03)',
