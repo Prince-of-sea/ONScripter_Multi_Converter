@@ -13,9 +13,15 @@ from utils2 import (
 
 
 def value_setting_update(values_default, value_setting):
-	for s in value_setting.split(';'):
-		k, v = s.split('=')
-		values_default[k] = type(values_default[k])(v)
+
+	if value_setting:
+		
+		for s in value_setting.split(';'):
+			try:
+				k, v = s.split('=')
+				values_default[k] = type(values_default[k])(v)
+
+			except: print(f'WARNING: Error in value_setting: {s}')
 
 	return values_default
 
