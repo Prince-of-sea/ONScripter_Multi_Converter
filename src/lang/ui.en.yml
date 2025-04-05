@@ -138,6 +138,7 @@ en:
   label_numvideo_compression: "Sequential Video Compression Target (when used):"
   label_dll_exclude: "Exclude all files with the extension \".dll\"."
   label_exdb_exclude: "Exclude all \"Thumbs.db\" files."
+  label_getgameicon: "Get Game Icon"
   label_onsini: "ons.ini Related (for PSP)."
   label_onsini_expansion: "Screen Display:"
   label_ini_font: "Always load fonts into memory."

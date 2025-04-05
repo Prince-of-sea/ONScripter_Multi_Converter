@@ -269,8 +269,8 @@ def convert_start(values):
 			configure_progress_bar(0.98, i18n.t('ui.Progress_create_config'), useGUI)
 			create_configfile(values, values_ex, compressed_dir)
 
-			#VITA時ついでにアイコンPNG作成
-			if (values['hardware'] == 'PSVITA'): create_iconpng(values, values_ex, compressed_dir)
+			#アイコンPNG作成
+			if values['etc_getgameicon_chk']: create_iconpng(values, values_ex, compressed_dir)
 
 			#0.txt書き出し
 			configure_progress_bar(0.982, i18n.t('ui.Progress_write_converted_scenario'), useGUI)

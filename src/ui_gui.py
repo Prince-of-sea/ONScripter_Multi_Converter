@@ -554,6 +554,12 @@ def gui_main(version: str, charset_param: str, hw_key: str, input_dir_param: str
 										default_value=values_default['etc_fileexdb_chk'],
 										tag='etc_fileexdb_chk',
 									)
+								with dpg.table_row():
+									dpg.add_checkbox(
+										label=i18n.t('ui.label_getgameicon'),
+										default_value=values_default['etc_getgameicon_chk'],
+										tag='etc_getgameicon_chk',
+									)
 						with dpg.tree_node(label=i18n.t('ui.label_onsini'), default_open=True):
 							with dpg.table(header_row=False, borders_innerH=False, borders_innerV=False):
 								dpg.add_table_column(no_resize=True, width_fixed=True)

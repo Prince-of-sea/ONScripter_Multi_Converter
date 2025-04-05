@@ -137,6 +137,7 @@ ja:
   label_numvideo_compression: "連番動画圧縮先(利用時)："
   label_dll_exclude: "拡張子\".dll\"のファイルを全て除外"
   label_exdb_exclude: "ファイル\"Thumbs.db\"を全て除外"
+  label_getgameicon: "ゲームアイコンを取得する"
   label_onsini: "ons.ini関連(PSP用)"
   label_onsini_expansion: "画面表示："
   label_ini_font: "常にメモリ内にフォントを読み込んでおく"

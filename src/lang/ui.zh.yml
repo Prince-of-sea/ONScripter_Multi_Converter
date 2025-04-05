@@ -138,6 +138,7 @@ zh:
   label_numvideo_compression: "顺序视频压缩目标（使用时）："
   label_dll_exclude: "排除所有扩展名为\".dll\"的文件"
   label_exdb_exclude: "排除所有\"Thumbs.db\"文件"
+  label_getgameicon: "获取游戏图标"
   label_onsini: "ons.ini相关（PSP用）"
   label_onsini_expansion: "屏幕显示："
   label_ini_font: "始终将字体加载到内存中"
