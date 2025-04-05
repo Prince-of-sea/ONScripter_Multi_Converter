@@ -19,11 +19,21 @@ def value_setting_update(values_default, value_setting):
 		for s in value_setting.split(';'):
 			try:
 				k, v = s.split('=')
+				if type(values_default[k]) == bool: v = strtobool(v)
 				values_default[k] = type(values_default[k])(v)
+				print(f'SUCCESS: Updated value of {k} to {v}')
 
 			except: print(f'WARNING: Error in value_setting: {s}')
 
 	return values_default
+
+
+def strtobool(val):
+	# 参考: https://note.nkmk.me/python-bool-true-false-usage/#1-0-distutilsutilstrtobool
+	val = val.lower()
+	if val in ('y', 'yes', 't', 'true', 'on', '1'): return True
+	elif val in ('n', 'no', 'f', 'false', 'off', '0'): return False
+	else: raise ValueError('')
 
 
 def get_meipass(p: Path):

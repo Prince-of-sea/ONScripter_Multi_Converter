@@ -10,7 +10,7 @@ from ui_cli import cli_main
 
 @click.command()
 @click.option('-t', '--title_setting', type=click.Choice(['']+[s['cli_arg'] for s in get_titledict().values()], case_sensitive=False),
-				default='', prompt=False, help='特定タイトル向けの個別設定を指定します(Japanese language only.)')
+				default='', prompt=False, help='Specify individual settings for specific titles. (cp932 only)')
 @click.option('-hw', '--hardware', type=click.Choice(['']+list(gethardwarevalues_full().keys()), case_sensitive=False),
 				default='', prompt=False, help='Specify for which hardware to convert.')
 @click.option('-lang', '--language', type=click.Choice(['', 'ja', 'zh', 'en'], case_sensitive=False),
