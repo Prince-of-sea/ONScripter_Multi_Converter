@@ -132,6 +132,7 @@ zh:
   label_video_audio_bitrate: "音频比特率："
   label_other: "其他"
   label_file: "文件相关"
+  label_if_nsa_ex2gb: "如果nsa压缩目标可能超过2GB："
   label_image_compression: "图像压缩目标："
   label_bgm_compression: "BGM压缩目标："
   label_se_compression: "SE/VOICE压缩目标："

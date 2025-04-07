@@ -23,6 +23,7 @@ zh:
   convert_and_keep_both: "转换后保留nbz和wav两种文件"
   replace_all_nbz_to_wav: "replace 0.txt with \".nbz\"->\".wav\""
 
+  create_new_nsa_after_arc3: "为 arc3 及更高版本创建新的 nsa 文件"
   do_not_compress: "不压缩"
 
   no_expansion: "不扩展"

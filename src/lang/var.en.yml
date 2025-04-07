@@ -23,6 +23,7 @@ en:
   convert_and_keep_both: "Convert and Keep Both nbz and wav Files"
   replace_all_nbz_to_wav: "Replace 0.txt with \".nbz\"->\".wav\""
 
+  create_new_nsa_after_arc3: "Create New nsa Files"
   do_not_compress: "Do Not Compress"
 
   no_expansion: "No Expansion"

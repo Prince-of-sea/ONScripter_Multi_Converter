@@ -28,14 +28,11 @@ from nsa_operations import compressed_nsa, extract_nsa
 from ons_script import onsscript_check, onsscript_decode
 from process_notons import get_titledict, pre_convert
 from requiredfile_locations import exist_all, exist_env
-from utils import configure_progress_bar, get_dir_size, message_box
+from utils import configure_progress_bar, message_box
 
 
 def convert_files(values: dict, values_ex: dict, cnvset_dict: dict, extracted_dir: Path, converted_dir: Path, useGUI: bool):
 	num_workers = values_ex['num_workers']
-
-	#圧縮先チェック用リスト
-	compchklist = []
 
 	#連番かな
 	isrenban = bool(values['vid_movfmt_radio'] == i18n.t('var.numbered_images'))
@@ -51,12 +48,6 @@ def convert_files(values: dict, values_ex: dict, cnvset_dict: dict, extracted_di
 
 		#ディレクトリ作成
 		f_dict['convertedpath'].parent.mkdir(parents=True, exist_ok=True)
-
-		#圧縮先チェック用リスト追加
-		compchklist.append(f_dict['comp'])
-
-	#圧縮先チェック用リスト重複削除
-	compchklist = list(set(compchklist))
 	
 	#並列ファイル変換時プログレスバー最大数設定
 	cnvbarnum = 0.90 if (not isrenban) else 0.30
@@ -83,34 +74,55 @@ def convert_files(values: dict, values_ex: dict, cnvset_dict: dict, extracted_di
 				startbarnum = (0.35 + ((0.60 / len(f_dict_video_list)) * cnt))
 				addbarnum = (0.60 / len(f_dict_video_list))
 				convert_video_renban2(values, values_ex, f_dict, startbarnum, addbarnum, useGUI)
-				
-	#2GB超えてるやつはnsa化させない
-	for arc_dir_name in compchklist:
-		arc_dir = Path(converted_dir / arc_dir_name / 'arc_' )
-		dir_size_MB = math.ceil(get_dir_size(Path(arc_dir)) / 1024 / 1024)
-	
-		if (dir_size_MB >= 2000):#2000MB(≒2GB)以上なら
-			compchklist.remove(arc_dir_name)#圧縮先チェック配列から削除
 
-			for p in arc_dir.glob('**/*'):#中身全部移動
-				if p.is_file():
-					p_moved = Path(converted_dir / 'no_comp' / 'arc_' / p.relative_to(arc_dir))#移動先パス
+	#2GB超えチェック
+	for arc_dir_num in range(10):
+
+		#arc_dirの設定
+		arc_dir = Path(converted_dir / f'arc{arc_dir_num}' / 'arc_' )
+
+		#arc_dirが存在しないやつは無視する
+		if not arc_dir.exists(): continue
+
+		#ex_dir_nameの設定
+		ex_dir_name = f'no_comp'#初期値
+		if (values['etc_over_2gb_nsa'] == i18n.t('var.create_new_nsa_after_arc3')):
+			if (arc_dir_num < 3):
+				ex_dir_name = f'arc3'
+			elif (arc_dir_num < 9):
+				ex_dir_name = f'arc{arc_dir_num+1}'
+
+		#合計サイズを計算するための変数初期化
+		dir_size = 0
+
+		#arc_dirの中身を全件取得してサイズチェックする
+		for p in arc_dir.glob('**/*'):
+			if p.is_file():#ファイルのみを取得
+
+				if (dir_size < 2097152000):#2000MB(≒2GB)未満なら
+					dir_size += p.stat().st_size#累積サイズに加える
+
+				if (dir_size >= 2097152000):#2000MB以上なら - 乗った瞬間からこっちの処理走らせるためelse未使用
+					p_moved = Path(converted_dir / ex_dir_name / 'arc_' / p.relative_to(arc_dir))#移動先パス
 					p_moved.parent.mkdir(parents=True, exist_ok=True)#移動先ディレクトリ作成
-					shutil.move(p, p_moved)
-			
-			shutil.rmtree(arc_dir)#ディレクトリ削除            
+					shutil.move(p, p_moved)#ファイルを移動する
 
-	#圧縮先チェック1 - arc1かarc2があるのにarcが無いなら
-	if (not 'arc' in compchklist) and ( ('arc1' in compchklist) or ('arc2' in compchklist)):
-		dummy_dir = Path(converted_dir / 'arc' / 'arc_' )
-		dummy_dir.mkdir(parents=True)#とりあえずarc作って
-		with open(Path(dummy_dir / '.dummy'), 'wb') as s: s.write(b'\xff')#ダミー突っ込んどく(ここ意味があるのか不明、未検証)
-	
-	#圧縮先チェック2 - arc2があるのにarc1が無いなら
-	if (not 'arc1' in compchklist) and ('arc2' in compchklist):
-		dummy_dir = Path(converted_dir / 'arc1' / 'arc_' )
-		dummy_dir.mkdir(parents=True)#とりあえずarc1作って
-		with open(Path(dummy_dir / '.dummy'), 'wb') as s: s.write(b'\xff')#ダミー突っ込んどく(ここ意味があるのか不明、未検証)
+	#arcダミー処理
+	dummy_dir_flag = False
+	for dummy_dir_num in range(2, -1, -1):#arc2からarcまで(3以降は順番に生成されるはずのため歯抜けは起きないはず)
+		dummy_dir_name = f'arc{dummy_dir_num}' if (dummy_dir_num > 0) else 'arc'
+
+		#dummy_dirの設定
+		dummy_dir = Path(converted_dir / dummy_dir_name / 'arc_' )
+
+		#まずarcの最大値が出たらフラグを立てる
+		if (not dummy_dir_flag) and (p.is_file()):
+			dummy_dir_flag = True
+		
+		#フラグが立っているのにarcが存在しないなら
+		elif (dummy_dir_flag) and (not p.is_file()):
+			dummy_dir.mkdir(parents=True)#とりあえずarc作って
+			with open(Path(dummy_dir / '.dummy'), 'wb') as s: s.write(b'\xff')#ダミー突っ込んどく(ここ意味があるのか不明、未検証)
 	
 	#エラーログ収集
 	allerrlog = ''

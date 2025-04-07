@@ -23,7 +23,7 @@ def value_setting_update(values_default, value_setting):
 				values_default[k] = type(values_default[k])(v)
 				print(f'SUCCESS: Updated value of {k} to {v}')
 
-			except: print(f'WARNING: Error in value_setting: {s}')
+			except: print(f'WARNING: Error in value_setting "{s}"')
 
 	return values_default
 
@@ -164,14 +164,6 @@ def format_check(filepath: Path):
 			else: ff = False
 
 	return ff
-
-
-def get_dir_size(p):
-	t = 0
-	for e in os.scandir(p):
-		if e.is_file(): t += e.stat().st_size
-		elif e.is_dir(): t += get_dir_size(e.path)
-	return t
 
 
 def dir_allmove(input_dir, output_dir):

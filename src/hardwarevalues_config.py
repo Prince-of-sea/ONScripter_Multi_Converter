@@ -39,6 +39,7 @@ def gethardwarevalues_full():
 				'vid_mjpegquality_bar': 8,
 				'vid_mp4quality_bar': 4, 'vid_mp4aud_kbps': '160', 'vid_mp4aud_hz': '44100',
 
+				'etc_over_2gb_nsa': i18n.t('var.do_not_compress'),
 				'etc_filecompimg_nsa': 'arc.nsa', 'etc_filecompbgm_nsa': 'arc1.nsa', 'etc_filecompse_nsa': 'arc2.nsa', 'etc_filecomprenban_nsa': 'arc2.nsa',
 				'etc_fileexdll_chk': True, 'etc_fileexdb_chk': True, 'etc_getgameicon_chk': False,
 				'etc_iniscreen': i18n.t('var.no_expansion'), 'etc_iniramfont_chk': True, 'etc_inicursor_chk': False,
@@ -93,6 +94,7 @@ def gethardwarevalues_full():
 				'vid_mjpegquality_bar': 8,
 				'vid_mp4quality_bar': 4, 'vid_mp4aud_kbps': '160', 'vid_mp4aud_hz': '44100',
 
+				'etc_over_2gb_nsa': i18n.t('var.create_new_nsa_after_arc3'),
 				'etc_filecompimg_nsa': 'arc.nsa', 'etc_filecompbgm_nsa': 'arc.nsa', 'etc_filecompse_nsa': 'arc1.nsa', 'etc_filecomprenban_nsa': 'arc2.nsa',
 				'etc_fileexdll_chk': True, 'etc_fileexdb_chk': True, 'etc_getgameicon_chk': True,
 				'etc_iniscreen': i18n.t('var.no_expansion'), 'etc_iniramfont_chk': True, 'etc_inicursor_chk': False,
@@ -147,6 +149,7 @@ def gethardwarevalues_full():
 				'vid_mjpegquality_bar': 8,
 				'vid_mp4quality_bar': 4, 'vid_mp4aud_kbps': '160', 'vid_mp4aud_hz': '44100',
 
+				'etc_over_2gb_nsa': i18n.t('var.do_not_compress'),
 				'etc_filecompimg_nsa': 'arc.nsa', 'etc_filecompbgm_nsa': i18n.t('var.do_not_compress'), 'etc_filecompse_nsa': 'arc.nsa', 'etc_filecomprenban_nsa': 'arc1.nsa',
 				'etc_fileexdll_chk': True, 'etc_fileexdb_chk': True, 'etc_getgameicon_chk': False,
 				'etc_iniscreen': i18n.t('var.no_expansion'), 'etc_iniramfont_chk': True, 'etc_inicursor_chk': True,
@@ -201,6 +204,7 @@ def gethardwarevalues_full():
 				'vid_mjpegquality_bar': 8,
 				'vid_mp4quality_bar': 4, 'vid_mp4aud_kbps': '160', 'vid_mp4aud_hz': '44100',
 
+				'etc_over_2gb_nsa': i18n.t('var.create_new_nsa_after_arc3'),
 				'etc_filecompimg_nsa': 'arc.nsa', 'etc_filecompbgm_nsa': 'arc1.nsa', 'etc_filecompse_nsa': 'arc2.nsa', 'etc_filecomprenban_nsa': 'arc2.nsa',
 				'etc_fileexdll_chk': True, 'etc_fileexdb_chk': True, 'etc_getgameicon_chk': False,
 				'etc_iniscreen': i18n.t('var.no_expansion'), 'etc_iniramfont_chk': True, 'etc_inicursor_chk': True,

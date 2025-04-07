@@ -21,7 +21,8 @@ ja:
 
   convert_and_keep_both: "変換後のファイルを拡張子nbzとwavで両方用意しておく"
   replace_all_nbz_to_wav: "0.txtを\".nbz\"->\".wav\"で一括置換"
-
+  
+  create_new_nsa_after_arc3: "arc3以降の新たなnsaファイルを作成する"
   do_not_compress: "圧縮しない"
 
   no_expansion: "拡大しない"

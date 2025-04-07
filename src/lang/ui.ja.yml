@@ -131,6 +131,7 @@ ja:
   label_video_audio_bitrate: "音声ビットレート："
   label_other: "その他"
   label_file: "ファイル関連"
+  label_if_nsa_ex2gb: "圧縮するnsaが2GBを超えそうな場合："
   label_image_compression: "画像圧縮先："
   label_bgm_compression: "BGM圧縮先："
   label_se_compression: "SE/VOICE圧縮先："

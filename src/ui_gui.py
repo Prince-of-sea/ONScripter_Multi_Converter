@@ -503,6 +503,17 @@ def gui_main(version: str, charset_param: str, hw_key: str, input_dir_param: str
 				with dpg.child_window(height=195, border=False):
 					with dpg.tree_node(label=i18n.t('ui.label_basic_settings'), default_open=True):
 						with dpg.tree_node(label=i18n.t('ui.label_file'), default_open=True):
+							with dpg.group(horizontal=True):
+								dpg.add_text(i18n.t('ui.label_if_nsa_ex2gb'))
+								dpg.add_radio_button(
+									items=(
+										i18n.t('var.create_new_nsa_after_arc3'),
+										i18n.t('var.do_not_compress'),
+									),
+									default_value=values_default['etc_over_2gb_nsa'],
+									horizontal=False,
+									tag='etc_over_2gb_nsa',
+								)
 							with dpg.table(header_row=False, borders_innerH=False, borders_innerV=False):
 								dpg.add_table_column(no_resize=True, width_fixed=True)
 								dpg.add_table_column(no_resize=True, width_fixed=True)
