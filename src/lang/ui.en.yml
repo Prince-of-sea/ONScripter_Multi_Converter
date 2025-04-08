@@ -132,7 +132,7 @@ en:
   label_video_audio_bitrate: "Audio Bitrate:"
   label_other: "Other"
   label_file: "File Related"
-  label_if_nsa_ex2gb: "If the nsa to be compressed is likely to exceed 2 GB:"
+  label_if_nsa_ex2gb: "If the nsa to be compressed is too large:"
   label_image_compression: "Image Compression Target:"
   label_bgm_compression: "BGM Compression Target:"
   label_se_compression: "SE/VOICE Compression Target:"

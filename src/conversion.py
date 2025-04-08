@@ -75,7 +75,7 @@ def convert_files(values: dict, values_ex: dict, cnvset_dict: dict, extracted_di
 				addbarnum = (0.60 / len(f_dict_video_list))
 				convert_video_renban2(values, values_ex, f_dict, startbarnum, addbarnum, useGUI)
 
-	#2GB超えチェック
+	#2GBorファイル数20k超えチェック
 	for arc_dir_num in range(10):
 
 		#arc_dirの設定
@@ -85,24 +85,32 @@ def convert_files(values: dict, values_ex: dict, cnvset_dict: dict, extracted_di
 		if not arc_dir.exists(): continue
 
 		#ex_dir_nameの設定
-		ex_dir_name = f'no_comp'#初期値
+		ex_dir_name = f'no_comp'#初期値("圧縮しない"選択時orすでにarc9まで作ってる場合このまま)
 		if (values['etc_over_2gb_nsa'] == i18n.t('var.create_new_nsa_after_arc3')):
 			if (arc_dir_num < 3):
 				ex_dir_name = f'arc3'
 			elif (arc_dir_num < 9):
 				ex_dir_name = f'arc{arc_dir_num+1}'
 
-		#合計サイズを計算するための変数初期化
+		#合計サイズ/ファイル数を計算するための変数初期化
 		dir_size = 0
+		dir_cnt = 0
+		dir_flag = False
 
 		#arc_dirの中身を全件取得してサイズチェックする
 		for p in arc_dir.glob('**/*'):
 			if p.is_file():#ファイルのみを取得
+				if (not dir_flag):#フラグが立っていなかったら
+					if (dir_size <= 2097152000):#2000MB(≒2GB)以下なら
+						dir_size += p.stat().st_size#累積サイズに加える
+					
+					if (dir_cnt <= 20000):#ファイル数が20000以下なら
+						dir_cnt += 1#ファイル数を加える
 
-				if (dir_size < 2097152000):#2000MB(≒2GB)未満なら
-					dir_size += p.stat().st_size#累積サイズに加える
+					if (dir_size > 2097152000) or (dir_cnt > 20000):#容量が2000MBより大きいまたは20000ファイルより多いなら
+						dir_flag = True#フラグを立てる
 
-				if (dir_size >= 2097152000):#2000MB以上なら - 乗った瞬間からこっちの処理走らせるためelse未使用
+				if (dir_flag):#フラグが立っていたら - 乗った瞬間からこっちの処理走らせるためelse未使用
 					p_moved = Path(converted_dir / ex_dir_name / 'arc_' / p.relative_to(arc_dir))#移動先パス
 					p_moved.parent.mkdir(parents=True, exist_ok=True)#移動先ディレクトリ作成
 					shutil.move(p, p_moved)#ファイルを移動する
