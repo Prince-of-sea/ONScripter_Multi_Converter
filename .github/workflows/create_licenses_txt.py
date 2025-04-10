@@ -29,7 +29,7 @@ def get_pkg_license_txt(pkg, license_txt):
 				break
 		
 		if not re_line:
-			raise Exception(f'ライセンス、またはGitHubへのURLが見つかりません: {str(pkg)}')
+			raise Exception(f'ライセンス、またはGitHubへのURLが見つかりません: {pkg}')
 		
 		for branch in branch_list:
 
@@ -50,7 +50,7 @@ def get_pkg_license_txt(pkg, license_txt):
 
 		
 		if not license_txt:
-			raise Exception(f'ライセンス、またはGitHubへのURLが見つかりません: {str(pkg)}')
+			raise Exception(f'ライセンス、またはGitHubへのURLが見つかりません: {pkg}')
 
 	return license_txt
 
@@ -107,6 +107,24 @@ if __name__ == "__main__":
 7. Nothing in this License Agreement shall be deemed to create any relationship of agency, partnership, or joint venture between PSF and Licensee. This License Agreement does not grant permission to use PSF trademarks or trade name in a trademark sense to endorse or promote products or services of Licensee, or any third party.
 8. By copying, installing or otherwise using Python, Licensee agrees to be bound by the terms and conditions of this License Agreement.
 ''',
+		'setuptools': '''Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to
+deal in the Software without restriction, including without limitation the
+rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+sell copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+IN THE SOFTWARE.
+'''
 	}
 	
 	create_licenses_txt(ignore_list, license_dict)
