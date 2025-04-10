@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import sys, os
+import sys
 import shutil
 import subprocess as sp
 from pathlib import Path

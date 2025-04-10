@@ -12,7 +12,6 @@
  PCスペック: <br>
  [![CPU-Z](https://valid.x86.fr/cache/banner/uvcxdx-2.png)](https://valid.x86.fr/uvcxdx)<br>
  FFmpeg-version: version 7.1-full_build<br>
- Python-version: Python 3.13.2<br>
 
 
 ## 動作に必要なもの
@@ -31,12 +30,17 @@
  - igscriptD [[DL (Assetsのigtools.zipの中)]](https://github.com/lennylxx/IG_tools/releases/tag/v1.0.0)
  - Kikiriki [[DL (archive.org)]](https://web.archive.org/web/20140714111942/http://tlwiki.org/images/7/7d/Kikiriki.rar)
 
+※"任意"は特定の非ONScripter作品を変換するために使用します<br>
+通常の作品を変換するだけの場合には必要ありません<br>
+
 
 ## 使い方
 ### 変換前準備
  DLしたファイルをそれぞれの場所に展開/移動し、<br>
  最終的にファイルを以下のような配置にして準備完了です<br>
  (ディレクトリの場所は問いません)
+
+#### 最低限動作に必要なファイル配置例
 ```
 [パスの通ってるディレクトリ]
    ffmpeg.exe
@@ -47,13 +51,34 @@
 │  ONScripter_Multi_Converter.exe
 │  
 └─tools
-    │  gscScriptCompAndDecompiler.exe (任意)
-    │  igscriptD.exe (任意)
-    │  mjdisasm.exe (任意)
+    │  nsaed.exe
+    │  smjpeg_encode.exe
+    │                  
+    └─Garbro_console
+       │  GARbro.Console.exe
+       │  {その他大量のファイル}
+       │  
+       └─{その他いくつかのディレクトリ}
+```
+
+#### 全てのツールを用意した場合のファイル配置例
+```
+[パスの通ってるディレクトリ]
+   ffmpeg.exe
+   ffprobe.exe
+
+
+[適当な名前のツール用ディレクトリ]
+│  ONScripter_Multi_Converter.exe
+│  
+└─tools
+    │  gscScriptCompAndDecompiler.exe
+    │  igscriptD.exe
+    │  mjdisasm.exe
     │  nsaed.exe
     │  smjpeg_encode.exe
     │  
-    ├─DirectorCastRipper_D10 (任意)
+    ├─DirectorCastRipper_D10
     │  │  DirectorCastRipper.exe
     │  │  {その他いくつかのファイル}
     │  │  
@@ -65,26 +90,23 @@
     │  │  
     │  └─{その他いくつかのディレクトリ}
     │          
-    └─Kikiriki (任意)
+    └─Kikiriki
             kikiriki.exe
             madCHook.dll
 ```
+
  ※ffmpeg、ffprobeはtools直下(nsaedやsmjpeg_encodeと同じところ)に入れても認識します<br>
  また、パスの通る場所とtools直下両方に存在する場合はtools直下が優先されます<br>
-
- ※(任意)と書いてあるものは一部の個別設定で使用します<br>
- 個別設定を利用しない場合必要ありません<br>
 
 
 ### ツールの設定(GUI)
  [こちらに詳しく書いてあります](./README_setting.md)<br>
-~~よくわからないならハード変更だけしてあと入力/出力指定してconvert押せばいいと思います~~
+~~よく分からないならハード変更だけしてあと入力/出力指定してconvert押せばいいと思います~~
 
 
 ### ツールの設定(CLI)
- 入出力、個別設定、変換ハードのみを指定可能 その他はハードごとの初期値で固定されます<br>
- v2.3.8現在ではGUIほど複雑な設定はできません(将来的にはできるようにする予定です)<br>
- 詳細はexeに対して引数`--help`をつけて確認してください<br>
+ [こちらに詳しく書いてあります](./README_setting2.md)<br>
+ 未知のエラーが発生する可能性があるため、よく分からない場合は利用しないでください
 
 
 ## 注意事項など
@@ -112,7 +134,7 @@
  変換前に本ツールを除外対象として設定しておくことをおすすめします<br>
 
  - Cドライブの空き容量に余裕をもった状態でご使用ください<br>
- 特に個別設定を使う作品は変換方法次第で一時的に最大25GB程度消費する可能性があります<br>
+ 特に個別設定を使う作品は変換方法次第で一時的に最大15GB程度消費する可能性があります<br>
 
  - 本ツールは日本語専用です<br>
 

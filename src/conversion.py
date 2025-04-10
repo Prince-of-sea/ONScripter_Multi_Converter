@@ -124,11 +124,11 @@ def convert_files(values: dict, values_ex: dict, cnvset_dict: dict, extracted_di
 		dummy_dir = Path(converted_dir / dummy_dir_name / 'arc_' )
 
 		#まずarcの最大値が出たらフラグを立てる
-		if (not dummy_dir_flag) and (p.is_file()):
+		if (not dummy_dir_flag) and (dummy_dir.is_dir()):
 			dummy_dir_flag = True
 		
 		#フラグが立っているのにarcが存在しないなら
-		elif (dummy_dir_flag) and (not p.is_file()):
+		elif (dummy_dir_flag) and (dummy_dir.is_dir()):
 			dummy_dir.mkdir(parents=True)#とりあえずarc作って
 			with open(Path(dummy_dir / '.dummy'), 'wb') as s: s.write(b'\xff')#ダミー突っ込んどく(ここ意味があるのか不明、未検証)
 	
