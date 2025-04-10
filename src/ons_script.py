@@ -48,16 +48,16 @@ def onsscript_check_resolution(values: dict, values_ex: dict, ztxtscript: str, o
 
 	#解像度表記抽出
 	oldnsc_mode = (r';[Mm][Oo][Dd][Ee](320|400|800)')#ONS解像度旧表記
-	newnsc_mode = (r'(\r|\n|\t|\s)*?;\$[Vv][0-9]{1,}[Gg]([0-9]{1,})[Ss]([0-9]{1,}),([0-9]{1,})[Ll][0-9]{1,}')#ONS解像度新表記
-	oldnsc_search = re.search(oldnsc_mode, ztxtscript)
+	newnsc_mode = (r';\$([A-z][0-9]+)*[Ss]([0-9]+),([0-9]+)([A-z][0-9]+)*')#ONS解像度新表記
 	newnsc_search = re.search(newnsc_mode, ztxtscript)
+	oldnsc_search = re.search(oldnsc_mode, ztxtscript)
 
 	#解像度表記を元に解像度を取得して変数に格納
 	if oldnsc_search:
 		script_resolution = (int(oldnsc_search.group(1)), int(int(oldnsc_search.group(1)) / 4 * 3))
 	
 	elif newnsc_search:
-		script_resolution = (int(newnsc_search.group(3)), int(newnsc_search.group(4)))
+		script_resolution = (int(newnsc_search.group(2)), int(newnsc_search.group(3)))
 	
 	else:
 		script_resolution = (640, 480)
@@ -92,15 +92,21 @@ def onsscript_check_resolution(values: dict, values_ex: dict, ztxtscript: str, o
 				override_resolution = (output_w, output_h)
 
 	if (aspect_43only) and (newnsc_search):
+
+		#グローバル数取得
+		newnsc_mode_gvar = (r';\$([A-z][0-9]+(,([0-9]+))?)*[Gg]([0-9]+)([A-z][0-9]+(,([0-9]+))?)*')
+		newnsc_mode_gvar_search = re.search(newnsc_mode_gvar, ztxtscript)
+		g_value_num = newnsc_mode_gvar_search.group(4) if newnsc_mode_gvar_search else '200'
+
 		#チェック&変換
 		if (hardware == 'PSP') and (override_resolution) and (charset == 'cp932'):#日本語版PSPのみ
-			if   (alternative_w == 800): ztxtscript = re.sub(newnsc_mode, r';mode800,value\2', ztxtscript, 1)#ほぼ800変換時
-			elif (alternative_w == 640): ztxtscript = re.sub(newnsc_mode, r';value\2', ztxtscript, 1)#ほぼ640変換時
-			else: ztxtscript = re.sub(newnsc_mode, r';value\2', ztxtscript, 1)#解像度無視時
+			if   (alternative_w == 800): ztxtscript = re.sub(newnsc_mode, f';mode800,value{g_value_num}', ztxtscript, 1)#ほぼ800変換時
+			elif (alternative_w == 640): ztxtscript = re.sub(newnsc_mode, f';value{g_value_num}', ztxtscript, 1)#ほぼ640変換時
+			else: ztxtscript = re.sub(newnsc_mode, f';value{g_value_num}', ztxtscript, 1)#解像度無視時
 
 		elif (script_resolution[0] in [320, 400, 640, 800]) and (script_resolution[1] == script_resolution[0] / 4 * 3):
-			if (script_resolution[0] == 640): ztxtscript = re.sub(newnsc_mode, r';value\2', ztxtscript, 1)#640x480
-			else: ztxtscript = re.sub(newnsc_mode, r';mode\3,value\2', ztxtscript, 1)#通常時
+			if (script_resolution[0] == 640): ztxtscript = re.sub(newnsc_mode, f';value{g_value_num}', ztxtscript, 1)#640x480
+			else: ztxtscript = re.sub(newnsc_mode, f';mode{newnsc_search.group(2)},value{g_value_num}', ztxtscript, 1)#通常時
 		
 		else: raise ValueError(i18n.t('ui.Unsupported_resolution'))
 	
