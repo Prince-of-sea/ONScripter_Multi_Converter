@@ -23,11 +23,11 @@ def title_info():
 		'notes': [
 			'ウィンドウは見やすくするため文字大きめ＆背景暗めに変更',
 			'画像から場所を選択する形式の選択肢も普通の仕様に変更',
+			'スタッフロールは画像表示のみ実装、またスキップ不可',
 			'セーブ、ロード、コンフィグ画面など基本UIは簡略化',
 			'一部箇所で本来では出ない暗転が挟まれる事がある',
 			'主人公の名前はデフォルト(元樹)で固定',
 			'背景/CGのガウスぼかし処理が若干違う',
-			'スタッフロールは画像表示のみ実装',
 			'おまけ(回想モードなど)は未実装',
 			'半透明の立ち絵が表示されない',
 			'画面遷移はフェードのみ',
@@ -507,6 +507,7 @@ bg "obj/OP_BG.png",10
 bgm "BGM/M22.wav"
 
 mov $1,"OP_BG_00"
+mov %val_clear,%1019+%1029+%1039+%1049+%1059
 if %1019==1 mov $1,"OP_BG_01"
 if %1029==1 mov $1,"OP_BG_01"
 if %1039==1 mov $1,"OP_BG_01"
@@ -1361,7 +1362,10 @@ def text_cnv(debug: bool, PATH_DICT: dict, PATH_DICT2: dict):
 	# numalias作成用文字列val_txt作成
 	val_txt = ''
 	for i,val in enumerate(val_list, 500):
-		val_txt += f'numalias {val[1:]},{i}\n'#頭の%取る
+		if (val[1:] == 'val_clear'):
+			val_txt += f'numalias {val[1:]},1001\n'
+		else:
+			val_txt += f'numalias {val[1:]},{i}\n'#頭の%取る
 	
 	# エフェクト定義用の配列を命令文に&置換
 	add0txt_effect = ''
@@ -1374,6 +1378,8 @@ def text_cnv(debug: bool, PATH_DICT: dict, PATH_DICT2: dict):
 	txt = txt.replace(r'.tga', r'.png')#拡張子1
 	txt = txt.replace(r'.bmp', r'.png')#拡張子2
 	txt = txt.replace(r'$name', r'元樹')#主人公名前
+	txt = txt.replace(r'mov %val_clear,%val_ret', r'')#クリア変数いじらせない
+	txt = txt.replace(r':/whitefadeout', r';')#最終END直前の謎バグ消す
 	txt = txt.replace(r'lsp val_onstmp,$val_def_default,75,280:print 9', r'')#END直後のテロップが複数回出るのを治す
 	txt = txt.replace(r'lsp val_onstmp,$val_def_default,75,260:print 9',
 					r'lsp val_onstmp,$val_def_default,75,260:print 10:wait 3000')#END直後のテロップが一瞬で消えるのを防ぐ
