@@ -6,7 +6,8 @@ import shutil
 import sys
 import i18n
 import pythoncom
-import win32ui, win32gui
+import win32ui
+import win32gui
 import win32com.client
 
 from pathlib import Path
@@ -15,200 +16,226 @@ from io import BytesIO
 
 from process_notons import get_titledict
 
+
 def get_uifontpath():
-	p_ttf = Path('./ui.ttf')
-	p_ttc = Path('./ui.ttc')
+    p_ttf = Path('./ui.ttf')
+    p_ttc = Path('./ui.ttc')
 
-	if p_ttf.is_file(): p = str(p_ttf)
-	elif p_ttc.is_file(): p = str(p_ttc)
-	else: p = r'C:/Windows/Fonts/'+i18n.t('var.default_font')
+    if p_ttf.is_file():
+        p = str(p_ttf)
+    elif p_ttc.is_file():
+        p = str(p_ttc)
+    else:
+        p = r'C:/Windows/Fonts/'+i18n.t('var.default_font')
 
-	return p
+    return p
 
 
 def get_programslist(icotemp_dir: Path, charset: str):
-	titledict = get_titledict()
-	programs_list = []
+    titledict = get_titledict()
+    programs_list = []
 
-	for env in ['ALLUSERSPROFILE', 'APPDATA']:
+    for env in ['ALLUSERSPROFILE', 'APPDATA']:
 
-		#環境変数からスタートメニューへのパスを取得
-		programs_dir = Path(Path(os.environ[env]) / 'Microsoft' / 'Windows' / 'Start Menu' / 'Programs')
+        # 環境変数からスタートメニューへのパスを取得
+        programs_dir = Path(
+            Path(os.environ[env]) / 'Microsoft' / 'Windows' / 'Start Menu' / 'Programs')
 
-		#スタートメニューリンク一覧取得
-		for i, lnk_path in enumerate(programs_dir.glob('**/*.lnk')):
-			icon_path = Path(icotemp_dir / f'{i}.bmp')
+        # スタートメニューリンク一覧取得
+        for i, lnk_path in enumerate(programs_dir.glob('**/*.lnk')):
+            icon_path = Path(icotemp_dir / f'{i}.bmp')
 
-			#アンインストール系(と思われるもの)は飛ばす
-			if any(s in lnk_path.stem.lower() for s in ['削除', 'アンインストール', 'ｱﾝｲﾝｽﾄｰﾙ', 'uninstall']): continue
+            # アンインストール系(と思われるもの)は飛ばす
+            if any(s in lnk_path.stem.lower() for s in ['削除', 'アンインストール', 'ｱﾝｲﾝｽﾄｰﾙ', 'uninstall']):
+                continue
 
-			#ショートカットのターゲットを取得
-			pythoncom.CoInitialize()
-			target_path = Path(win32com.client.Dispatch("WScript.Shell").CreateShortcut(str(lnk_path)).TargetPath)
-			pythoncom.CoUninitialize()
+            # ショートカットのターゲットを取得
+            pythoncom.CoInitialize()
+            target_path = Path(
+                win32com.client.Dispatch("WScript.Shell").CreateShortcut(str(lnk_path)).TargetPath)
+            pythoncom.CoUninitialize()
 
-			#拡張子が.exeでない場合は飛ばす
-			if (not target_path.suffix.lower() == '.exe'): continue
+            # 拡張子が.exeでない場合は飛ばす
+            if (not target_path.suffix.lower() == '.exe'):
+                continue
 
-			#ショートカットの親ディレクトリ名を取得
-			lnk_parentname = lnk_path.parent.name
+            # ショートカットの親ディレクトリ名を取得
+            lnk_parentname = lnk_path.parent.name
 
-			#親ディレクトリ名がProgramsでない場合はそのまま、Programsの場合はショートカット名にする
-			program_name = lnk_parentname if (lnk_parentname != 'Programs') else lnk_path.stem
+            # 親ディレクトリ名がProgramsでない場合はそのまま、Programsの場合はショートカット名にする
+            if (lnk_parentname != 'Programs'):
+                program_name = lnk_parentname
+            else:
+                program_name = lnk_path.stem
 
-			#ショートカットのターゲットにnscripterのシナリオファイルが存在するか確認
-			if any(s for s in ['nscript.dat', '0.txt', '00.txt'] if Path(target_path.parent / s).is_file()):
+            # ショートカットのターゲットにnscripterのシナリオファイルが存在するか確認
+            if any(s for s in ['nscript.dat', '0.txt', '00.txt'] if Path(target_path.parent / s).is_file()):
 
-				#存在する場合はprograms_listに追加
-				programs_list.append( {'name': program_name, 'exe_path': target_path, 'icon_path': icon_path, 'overwrite_title_setting': False} )
-			
-			#個別変換 - 日本語のみ対応
-			# [追記]この仕様「.lnkの親フォルダ名(ない場合.lnk本体の名前)」と「リンク先の.exe名」でチェック掛けてるので両方一致すると別プログラムでも元作品と誤認します
-			# 今のところは意図的に合わせないと被らないような名前だけだが、将来的にはもっと厳格な仕様に変えたほうが良いかも
-			elif (charset == 'cp932'):
+                # 存在する場合はprograms_listに追加
+                programs_list.append({'name': program_name, 'exe_path': target_path,
+                                     'icon_path': icon_path, 'overwrite_title_setting': False})
 
-				#個別変換一致確認
-				for k,v in titledict.items():
+            # 個別変換 - 日本語のみ対応
+            # [追記]この仕様「.lnkの親フォルダ名(ない場合.lnk本体の名前)」と「リンク先の.exe名」でチェック掛けてるので両方一致すると別プログラムでも元作品と誤認します
+            # 今のところは意図的に合わせないと被らないような名前だけだが、将来的にはもっと厳格な仕様に変えたほうが良いかも
+            elif (charset == 'cp932'):
 
-					#タイトルが設定されていない場合はスキップ
-					if not v.get('program_name'): continue
+                # 個別変換一致確認
+                for k, v in titledict.items():
 
-					#名前一致&ファイルが存在する場合
-					if (program_name in v['program_name']) and (target_path.stem in v['exe_name']) and (target_path.is_file()):
+                    # タイトルが設定されていない場合はスキップ
+                    if not v.get('program_name'):
+                        continue
 
-						#存在する場合はprograms_listに追加
-						programs_list.append( {'name': v['title'], 'exe_path': target_path, 'icon_path': icon_path, 'overwrite_title_setting': k} )
+                    # 名前一致&ファイルが存在する場合
+                    if (program_name in v['program_name']) and (target_path.stem in v['exe_name']) and (target_path.is_file()):
 
-	return programs_list
+                        # 存在する場合はprograms_listに追加
+                        programs_list.append(
+                            {'name': v['title'], 'exe_path': target_path, 'icon_path': icon_path, 'overwrite_title_setting': k})
+
+    return programs_list
 
 
 def get_iconexepath(values: dict, title_info: dict):
-	icon_exe_path = None
+    icon_exe_path = None
 
-	input_dir = values['input_dir']
-	exe_name = title_info['exe_name']
+    input_dir = values['input_dir']
+    exe_name = title_info['exe_name']
 
-	for n in exe_name:
-		p = Path(input_dir / f'{n}.exe')
-		if p.is_file():
-			icon_exe_path = p
-			break
+    for n in exe_name:
+        p = Path(input_dir / f'{n}.exe')
+        if p.is_file():
+            icon_exe_path = p
+            break
 
-	return icon_exe_path
+    return icon_exe_path
 
 
 def create_iconpng(values: dict, values_ex: dict, compressed_dir: Path):
-	icon_exe_path = values_ex.get('icon_exe_path')
+    icon_exe_path = values_ex.get('icon_exe_path')
 
-	# 取得できていない場合exeパスを取得する
-	if (not icon_exe_path):
-		for p in values['input_dir'].glob('*.[Ee][Xx][Ee]'):
-			with p.open('rb') as f:
-				if (b'IDI_NSCRICON' in f.read()):
-					icon_exe_path = p
-					break
-	
-	# まだ取得できていない場合諦める
-	if (not icon_exe_path): return
+    # 取得できていない場合exeパスを取得する
+    if (not icon_exe_path):
+        for p in values['input_dir'].glob('*.[Ee][Xx][Ee]'):
+            with p.open('rb') as f:
+                if (b'IDI_NSCRICON' in f.read()):
+                    icon_exe_path = p
+                    break
 
-	# ファイル名を代入する
-	result_path = Path(compressed_dir / 'icon.png')
+    # まだ取得できていない場合諦める
+    if (not icon_exe_path):
+        return
 
-	# exeパスからまず32x32のアイコンを取得する
-	exepath2icon(icon_exe_path, result_path, error_skip=True)
+    # ファイル名を代入する
+    result_path = Path(compressed_dir / 'icon.png')
 
-	# 32x32のアイコンをPNGに(zopfliPNGで圧縮して)変換する
-	if result_path.is_file():#この時点では拡張子PNGのBMPファイルになっている
-		im = Image.open(result_path)
-		io_im = BytesIO()
-		im.save(io_im, format='PNG')
-		io_im.seek(0)
-		with open(result_path, 'wb') as c: c.write(zf.ZopfliPNG().optimize(io_im.read()))
+    # exeパスからまず32x32のアイコンを取得する
+    exepath2icon(icon_exe_path, result_path, error_skip=True)
 
-	return
+    # 32x32のアイコンをPNGに(zopfliPNGで圧縮して)変換する
+    if result_path.is_file():  # この時点では拡張子PNGのBMPファイルになっている
+        im = Image.open(result_path)
+        io_im = BytesIO()
+        im.save(io_im, format='PNG')
+        io_im.seek(0)
+        with open(result_path, 'wb') as c:
+            c.write(zf.ZopfliPNG().optimize(io_im.read()))
+
+    return
 
 
-def exepath2icon(exe_path: Path, icon_path: Path, error_skip: bool=False):
-	#参考: https://stackoverflow.com/questions/19760913/how-to-extract-32x32-icon-bitmap-data-from-exe-and-convert-it-into-a-pil-image-o
+def exepath2icon(exe_path: Path, icon_path: Path, error_skip: bool = False):
+    # 参考: https://stackoverflow.com/questions/19760913/how-to-extract-32x32-icon-bitmap-data-from-exe-and-convert-it-into-a-pil-image-o
 
-	large, small = win32gui.ExtractIconEx(str(exe_path),0)
+    large, small = win32gui.ExtractIconEx(str(exe_path), 0)
 
-	hdc = win32ui.CreateDCFromHandle( win32gui.GetDC(0) )
-	hbmp = win32ui.CreateBitmap()
-	hbmp.CreateCompatibleBitmap( hdc, 32, 32 )
-	hdc = hdc.CreateCompatibleDC()
+    hdc = win32ui.CreateDCFromHandle(win32gui.GetDC(0))
+    hbmp = win32ui.CreateBitmap()
+    hbmp.CreateCompatibleBitmap(hdc, 32, 32)
+    hdc = hdc.CreateCompatibleDC()
 
-	hdc.SelectObject( hbmp )
+    hdc.SelectObject(hbmp)
 
-	try: hdc.DrawIcon( (0,0), large[0] )#アイコンがない場合ここでエラー
-	except: 
-		if error_skip: return
-		else: pass
+    try:
+        hdc.DrawIcon((0, 0), large[0])  # アイコンがない場合ここでエラー
+    except:
+        if error_skip:
+            return
+        else:
+            pass
 
-	win32gui.DestroyIcon(large[0])
-	win32gui.DestroyIcon(small[0])
+    win32gui.DestroyIcon(large[0])
+    win32gui.DestroyIcon(small[0])
 
-	hbmp.SaveBitmapFile( hdc, str(icon_path))
-	
-	return
+    hbmp.SaveBitmapFile(hdc, str(icon_path))
+
+    return
 
 
 def in_out_dir_check(values: dict):
-	input_dir = values['input_dir']
-	output_dir = values['output_dir']
-	
-	#エラーメッセージ作成
-	errmsg = ''
-	
-	if not input_dir: errmsg = i18n.t('ui.Input_directory_not_specified')
-	elif Path(input_dir).is_dir() == False: errmsg = i18n.t('ui.Input_directory_not_found')
+    input_dir = values['input_dir']
+    output_dir = values['output_dir']
 
-	elif not output_dir: errmsg = i18n.t('ui.Output_directory_not_specified')
-	elif Path(output_dir).is_dir() == False: errmsg = i18n.t('ui.Output_directory_not_found')
+    # エラーメッセージ作成
+    errmsg = ''
 
-	elif os.path.normpath(input_dir).lower() in os.path.normpath(output_dir).lower(): errmsg = i18n.t('ui.Input_output_conflict')
+    if not input_dir:
+        errmsg = i18n.t('ui.Input_directory_not_specified')
+    elif Path(input_dir).is_dir() == False:
+        errmsg = i18n.t('ui.Input_directory_not_found')
 
-	if errmsg: raise Exception(errmsg)
-	
-	return
+    elif not output_dir:
+        errmsg = i18n.t('ui.Output_directory_not_specified')
+    elif Path(output_dir).is_dir() == False:
+        errmsg = i18n.t('ui.Output_directory_not_found')
+
+    elif os.path.normpath(input_dir).lower() in os.path.normpath(output_dir).lower():
+        errmsg = i18n.t('ui.Input_output_conflict')
+
+    if errmsg:
+        raise Exception(errmsg)
+
+    return
 
 
-def create_configfile(values: dict, values_ex:dict, compressed_dir: Path):
-	output_resolution = values_ex['output_resolution']    
-	etc_iniramfont_chk = values['etc_iniramfont_chk']
-	etc_inicursor_chk = values['etc_inicursor_chk']
-	etc_iniscreen = values['etc_iniscreen']
-	select_resolution = values_ex['select_resolution']
-	configfile = values_ex['configfile']
-	charset = values['charset']
+def create_configfile(values: dict, values_ex: dict, compressed_dir: Path):
+    output_resolution = values_ex['output_resolution']
+    etc_iniramfont_chk = values['etc_iniramfont_chk']
+    etc_inicursor_chk = values['etc_inicursor_chk']
+    etc_iniscreen = values['etc_iniscreen']
+    select_resolution = values_ex['select_resolution']
+    configfile = values_ex['configfile']
+    charset = values['charset']
 
-	match configfile:
-		case 'ons.ini':#実質PSP専用?
+    match configfile:
+        case 'ons.ini':  # 実質PSP専用?
 
-			#cp932の場合
-			if charset == 'cp932':
-				#surface/aspect
-				if (etc_iniscreen == i18n.t('var.full_size')) or (not output_resolution in select_resolution):#フルor解像度無視変換
-					surface = 'SOFTWARE'
-					aspect = 'OFF'
+            # cp932の場合
+            if charset == 'cp932':
+                # surface/aspect
+                if (etc_iniscreen == i18n.t('var.full_size')) or (not output_resolution in select_resolution):  # フルor解像度無視変換
+                    surface = 'SOFTWARE'
+                    aspect = 'OFF'
 
-				elif (etc_iniscreen == i18n.t('var.maintain_ratio')):#アス比維持
-					surface = 'SOFTWARE'
-					aspect = 'ON'
-				
-				elif (etc_iniscreen == i18n.t('var.no_expansion')):#拡大しない
-					surface = 'HARDWARE'
-					aspect = 'OFF'
+                elif (etc_iniscreen == i18n.t('var.maintain_ratio')):  # アス比維持
+                    surface = 'SOFTWARE'
+                    aspect = 'ON'
 
-				else: raise i18n.t('ui.ons_ini_not_found_expansion_settings')
+                elif (etc_iniscreen == i18n.t('var.no_expansion')):  # 拡大しない
+                    surface = 'HARDWARE'
+                    aspect = 'OFF'
 
-				#fontmemory
-				fontmemory = 'ON' if etc_iniramfont_chk else 'OFF'
+                else:
+                    raise i18n.t('ui.ons_ini_not_found_expansion_settings')
 
-				#analogkey
-				analogkey = 'ON2' if etc_inicursor_chk else 'ON1'
+                # fontmemory
+                fontmemory = 'ON' if etc_iniramfont_chk else 'OFF'
 
-				cfg = f'''SURFACE={surface}
+                # analogkey
+                analogkey = 'ON2' if etc_inicursor_chk else 'ON1'
+
+                cfg = f'''SURFACE={surface}
 WIDTH={output_resolution[0]}
 HEIGHT={output_resolution[1]}
 ASPECT={aspect}
@@ -234,99 +261,112 @@ START=97
 ALUP=276
 ALDOWN=275
 '''
-			#gbkの場合
-			elif charset == 'gbk':#Based on 20080121-zh04
-				screensize = 'full' if (etc_iniscreen == i18n.t('var.full_size')) else 'normal'
-				cfg = f'''resolution={output_resolution[0]}
+            # gbkの場合
+            elif charset == 'gbk':  # Based on 20080121-zh04
+                if (etc_iniscreen == i18n.t('var.full_size')):
+                    screensize = 'full'
+                else:
+                    screensize =  'normal'
+                    
+                cfg = f'''resolution={output_resolution[0]}
 screensize={screensize}
 cpuclock=333
 busclock=166
 '''
-		
-		case 'sittings.txt':#現時点ではvita専用 おそらくyuri系列大体この仕様
-			cfg = r'--window --fontcache --textbox'
-			if charset == 'cp932': cfg += r' --enc:sjis'
-			
-		case _: return
 
-	with open(Path(compressed_dir / configfile), 'w', encoding='utf-8') as s: s.write(cfg)
+        case 'sittings.txt':  # 現時点ではvita専用 おそらくyuri系列大体この仕様
+            cfg = r'--window --fontcache --textbox'
+            if charset == 'cp932':
+                cfg += r' --enc:sjis'
 
-	return
+        case _: return
+
+    with open(Path(compressed_dir / configfile), 'w', encoding='utf-8') as s:
+        s.write(cfg)
+
+    return
 
 
 def remove_0txtcommentout(values_ex):
-	ztxtscript = values_ex['0txtscript']
-	ztxtscript_new = ''
+    ztxtscript = values_ex['0txtscript']
+    ztxtscript_new = ''
 
-	#最初のコメントアウトは解像度表記(のはず)なので飛ばすようフラグ立て
-	first_commentout_flag = True
+    # 最初のコメントアウトは解像度表記(のはず)なので飛ばすようフラグ立て
+    first_commentout_flag = True
 
-	for line in ztxtscript.splitlines():
-		#行がある場合のみ(=空行は飛ばす)
-		if line:
+    for line in ztxtscript.splitlines():
+        # 行がある場合のみ(=空行は飛ばす)
+        if line:
 
-			#コメントアウトの有無確認
-			line_match1 = re.match(r'\s*(.*?)\s*;(?!.*")', line)#コメント付き命令行から命令だけ出すやつ
-			line_match2 = re.match(r'\s*;', line)#コメントしか無い行検出
+            # コメントアウトの有無確認
+            # コメント付き命令行から命令だけ出すやつ
+            line_match1 = re.match(r'\s*(.*?)\s*;(?!.*")', line)
+            line_match2 = re.match(r'\s*;', line)  # コメントしか無い行検出
 
-			if (line_match1):
+            if (line_match1):
 
-				#初回はフラグ折って普通に書く(これで解像度表記だけは普通に通るはず)
-				if first_commentout_flag:
-					first_commentout_flag = False
-					ztxtscript_new += (line + '\n')
-				
-				#二度目以降はコメント全消し
-				else:
-					if line_match1[1]: ztxtscript_new += (line_match1[1] + '\n')
+                # 初回はフラグ折って普通に書く(これで解像度表記だけは普通に通るはず)
+                if first_commentout_flag:
+                    first_commentout_flag = False
+                    ztxtscript_new += (line + '\n')
 
-			elif (not line_match2):
-				ztxtscript_new += (line + '\n')
+                # 二度目以降はコメント全消し
+                else:
+                    if line_match1[1]:
+                        ztxtscript_new += (line_match1[1] + '\n')
 
-	return ztxtscript_new
+            elif (not line_match2):
+                ztxtscript_new += (line + '\n')
+
+    return ztxtscript_new
 
 
 def create_0txt(values: dict, values_ex: dict, compressed_dir: Path):
-	ztxtscript = values_ex['0txtscript']
-	allerrlog = values_ex['allerrlog']
-	version = values['version']
-	charset = values['charset']
+    ztxtscript = values_ex['0txtscript']
+    allerrlog = values_ex['allerrlog']
+    version = values['version']
+    charset = values['charset']
 
-	#0.txt書き出し
-	ztxtscript += (f'\nend\n\n;\tConverted by "ONScripter Multi Converter ver.{version}"\n;\thttps://github.com/Prince-of-sea/ONScripter_Multi_Converter\n')
-	with open(Path(compressed_dir / '0.txt'), 'w', encoding=charset, errors='ignore') as s: s.write(ztxtscript)
+    # 0.txt書き出し
+    ztxtscript += (
+        f'\nend\n\n;\tConverted by "ONScripter Multi Converter ver.{version}"\n;\thttps://github.com/Prince-of-sea/ONScripter_Multi_Converter\n')
+    with open(Path(compressed_dir / '0.txt'), 'w', encoding=charset, errors='ignore') as s:
+        s.write(ztxtscript)
 
-	#ついでにエラーログがあれば書き出し
-	if allerrlog:
-		with open(Path(compressed_dir / 'errorlog.tsv'), 'w', encoding='utf-8', errors='ignore') as s: s.write(allerrlog)
+    # ついでにエラーログがあれば書き出し
+    if allerrlog:
+        with open(Path(compressed_dir / 'errorlog.tsv'), 'w', encoding='utf-8', errors='ignore') as s:
+            s.write(allerrlog)
 
-	return
+    return
 
 
 def create_savedatadir(values_ex: dict, compressed_dir: dict):
-	savedir_path = values_ex['savedir_path']
+    savedir_path = values_ex['savedir_path']
 
-	if savedir_path:
-		Path(compressed_dir / savedir_path).mkdir()
+    if savedir_path:
+        Path(compressed_dir / savedir_path).mkdir()
 
-	return
+    return
 
 
 def debug_copy(values: dict, compressed_dir: Path):
-	d = Path( Path(sys.argv[0]).parent / 'debug' / values['hardware'] )
+    d = Path(Path(sys.argv[0]).parent / 'debug' / values['hardware'])
 
-	if d.is_dir():
-		for p in d.glob('*'): shutil.copy(p, compressed_dir)
+    if d.is_dir():
+        for p in d.glob('*'):
+            shutil.copy(p, compressed_dir)
 
-	return
+    return
 
 
 def result_move(result_dir: Path, compressed_dir: Path):
-	
-	#すでにあるなら削除
-	if result_dir.exists(): shutil.rmtree(result_dir)
 
-	#移動
-	shutil.move(compressed_dir, result_dir)
-	
-	return
+    # すでにあるなら削除
+    if result_dir.exists():
+        shutil.rmtree(result_dir)
+
+    # 移動
+    shutil.move(compressed_dir, result_dir)
+
+    return
