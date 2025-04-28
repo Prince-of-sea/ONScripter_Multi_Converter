@@ -28,7 +28,7 @@ from ui_cli import cli_main
 @click.option('-cl', '--use_cli', is_flag=True, default=False, help='Enable automatic conversion in the CLI.')
 def main(language: str, charset: str, use_cli: bool, hardware: str, input_dir: str, output_dir: str, title_setting: str, value_setting: str):
     '''Image/sound/video & scenario conversion tool for ONScripter'''
-    version = '2.4.2'
+    version = '2.4.3 pre-alpha'
 
     # languageが空の場合は日本語判定
     if language == '':
