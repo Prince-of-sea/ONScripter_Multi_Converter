@@ -24,6 +24,7 @@ def get_titledict():
     d['[ステージ☆なな]冬のポラリス'] = notons2ons.MJO2ONS_NANA_Polaris.title_info()
     d['[羊おじさん倶楽部]魔女魔少魔法魔'] = notons2ons.KIRIKIRI2ONS_unclesheep_mgirlm.title_info()
     d['[夜のひつじ]孤独に効く百合'] = notons2ons.KIRIKIRI2ONS_yorunohitsuji_kodoyuri.title_info()
+    d['[夜のひつじ]相思相愛ロリータ'] = notons2ons.KIRIKIRI2ONS_yorunohitsuji_lol.KIRIKIRI2ONS_yorunohitsuji_lol.title_info()
     d['[るび様を崇める会]ご主人様、セイラに夢みたいないちゃラブご奉仕させていただけますか'] = notons2ons.TYRANO2ONS_Rubisama_seilove.title_info()
 
     return d
@@ -50,6 +51,7 @@ def pre_convert(values: dict, values_ex: dict, pre_converted_dir: Path):
         case '[ステージ☆なな]冬のポラリス': notons2ons.MJO2ONS_NANA_Polaris.main(values, values_ex, pre_converted_dir)
         case '[羊おじさん倶楽部]魔女魔少魔法魔': notons2ons.KIRIKIRI2ONS_unclesheep_mgirlm.main(values, values_ex, pre_converted_dir)
         case '[夜のひつじ]孤独に効く百合': notons2ons.KIRIKIRI2ONS_yorunohitsuji_kodoyuri.main(values, values_ex, pre_converted_dir)
+        case '[夜のひつじ]相思相愛ロリータ': notons2ons.KIRIKIRI2ONS_yorunohitsuji_lol.KIRIKIRI2ONS_yorunohitsuji_lol.main(values, values_ex, pre_converted_dir)
         case '[るび様を崇める会]ご主人様、セイラに夢みたいないちゃラブご奉仕させていただけますか': notons2ons.TYRANO2ONS_Rubisama_seilove.main(values, values_ex, pre_converted_dir)
         case _: raise ValueError('title_setting error.')
 
