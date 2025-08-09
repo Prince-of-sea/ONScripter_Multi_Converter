@@ -11,6 +11,7 @@ def get_titledict():
     d['[CHARON]掴め、人生の右打ち!GOGO全回転 嵐を呼ぶ!炎のパチンカスロード'] = notons2ons.TYRANO2ONS_CHARON_Pachi.title_info()
     d['[CUFFS]ワンコとリリー (パッケージ版不可)'] = notons2ons.KIRIKIRI2ONS_CUFFS_wankor.title_info()
     d['[etude]巫女舞 ～ただ一つの願い～'] = notons2ons.ARCX2ONS_etude_miko.title_info()
+    d['[FrontWing]魔界天使ジブリール'] = notons2ons.QLIE2ONS_fw_djib.title_info()
     d['[Liar-soft]SEVEN-BRIDGE'] = notons2ons.RSC2ONS_Liar_SB.title_info()
     d['[minori]はるのあしおと'] = notons2ons.MUSICA2ONS_minori_haruoto.title_info()
     d['[Moviendo]処女回路'] = notons2ons.KIRIKIRI2ONS_Moviendo_otomec.title_info()
