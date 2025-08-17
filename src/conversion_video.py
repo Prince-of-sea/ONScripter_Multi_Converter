@@ -337,13 +337,13 @@ def convert_video_mp4(values: dict, values_ex: dict, f_dict: dict):
     ffmpeg_Path = location_env('ffmpeg')
 
     # 縦横指定
-    w = values_ex['output_resolution'][0]
-    h = values_ex['output_resolution'][1]
+    w = int(int(values_ex['output_resolution'][0])/2)*2
+    h = int(int(values_ex['output_resolution'][1])/2)*2
 
     # 変換
     sp.run([ffmpeg_Path, '-y',
             '-i', extractedpath,
-            '-s', f'{w}:{h}',
+            '-s', f'{w}x{h}',
             '-vcodec', 'libx264',
             '-acodec', 'aac',
             '-ar', '44100',
