@@ -236,7 +236,7 @@ def convert_video_renban(values: dict, values_ex: dict, f_dict: dict):
         if (vid_renbanaudset_radio == i18n.t('var.bgm_match')):
             if (aud_bgmch_radio == i18n.t('var.stereo')):
                 dummy_dict['ch'] = '2'
-            if (aud_bgmch_radio == i18n.t('var.mono')):
+            elif (aud_bgmch_radio == i18n.t('var.mono')):
                 dummy_dict['ch'] = '1'
             else:
                 raise ValueError(
