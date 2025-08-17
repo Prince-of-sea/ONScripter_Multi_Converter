@@ -276,6 +276,7 @@ def onsscript_check_txtmodify_adddefsub(ztxtscript: str, pre_txt: str, aft_txt: 
 
 def onsscript_check_txtmodify(values: dict, values_ex: dict, ztxtscript: str, override_resolution: list):
     hardware = values['hardware']
+    vid_movfmt_radio = values['vid_movfmt_radio']
     etc_0txtnbz_radio = values['etc_0txtnbz_radio']
     etc_0txtavitompegplay = values['etc_0txtavitompegplay']
     etc_0txtnoscreenshot = values['etc_0txtnoscreenshot']
@@ -315,25 +316,23 @@ def onsscript_check_txtmodify(values: dict, values_ex: dict, ztxtscript: str, ov
         pass
     else:
         raise ValueError(i18n.t('ui.nbz_conversion_setting_error'))
-
+    
     # avi命令→mpegplay命令変換
-    adddefsubavi = False
-    if (etc_0txtavitompegplay == i18n.t('var.use_function_override')):  # 利用する(関数上書き)
+    if (vid_movfmt_radio == i18n.t('var.do_not_convert')): # そもそも動画を「変換しない」にしている
+        ztxtscript = onsscript_check_txtmodify_adddefsub(# なら全部無力化
+            ztxtscript, 'defsub avi', '*avi\ngetparam $multiconverteralias0,%multiconverteralias0:return')
         ztxtscript = onsscript_check_txtmodify_adddefsub(
-            ztxtscript, 'defsub avi', '*avi\ngetparam $multiconverteralias0,%multiconverteralias0:mpegplay $multiconverteralias0,%multiconverteralias0:return')  # avi命令をmpegplay命令に変換
-        adddefsubavi = True
-    elif (etc_0txtavitompegplay == i18n.t('var.use_regex_replace')):  # 利用する(正規表現置換)
+            ztxtscript, 'defsub mpegplay', '*mpegplay\ngetparam $multiconverteralias0,%multiconverteralias0:return')
+    elif (etc_0txtavitompegplay == i18n.t('var.use_function_override')) or (vid_movfmt_radio == i18n.t('var.numbered_images')): # 利用する(関数上書き) または 動画「連番画像」利用時
+        ztxtscript = onsscript_check_txtmodify_adddefsub(# avi命令をmpegplay命令に変換
+            ztxtscript, 'defsub avi', '*avi\ngetparam $multiconverteralias0,%multiconverteralias0:mpegplay $multiconverteralias0,%multiconverteralias0:return')
+    elif (etc_0txtavitompegplay == i18n.t('var.use_regex_replace')): # 利用する(正規表現置換)
         ztxtscript = re.sub(
             r'([\n|\t| |:])[Aa][Vv][Ii][\t\s]+"(.+?)",[\t\s]*([0|1]|%[0-9]+)', r'\1mpegplay "\2",\3', ztxtscript)
     elif (etc_0txtavitompegplay == i18n.t('var.do_not_use')):  # 利用しない
         pass
     else:  # 未選択エラー
         raise ValueError(i18n.t('ui.avi_conversion_setting_error'))
-
-    # 動画連番画像利用時強制avi命令→mpegplay命令変換
-    if (values['vid_movfmt_radio'] == i18n.t('var.numbered_images')) and (not adddefsubavi):
-        ztxtscript = onsscript_check_txtmodify_adddefsub(
-            ztxtscript, 'defsub avi', '*avi\ngetparam $multiconverteralias0,%multiconverteralias0:mpegplay $multiconverteralias0,%multiconverteralias0:return')  # avi命令をmpegplay命令に変換
 
     # savescreenshot命令無効化
     if (etc_0txtnoscreenshot == i18n.t('var.use_function_override')):  # 利用する(関数上書き)
