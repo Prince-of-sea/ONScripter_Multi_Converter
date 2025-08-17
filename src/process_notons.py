@@ -39,6 +39,7 @@ def pre_convert(values: dict, values_ex: dict, pre_converted_dir: Path):
         case '[CHARON]掴め、人生の右打ち!GOGO全回転 嵐を呼ぶ!炎のパチンカスロード': notons2ons.TYRANO2ONS_CHARON_Pachi.main(values, values_ex, pre_converted_dir)
         case '[CUFFS]ワンコとリリー (パッケージ版不可)': notons2ons.KIRIKIRI2ONS_CUFFS_wankor.main(values, values_ex, pre_converted_dir)
         case '[etude]巫女舞 ～ただ一つの願い～': notons2ons.ARCX2ONS_etude_miko.main(values, values_ex, pre_converted_dir)
+        case '[FrontWing]魔界天使ジブリール': notons2ons.QLIE2ONS_fw_djib.main(values, values_ex, pre_converted_dir)
         case '[Liar-soft]SEVEN-BRIDGE': notons2ons.RSC2ONS_Liar_SB.main(values, values_ex, pre_converted_dir)
         case '[minori]はるのあしおと': notons2ons.MUSICA2ONS_minori_haruoto.main(values, values_ex, pre_converted_dir)
         case '[Moviendo]処女回路': notons2ons.KIRIKIRI2ONS_Moviendo_otomec.main(values, values_ex, pre_converted_dir)
