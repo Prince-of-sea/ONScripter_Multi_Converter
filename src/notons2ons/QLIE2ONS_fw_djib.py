@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 from pathlib import Path
-from PIL import Image, ImageFilter, ImageEnhance
+from PIL import Image
 import concurrent.futures
 import shutil, tempfile, re
-import subprocess as sp
 
 
 # if文管理用
@@ -109,7 +108,7 @@ class EffectClass:
 		txt = ''
 		for t in self.eflist:
 			if t[0]:
-				print('特殊エフェクト要作成')
+				raise ValueError('特殊エフェクト要作成')
 			else:
 				txt += f'effect {t[2]},10,{t[1]}\n'
 		
@@ -134,18 +133,22 @@ def title_info():
 		'notes': [
 			'旧パッケージ版(Vista対応版ではないもの)はそもそも変換非対応',
 			'好感度調整の実装が不完全なため分岐はすべて選択肢で実装',
-			'一部シナリオ遷移が不自然(同じ日常会話が繰り返し出るなど)',
-			'アモーレ収集選択は全部固定(一応クリア後回想から全て閲覧可)',#タイトル画面作るまでは無理
+			'一部シナリオ遷移が不自然(同じ会話が繰り返し出るなど)',
+			'セーブ、ロード、コンフィグ画面など基本UIは簡略化',
+			'一部エフェクト(フラッシュなど)で立ち絵が消えない',
+			'おまけは回想モード以外すべて未実装'
+			'回想モードは最初から全部開放',
+			'アモーレ収集選択は全部固定',
+			'画面遷移はフェードのみ',
+			'選択肢画面簡略化',
 		]
-
-		# !!! まだマルチコンバータ組み込みでは動作しません !!!
-		# 単体動作は可能、BAD以外のルートは一通り動作確認済み
 	}
+
 
 
 # リソース自動展開 (マルチコンバータ組み込み時にのみ利用)
 def extract_resource(values: dict, values_ex: dict, pre_converted_dir: Path):
-	# from utils import extract_archive_garbro # type: ignore
+	from utils import extract_archive_garbro # type: ignore
 
 	num_workers = values_ex['num_workers']
 	input_dir = values['input_dir']
@@ -191,6 +194,9 @@ def extract_resource(values: dict, values_ex: dict, pre_converted_dir: Path):
 				futures.append(executor.submit(extract_archive_b, b_path))
 
 			concurrent.futures.as_completed(futures)
+		
+		# [djib専用]タイトル競合防止
+		Path(pack_overwritedir / 'script' / 'title' / 'img' / 'titlebg.png').unlink()
 
 		# 拡張子".bmp"のファイルを隔離
 		pack_overwritebmpdir = Path(pack_tmpdir / 'overwrite_bmp')
@@ -231,25 +237,13 @@ def extract_resource(values: dict, values_ex: dict, pre_converted_dir: Path):
 
 # .bファイル展開処理用関数
 def extract_archive_b(b_path: Path):
+	from utils import extract_archive_garbro # type: ignore
+	
 	b_oldpath = Path(b_path.parent / f'{b_path.stem}_.b')
 	shutil.move(b_path, b_oldpath)
 	extract_archive_garbro(b_oldpath, b_path)
 	b_oldpath.unlink()
 
-
-
-#################### kari #####################
-# 正式組み込み時に消す
-def extract_archive_garbro(p: Path, e: Path, f: str = ''):
-	GARbro_Path = Path(r'C:/_software/_zisaku/NSC2ONS4PSP/tools/Garbro_console/GARbro.Console.exe')#location('GARbro')
-	e.mkdir()
-	if f:
-		l = [GARbro_Path, 'x', '-if', f.lower(), '-ca', '-o', e, p]
-	else:
-		l = [GARbro_Path, 'x', '-ca', '-o', e, p]
-	sp.run(l)  # 展開
-	return
-###############################################
 
 # 0.txtにはじめから書いておくもの (旧コンバータdefault.txt相当)
 def default_txt(txt: str, val_txt: str = '', add0txt_effect: str = '', rs:str = '', sb:str = ''):
@@ -270,7 +264,8 @@ windowchip 8
 
 {val_txt}
 
-
+effect  8,10,500
+effect  9,10,1000
 effect 10,10,50
 {add0txt_effect}
 
@@ -367,27 +362,728 @@ goto *l_control_Hselect
 goto *l_control_Hselect
 ;----------------------------------------
 *staffroll
-;ルートフラグの変数取ってそれによって出す画像変える予定
-すたっふろーる\\
+
+mov %1000,1;クリア判定
+
+stop:csp -1:print 1
+
+bgm "image/etc/endroll.b/BGM17.ogg"
+mov %2,0;表示用タイマー
+resettimer
+
+lsph 100,"image/etc/endroll.b/01.png",0,0:getspsize 100,%0,%1:amsp 100,400-(%0/2),300-(%1/2):vsp 100,1
+print 9
+mov %2,%2+3800:waittimer %2
+csp 100:csp 101
+print 9
+mov %2,%2+1900:waittimer %2
+lsph 100,"image/etc/endroll.b/02.png",0,0:getspsize 100,%0,%1:amsp 100,200-(%0/2),300-(%1/2):vsp 100,1
+lsph 101,"image/etc/endroll.b/i01.png",0,0:getspsize 101,%0,%1:amsp 101,600-(%0/2),300-(%1/2):vsp 101,1
+print 9
+mov %2,%2+3800:waittimer %2
+csp 100:csp 101
+print 9
+mov %2,%2+1900:waittimer %2
+lsph 100,"image/etc/endroll.b/03.png",0,0:getspsize 100,%0,%1:amsp 100,200-(%0/2),300-(%1/2):vsp 100,1
+lsph 101,"image/etc/endroll.b/i02.png",0,0:getspsize 101,%0,%1:amsp 101,600-(%0/2),300-(%1/2):vsp 101,1
+print 9
+mov %2,%2+3800:waittimer %2
+csp 100
+print 9
+mov %2,%2+1900:waittimer %2
+lsph 100,"image/etc/endroll.b/04.png",0,0:getspsize 100,%0,%1:amsp 100,200-(%0/2),300-(%1/2):vsp 100,1
+print 9
+mov %2,%2+3800:waittimer %2
+csp 100:csp 101
+print 9
+mov %2,%2+1900:waittimer %2
+lsph 100,"image/etc/endroll.b/05.png",0,0:getspsize 100,%0,%1:amsp 100,400-(%0/2),300-(%1/2):vsp 100,1
+print 9
+mov %2,%2+3800:waittimer %2
+csp 100:csp 101
+print 9
+mov %2,%2+1900:waittimer %2
+lsph 100,"image/etc/endroll.b/06.png",0,0:getspsize 100,%0,%1:amsp 100,200-(%0/2),300-(%1/2):vsp 100,1
+lsph 101,"image/etc/endroll.b/i03.png",0,0:getspsize 101,%0,%1:amsp 101,600-(%0/2),300-(%1/2):vsp 101,1
+print 9
+mov %2,%2+3800:waittimer %2
+csp 100
+print 9
+mov %2,%2+1900:waittimer %2
+lsph 100,"image/etc/endroll.b/07.png",0,0:getspsize 100,%0,%1:amsp 100,200-(%0/2),300-(%1/2):vsp 100,1
+print 9
+mov %2,%2+3800:waittimer %2
+csp 100:csp 101
+print 9
+mov %2,%2+1900:waittimer %2
+lsph 100,"image/etc/endroll.b/08.png",0,0:getspsize 100,%0,%1:amsp 100,200-(%0/2),300-(%1/2):vsp 100,1
+lsph 101,"image/etc/endroll.b/i04.png",0,0:getspsize 101,%0,%1:amsp 101,600-(%0/2),300-(%1/2):vsp 101,1
+print 9
+mov %2,%2+3800:waittimer %2
+csp 100
+print 9
+mov %2,%2+1900:waittimer %2
+lsph 100,"image/etc/endroll.b/09.png",0,0:getspsize 100,%0,%1:amsp 100,200-(%0/2),300-(%1/2):vsp 100,1
+print 9
+mov %2,%2+3800:waittimer %2
+csp 100:csp 101
+print 9
+mov %2,%2+1900:waittimer %2
+lsph 100,"image/etc/endroll.b/10.png",0,0:getspsize 100,%0,%1:amsp 100,200-(%0/2),300-(%1/2):vsp 100,1
+lsph 101,"image/etc/endroll.b/i05.png",0,0:getspsize 101,%0,%1:amsp 101,600-(%0/2),300-(%1/2):vsp 101,1
+print 9
+mov %2,%2+3800:waittimer %2
+csp 100
+print 9
+mov %2,%2+1900:waittimer %2
+lsph 100,"image/etc/endroll.b/11.png",0,0:getspsize 100,%0,%1:amsp 100,200-(%0/2),300-(%1/2):vsp 100,1
+print 9
+mov %2,%2+3800:waittimer %2
+csp 100:csp 101
+print 9
+mov %2,%2+1900:waittimer %2
+lsph 100,"image/etc/endroll.b/12.png",0,0:getspsize 100,%0,%1:amsp 100,200-(%0/2),300-(%1/2):vsp 100,1
+lsph 101,"image/etc/endroll.b/i06.png",0,0:getspsize 101,%0,%1:amsp 101,600-(%0/2),300-(%1/2):vsp 101,1
+print 9
+mov %2,%2+3800:waittimer %2
+csp 100
+print 9
+mov %2,%2+1900:waittimer %2
+lsph 100,"image/etc/endroll.b/13.png",0,0:getspsize 100,%0,%1:amsp 100,200-(%0/2),300-(%1/2):vsp 100,1
+print 9
+mov %2,%2+3800:waittimer %2
+csp 100:csp 101
+print 9
+mov %2,%2+1900:waittimer %2
+lsph 100,"image/etc/endroll.b/14.png",0,0:getspsize 100,%0,%1:amsp 100,200-(%0/2),300-(%1/2):vsp 100,1
+lsph 101,"image/etc/endroll.b/i07.png",0,0:getspsize 101,%0,%1:amsp 101,600-(%0/2),300-(%1/2):vsp 101,1
+print 9
+mov %2,%2+3800:waittimer %2
+csp 100
+print 9
+mov %2,%2+1900:waittimer %2
+lsph 100,"image/etc/endroll.b/15.png",0,0:getspsize 100,%0,%1:amsp 100,200-(%0/2),300-(%1/2):vsp 100,1
+print 9
+mov %2,%2+3800:waittimer %2
+csp 100:csp 101
+print 9
+mov %2,%2+1900:waittimer %2
+lsph 100,"image/etc/endroll.b/16.png",0,0:getspsize 100,%0,%1:amsp 100,200-(%0/2),300-(%1/2):vsp 100,1
+lsph 101,"image/etc/endroll.b/i08.png",0,0:getspsize 101,%0,%1:amsp 101,600-(%0/2),300-(%1/2):vsp 101,1
+print 9
+mov %2,%2+3800:waittimer %2
+csp 100
+print 9
+mov %2,%2+1900:waittimer %2
+lsph 100,"image/etc/endroll.b/17.png",0,0:getspsize 100,%0,%1:amsp 100,200-(%0/2),300-(%1/2):vsp 100,1
+print 9
+mov %2,%2+3800:waittimer %2
+csp 100:csp 101
+print 9
+mov %2,%2+1900:waittimer %2
+lsph 100,"image/etc/endroll.b/18.png",0,0:getspsize 100,%0,%1:amsp 100,200-(%0/2),300-(%1/2):vsp 100,1
+lsph 101,"image/etc/endroll.b/i09.png",0,0:getspsize 101,%0,%1:amsp 101,600-(%0/2),300-(%1/2):vsp 101,1
+print 9
+mov %2,%2+3800:waittimer %2
+csp 100
+print 9
+mov %2,%2+1900:waittimer %2
+lsph 100,"image/etc/endroll.b/19.png",0,0:getspsize 100,%0,%1:amsp 100,200-(%0/2),300-(%1/2):vsp 100,1
+print 9
+mov %2,%2+3800:waittimer %2
+csp 100:csp 101
+print 9
+mov %2,%2+1900:waittimer %2
+lsph 100,"image/etc/endroll.b/20.png",0,0:getspsize 100,%0,%1:amsp 100,200-(%0/2),300-(%1/2):vsp 100,1
+lsph 101,"image/etc/endroll.b/i10.png",0,0:getspsize 101,%0,%1:amsp 101,600-(%0/2),300-(%1/2):vsp 101,1
+print 9
+mov %2,%2+3800:waittimer %2
+csp 100:csp 101
+print 9
+mov %2,%2+1900:waittimer %2
+lsph 100,"image/etc/endroll.b/21.png",0,0:getspsize 100,%0,%1:amsp 100,400-(%0/2),300-(%1/2):vsp 100,1
+print 9
+mov %2,%2+3800:waittimer %2
+csp 100:csp 101
+print 9
+mov %2,%2+1900:waittimer %2
+lsph 100,"image/etc/endroll.b/22.png",0,0:getspsize 100,%0,%1:amsp 100,200-(%0/2),300-(%1/2):vsp 100,1
+lsph 101,"image/etc/endroll.b/i11.png",0,0:getspsize 101,%0,%1:amsp 101,600-(%0/2),300-(%1/2):vsp 101,1
+print 9
+mov %2,%2+3800:waittimer %2
+csp 100
+print 9
+mov %2,%2+1900:waittimer %2
+lsph 100,"image/etc/endroll.b/23.png",0,0:getspsize 100,%0,%1:amsp 100,200-(%0/2),300-(%1/2):vsp 100,1
+print 9
+mov %2,%2+3800:waittimer %2
+csp 100:csp 101
+print 9
+mov %2,%2+1900:waittimer %2
+lsph 100,"image/etc/endroll.b/24.png",0,0:getspsize 100,%0,%1:amsp 100,200-(%0/2),300-(%1/2):vsp 100,1
+lsph 101,"image/etc/endroll.b/i12.png",0,0:getspsize 101,%0,%1:amsp 101,600-(%0/2),300-(%1/2):vsp 101,1
+print 9
+mov %2,%2+3800:waittimer %2
+csp 100
+print 9
+mov %2,%2+1900:waittimer %2
+lsph 100,"image/etc/endroll.b/25.png",0,0:getspsize 100,%0,%1:amsp 100,200-(%0/2),300-(%1/2):vsp 100,1
+print 9
+mov %2,%2+3800:waittimer %2
+csp 100:csp 101
+print 9
+mov %2,%2+1900:waittimer %2
+lsph 100,"image/etc/endroll.b/26.png",0,0:getspsize 100,%0,%1:amsp 100,200-(%0/2),300-(%1/2):vsp 100,1
+lsph 101,"image/etc/endroll.b/i13.png",0,0:getspsize 101,%0,%1:amsp 101,600-(%0/2),300-(%1/2):vsp 101,1
+print 9
+mov %2,%2+3800:waittimer %2
+csp 100
+print 9
+mov %2,%2+1900:waittimer %2
+lsph 100,"image/etc/endroll.b/27.png",0,0:getspsize 100,%0,%1:amsp 100,200-(%0/2),300-(%1/2):vsp 100,1
+print 9
+mov %2,%2+3800:waittimer %2
+csp 100:csp 101
+print 9
+mov %2,%2+1900:waittimer %2
+lsph 100,"image/etc/endroll.b/28.png",0,0:getspsize 100,%0,%1:amsp 100,200-(%0/2),300-(%1/2):vsp 100,1
+lsph 101,"image/etc/endroll.b/i14.png",0,0:getspsize 101,%0,%1:amsp 101,600-(%0/2),300-(%1/2):vsp 101,1
+print 9
+mov %2,%2+3800:waittimer %2
+csp 100:csp 101
+print 9
+mov %2,%2+1900:waittimer %2
+lsph 100,"image/etc/endroll.b/29.png",0,0:getspsize 100,%0,%1:amsp 100,400-(%0/2),300-(%1/2):vsp 100,1
+print 9
+mov %2,%2+3800:waittimer %2
+csp 100:csp 101
+print 9
+mov %2,%2+1900:waittimer %2
+
+waittimer 167770
+bgmstop
 return
 ;----------------------------------------
+*not_yet
+lsp 10,":s;#FFFFFF#AAAAAA未実装です",334,287
+lsp 11":c;>800,600,#000000",0,0,128
+print 1
+click
+csp 11:csp 10
+print 1
+return
+;----------------------------------------
+*scenesel_start
+bgmstop:csp -1:bg black,9
+bg "script/scenemode/image/scenebg.png",8
+lsp 200,":c;>800,600,#000000",0,0,128
+bgm "bgm/BGM15.ogg"
+mov %195,1
+lsp 100,":s;#FFFFFF#AAAAAAＲｉｋＨ＿０１ａ",     0,  0
+lsp 101,":s;#FFFFFF#AAAAAAＲｉｋＨ＿０１ｂ",     0, 25
+lsp 102,":s;#FFFFFF#AAAAAAＲｉｋＨ＿０１ｃ",     0, 50
+lsp 103,":s;#FFFFFF#AAAAAAＲｉｋＨ＿０２ａ",     0, 75
+lsp 104,":s;#FFFFFF#AAAAAAＲｉｋＨ＿０２ｂ",     0,100
+lsp 105,":s;#FFFFFF#AAAAAAＲｉｋＨ＿０２ｃ",     0,125
+lsp 106,":s;#FFFFFF#AAAAAAＲｉｋＨ＿０３ａ",     0,150
+lsp 107,":s;#FFFFFF#AAAAAAＲｉｋＨ＿０３ｂ",     0,175
+lsp 108,":s;#FFFFFF#AAAAAAＲｉｋＨ＿０３ｃ",     0,200
+lsp 109,":s;#FFFFFF#AAAAAAＲｉｋＨ＿０４ａ",     0,225
+lsp 110,":s;#FFFFFF#AAAAAAＲｉｋＨ＿０４ｂ",     0,250
+lsp 111,":s;#FFFFFF#AAAAAAＲｉｋＨ＿０４ｃ",     0,275
+lsp 112,":s;#FFFFFF#AAAAAAＲｉｋＨ＿０５ａ",     0,300
+lsp 113,":s;#FFFFFF#AAAAAAＲｉｋＨ＿０５ｂ",     0,325
+lsp 114,":s;#FFFFFF#AAAAAAＲｉｋＨ＿０５ｃ",     0,350
+lsp 115,":s;#FFFFFF#AAAAAAＲｉｋＨ＿０６ａ",     0,375
+lsp 116,":s;#FFFFFF#AAAAAAＲｉｋＨ＿０６ｂ",     0,400
+lsp 117,":s;#FFFFFF#AAAAAAＲｉｋＨ＿０６ｃ",     0,425
+lsp 118,":s;#FFFFFF#AAAAAAＲｉｋＨ＿０７ａ",     0,450
+lsp 119,":s;#FFFFFF#AAAAAAＲｉｋＨ＿０７ｂ",     0,475
+lsp 120,":s;#FFFFFF#AAAAAAＲｉｋＨ＿０７ｃ",     0,500
+lsp 121,":s;#FFFFFF#AAAAAAＲｉｋＨ＿０８ａ",     0,525
+lsp 122,":s;#FFFFFF#AAAAAAＲｉｋＨ＿０８ｂ",     0,550
+lsp 123,":s;#FFFFFF#AAAAAAＲｉｋＨ＿０８ｃ",     0,575
+lsp 124,":s;#FFFFFF#AAAAAAＲｉｋＨ＿０９ａ",   250,  0
+lsp 125,":s;#FFFFFF#AAAAAAＲｉｋＨ＿０９ｂ",   250, 25
+lsp 126,":s;#FFFFFF#AAAAAAＲｉｋＨ＿０９ｃ",   250, 50
+lsp 127,":s;#FFFFFF#AAAAAAＲｉｋＨ＿１０ａ",   250, 75
+lsp 128,":s;#FFFFFF#AAAAAAＲｉｋＨ＿１０ｂ",   250,100
+lsp 129,":s;#FFFFFF#AAAAAAＲｉｋＨ＿１０ｃ",   250,125
+lsp 130,":s;#FFFFFF#AAAAAAＲｉｋＨ＿１１ａ",   250,150
+lsp 131,":s;#FFFFFF#AAAAAAＲｉｋＨ＿１１ｂ",   250,175
+lsp 132,":s;#FFFFFF#AAAAAAＲｉｋＨ＿１１ｃ",   250,200
+lsp 133,":s;#FFFFFF#AAAAAAＲｉｋＨ＿１２ａ",   250,225
+lsp 134,":s;#FFFFFF#AAAAAAＲｉｋＨ＿１２ｂ",   250,250
+lsp 135,":s;#FFFFFF#AAAAAAＲｉｋＨ＿１２ｃ",   250,275
+lsp 136,":s;#FFFFFF#AAAAAAＲｉｋＨ＿１３ａ",   250,300
+lsp 137,":s;#FFFFFF#AAAAAAＲｉｋＨ＿１３ｂ",   250,325
+lsp 138,":s;#FFFFFF#AAAAAAＲｉｋＨ＿１３ｃ",   250,350
+lsp 139,":s;#FFFFFF#AAAAAAｏｐ",               250,375
+lsp 140,":s;#FFFFFF#AAAAAAＢａｔ＿１＿０１",   250,400
+lsp 141,":s;#FFFFFF#AAAAAAＢａｔ＿１＿０２",   250,425
+lsp 142,":s;#FFFFFF#AAAAAAＢａｔ＿２＿０１",   250,450
+lsp 143,":s;#FFFFFF#AAAAAAＢａｔ＿２＿０２",   250,475
+lsp 144,":s;#FFFFFF#AAAAAAＢａｔ＿３＿０１",   250,500
+lsp 145,":s;#FFFFFF#AAAAAAＢａｔ＿３＿０２",   250,525
+lsp 146,":s;#FFFFFF#AAAAAAＢａｔ＿４＿０１",   250,550
+lsp 147,":s;#FFFFFF#AAAAAAＢａｔ＿４＿０２",   250,575
+lsp 148,":s;#FFFFFF#AAAAAAＲｉｋ＿５",         500,  0
+lsp 149,":s;#FFFFFF#AAAAAAＲｉｋ＿６",         500, 25
+lsp 150,":s;#FFFFFF#AAAAAAｈｅｎｓｈｉｎ",     500, 50
+lsp 151,":s;#FFFFFF#AAAAAAｌｏｖ＿４＿０１",   500, 75
+lsp 152,":s;#FFFFFF#AAAAAAｌｏｖ＿５＿０１",   500,100
+lsp 153,":s;#FFFFFF#AAAAAAｌｏｖ＿ｅｎｄ",     500,125
+lsp 154,":s;#FFFFFF#AAAAAAＭｅｉ＿１＿０１ｂ", 500,150
+lsp 155,":s;#FFFFFF#AAAAAAＭｅｉＨ＿１＿０１", 500,175
+lsp 156,":s;#FFFFFF#AAAAAAＭｅｉＨ＿２＿０１", 500,200
+lsp 157,":s;#FFFFFF#AAAAAAＭｅｉＨ＿２＿０２", 500,225
+lsp 158,":s;#FFFFFF#AAAAAAＭｅｉＨ＿３＿０１", 500,250
+lsp 159,":s;#FFFFFF#AAAAAAＭｅｉＨ＿３＿０２", 500,275
+lsp 160,":s;#FFFFFF#AAAAAAＭｅｉＨ＿４＿０１", 500,300
+lsp 161,":s;#FFFFFF#AAAAAAＭｅｉ＿５＿０３",   500,325
+lsp 162,":s;#FFFFFF#AAAAAAＭｅｉ＿５＿０７",   500,350
+lsp 163,":s;#FFFFFF#AAAAAAＭｅｉ＿５＿０７ｃ", 500,375
+
+;めんどくなったので
+lsp 164,":s;#FFFFFF☆☆☆☆☆☆☆☆☆☆", 525,425
+lsp 165,":s;#FFFFFF再生後はメニューから", 525,450
+lsp 166,":s;#FFFFFFタイトルに戻ってね　", 525,475
+lsp 167,":s;#FFFFFF一部シーンは読み続け", 525,500
+lsp 168,":s;#FFFFFFると強制終了するかも", 525,525
+lsp 169,":s;#FFFFFF☆☆☆☆☆☆☆☆☆☆", 525,550
+
+print 1
+
+*scenesel_loop
+	bclear
+	spbtn 100,100
+	spbtn 101,101
+	spbtn 102,102
+	spbtn 103,103
+	spbtn 104,104
+	spbtn 105,105
+	spbtn 106,106
+	spbtn 107,107
+	spbtn 108,108
+	spbtn 109,109
+	spbtn 110,110
+	spbtn 111,111
+	spbtn 112,112
+	spbtn 113,113
+	spbtn 114,114
+	spbtn 115,115
+	spbtn 116,116
+	spbtn 117,117
+	spbtn 118,118
+	spbtn 119,119
+	spbtn 120,120
+	spbtn 121,121
+	spbtn 122,122
+	spbtn 123,123
+	spbtn 124,124
+	spbtn 125,125
+	spbtn 126,126
+	spbtn 127,127
+	spbtn 128,128
+	spbtn 129,129
+	spbtn 130,130
+	spbtn 131,131
+	spbtn 132,132
+	spbtn 133,133
+	spbtn 134,134
+	spbtn 135,135
+	spbtn 136,136
+	spbtn 137,137
+	spbtn 138,138
+	spbtn 139,139
+	spbtn 140,140
+	spbtn 141,141
+	spbtn 142,142
+	spbtn 143,143
+	spbtn 144,144
+	spbtn 145,145
+	spbtn 146,146
+	spbtn 147,147
+	spbtn 148,148
+	spbtn 149,149
+	spbtn 150,150
+	spbtn 151,151
+	spbtn 152,152
+	spbtn 153,153
+	spbtn 154,154
+	spbtn 155,155
+	spbtn 156,156
+	spbtn 157,157
+	spbtn 158,158
+	spbtn 159,159
+	spbtn 160,160
+	spbtn 161,161
+	spbtn 162,162
+	spbtn 163,163
+	
+	btnwait %196
+	
+	;全部
+	if %196!=-1 if %196!=0 stop:csp -1:bg black,10
+	
+	if %196==100 goto *l_RikH_01a_replay
+	if %196==101 goto *l_RikH_01b_replay
+	if %196==102 goto *l_RikH_01c_replay
+	if %196==103 goto *l_RikH_02a_replay
+	if %196==104 goto *l_RikH_02b_replay
+	if %196==105 goto *l_RikH_02c_replay
+	if %196==106 goto *l_RikH_03a_replay
+	if %196==107 goto *l_RikH_03b_replay
+	if %196==108 goto *l_RikH_03c_replay
+	if %196==109 goto *l_RikH_04a_replay
+	if %196==110 goto *l_RikH_04b_replay
+	if %196==111 goto *l_RikH_04c_replay
+	if %196==112 goto *l_RikH_05a_replay
+	if %196==113 goto *l_RikH_05b_replay
+	if %196==114 goto *l_RikH_05c_replay
+	if %196==115 goto *l_RikH_06a_replay
+	if %196==116 goto *l_RikH_06b_replay
+	if %196==117 goto *l_RikH_06c_replay
+	if %196==118 goto *l_RikH_07a_replay
+	if %196==119 goto *l_RikH_07b_replay
+	if %196==120 goto *l_RikH_07c_replay
+	if %196==121 goto *l_RikH_08a_replay
+	if %196==122 goto *l_RikH_08b_replay
+	if %196==123 goto *l_RikH_08c_replay
+	if %196==124 goto *l_RikH_09a_replay
+	if %196==125 goto *l_RikH_09b_replay
+	if %196==126 goto *l_RikH_09c_replay
+	if %196==127 goto *l_RikH_10a_replay
+	if %196==128 goto *l_RikH_10b_replay
+	if %196==129 goto *l_RikH_10c_replay
+	if %196==130 goto *l_RikH_11a_replay
+	if %196==131 goto *l_RikH_11b_replay
+	if %196==132 goto *l_RikH_11c_replay
+	if %196==133 goto *l_RikH_12a_replay
+	if %196==134 goto *l_RikH_12b_replay
+	if %196==135 goto *l_RikH_12c_replay
+	if %196==136 goto *l_RikH_13a_replay
+	if %196==137 goto *l_RikH_13b_replay
+	if %196==138 goto *l_RikH_13c_replay
+	if %196==139 goto *l_op_replay
+	if %196==140 goto *l_Bat_1_01_replay
+	if %196==141 goto *l_Bat_1_02_replay
+	if %196==142 goto *l_Bat_2_01_replay
+	if %196==143 goto *l_Bat_2_02_replay
+	if %196==144 goto *l_Bat_3_01_replay
+	if %196==145 goto *l_Bat_3_02_replay
+	if %196==146 goto *l_Bat_4_01_replay
+	if %196==147 goto *l_Bat_4_02_replay
+	if %196==148 goto *l_Rik_5_replay
+	if %196==149 goto *l_Rik_6_replay
+	if %196==150 goto *l_henshin_replay
+	if %196==151 goto *l_lov_4_01_replay
+	if %196==152 goto *l_lov_5_01_replay
+	if %196==153 goto *l_lov_end_replay
+	if %196==154 goto *l_Mei_1_01b_replay
+	if %196==155 goto *l_MeiH_1_01_replay
+	if %196==156 goto *l_MeiH_2_01_replay
+	if %196==157 goto *l_MeiH_2_02_replay
+	if %196==158 goto *l_MeiH_3_01_replay
+	if %196==159 goto *l_MeiH_3_02_replay
+	if %196==160 goto *l_MeiH_4_01_replay
+	if %196==161 goto *l_Mei_5_03_replay
+	if %196==162 goto *l_Mei_5_07_replay
+	if %196==163 goto *l_Mei_5_07c_replay
+
+	if %196==-1 reset
+	if %196==0  reset
+goto *scenesel_loop
+;----------------------------------------
 *start
+
+;初回起動時 - 音量用変数すべて100
+fileexist %130,"gloval.sav"
+if %130==0 if %1030==0 if %1031==0 if %1032==0 mov %1030,60:mov %1031,60:mov %1032,60
+
+bgmvol   %1030
+sevol    %1031
+voicevol %1032
+
 mov %40,0
 bg black,1
 mov {rs},"test"
 setwindow  50,470,25,2,26,26,0, 5,10,1,1,"library/avgsystem/img/outmessagewindow.png",  9,430
 erasetextwindow 0	;0でエフェクト時window出っぱなし
 
+bg black,1
+bg "script/logo/img/logo.b/logo.png",9
+wait 2500
+bg black,9
+bg "script/logo/img/caution.b/Cation.png",9
+wait 2500
+bg black,9
 
-;todo: タイトル作る
-;本編で全シーン見れない以上回想モード実装は必須
-;クリアフラグはスタッフロールに登録、どれか一つでもクリアしたら全回想開放で
-;回想一括開放ボタンつけてもいいかもしれない
+;タイトルbgm
+bgm "bgm/BGM15.ogg"
 
-;debug
-goto *l_op_op
+lsp 61,":a/3,0,3;script/title/img/menu00_.png",458,244
+lsp 62,":a/3,0,3;script/title/img/menu01_.png",458,304
+lsp 63,":a/3,0,3;script/title/img/menu02_.png",458,364
+lsp 64,":a/3,0,3;script/title/img/menu09_.png",458,424
+lsp 65,":a/3,0,3;script/title/img/menu03_.png",458,484
+lsp 66,":s;#FFFFFF#AAAAAA★",                  770,  5
 
-end
+lsp 99,"script/title/img/menuback01.png",430,210
+
+bg "script/title/img/titlebg.png",8
+
+*titlemenu_loop1
+	bclear
+
+	spbtn 61,61
+	spbtn 62,62
+	spbtn 63,63
+	spbtn 64,64
+	spbtn 65,65
+	spbtn 66,66
+
+	btnwait %0
+	if %0!=-1 if %0!=0 dwave 1,"script/title/img/titlebutton.b/se502.ogg"
+
+	if %0==61 csp -1:bg black 9:stop:mov %195,0:goto *l_op_op	;最初から
+	if %0==62 systemcall load:goto *titlemenu_loop1				;続きから
+	if %0==63 goto *titlemenu_2									;おまけ
+	if %0==64 goto *titlemenu_3									;ｲﾝﾌｫﾒｰｼｮﾝ
+	if %0==65 goto *titlemenu_4									;終わり
+	if %0==66 csp -1:bg black 9:goto *volmenu_GUI				;音量設定(勝手に作った)
+goto *titlemenu_loop1
+;----------------------------------------
+*titlemenu_2	;おまけ
+
+vsp 61,0:vsp 62,0:vsp 63,0:vsp 64,0:vsp 65,0:vsp 66,0
+print 8
+
+lsp 71,":a/3,0,3;script/title/img/menu04_.png",458,244
+lsp 72,":a/3,0,3;script/title/img/menu05_.png",458,304
+lsp 73,":a/3,0,3;script/title/img/menu06_.png",458,364
+lsp 74,":a/3,0,3;script/title/img/menu07_.png",458,424
+lsp 75,":a/3,0,3;script/title/img/menu08_.png",458,484
+print 8
+
+*titlemenu_loop2
+	bclear
+	spbtn 71,71
+	spbtn 72,72
+	spbtn 73,73
+	spbtn 74,74
+	spbtn 75,75
+
+	btnwait %0
+	if %0!=-1 if %0!=0 dwave 1,"script/title/img/titlebutton.b/se502.ogg"
+
+	if %0==71 gosub *not_yet:goto *titlemenu_loop2		;CG鑑賞
+	if %0==72 goto *scenesel_start						;シーン回想
+	if %0==73 gosub *not_yet:goto *titlemenu_loop2		;BGM鑑賞
+	if %0==74 gosub *not_yet:goto *titlemenu_loop2		;ｴﾝﾃﾞｨﾝｸﾞﾁｪｯｸ
+
+	;戻る
+	if %0==75 bclear:csp 71:csp 72:csp 73:csp 74:csp 75:print 8
+	if %0==75 vsp 61,1:vsp 62,1:vsp 63,1:vsp 64,1:vsp 65,1:vsp 66,1:goto *titlemenu_loop1
+goto *titlemenu_loop2
+;----------------------------------------
+*titlemenu_3	;info
+
+;menubackもかえる
+vsp 61,0:vsp 62,0:vsp 63,0:vsp 64,0:vsp 65,0:vsp 66,0
+print 8
+
+lsp 99,"script/title/img/menuback00.png",430,240
+print 1
+
+lsp 81,":a/3,0,3;script/title/img/menu12_.png",458,274
+lsp 82,":a/3,0,3;script/title/img/menu13_.png",458,364
+lsp 83,":a/3,0,3;script/title/img/menu08_.png" 458,454
+print 8
+
+
+*titlemenu_loop3
+	bclear
+	spbtn 81,81
+	spbtn 82,82
+	spbtn 83,83
+
+	btnwait %0
+	if %0!=-1 if %0!=0 dwave 1,"script/title/img/titlebutton.b/se502.ogg"
+
+	if %0==81 gosub *not_yet:goto *titlemenu_loop3	;ﾌﾛﾝﾄｳｲﾝｸﾞHP
+	if %0==82 goto *titlemenu_5						;ゲームアワード
+
+	;戻る
+	if %0==83 bclear:csp 81,csp 82,csp 83:print 8
+	if %0==83 lsp 99,"script/title/img/menuback01.png",430,210
+	if %0==83 vsp 61,1:vsp 62,1:vsp 63,1:vsp 64,1:vsp 65,1:vsp 66,1:goto *titlemenu_loop1
+goto *titlemenu_loop3
+;----------------------------------------
+*titlemenu_4	;終わり
+
+lsp 29,"script/customexit/img/goend.png",170,240
+lsp 21,":a/3,0,3;script/customexit/img/yes_.png",296,332
+lsp 22,":a/3,0,3;script/customexit/img/no_.png",448,332
+print 1
+
+*titlemenu_loop4
+	bclear
+	spbtn 21,21
+	spbtn 22,22
+
+	btnwait %0
+	if %0!=-1 if %0!=0 dwave 1,"script/title/img/titlebutton.b/se502.ogg"
+	if %0!=-1 if %0!=0 csp 21:csp 22:csp 29:print 1	;どっちでも消すので
+
+	if %0==21 wait 500:end			;はい
+	if %0==22 goto *titlemenu_loop1	;いいえ
+goto *titlemenu_loop4
+;----------------------------------------
+*titlemenu_5	;ゲームアワード
+
+lsp 39,"image/bg/black.png",0,0
+print 8
+
+bgmstop
+lsp 39,"script/award/awardbg.png",0,0
+lsp 31,":a/3,0,3;script/award/url.b/discless01_URL_.png",100,400
+lsp 32,":a/3,0,3;script/award/exit.b/exit_.png",410,512
+print 8
+
+*titlemenu_loop5
+	bclear
+	spbtn 31,31
+	spbtn 32,32
+
+	btnwait %0
+	if %0!=-1 if %0!=0 dwave 1,"script/award/exit.b/ボタン効果音2.ogg"
+
+	if %0==31 gosub *not_yet:goto *titlemenu_loop5	;link
+
+	;exit
+	if %0==32 csp 31:csp 32:lsp 39,"image/bg/black.png",0,0:print 8
+	if %0==32 csp 39:print 8:bgm "bgm/BGM15.ogg":goto *titlemenu_loop3
+goto *titlemenu_loop5
+;----------------------------------------
+*volmenu_GUI
+	;https://gist.github.com/Prince-of-sea/325b8ae6912ecf23316a71c3d008480c
+	;文字/数字/スプライト/ボタン
+	;全部130~149までを使ってます - 競合に注意
+
+	;背景
+	lsp 200,":c;>800,600,#000000",0,0,192
+	lsp 201"script/customconfig/img/soundbg.png",0,0
+	
+	;バー文字列定義
+	mov $130,":s;#FFFFFF#666666○――――――――――"
+	mov $131,":s;#FFFFFF#666666―○―――――――――"
+	mov $132,":s;#FFFFFF#666666――○――――――――"
+	mov $133,":s;#FFFFFF#666666―――○―――――――"
+	mov $134,":s;#FFFFFF#666666――――○――――――"
+	mov $135,":s;#FFFFFF#666666―――――○―――――"
+	mov $136,":s;#FFFFFF#666666――――――○――――"
+	mov $137,":s;#FFFFFF#666666―――――――○―――"
+	mov $138,":s;#FFFFFF#666666――――――――○――"
+	mov $139,":s;#FFFFFF#666666―――――――――○―"
+	mov $140,":s;#FFFFFF#666666――――――――――○"
+	
+*volmenu_loop
+	;取得
+	getbgmvol   %1030
+	getsevol    %1031
+	getvoicevol %1032
+	
+	;文字列変換
+	itoa2 $141,%1030
+	itoa2 $142,%1031
+	itoa2 $143,%1032
+	
+	;バー代入
+	if %1030==  0 mov $146,$130
+	if %1030== 10 mov $146,$131
+	if %1030== 20 mov $146,$132
+	if %1030== 30 mov $146,$133
+	if %1030== 40 mov $146,$134
+	if %1030== 50 mov $146,$135
+	if %1030== 60 mov $146,$136
+	if %1030== 70 mov $146,$137
+	if %1030== 80 mov $146,$138
+	if %1030== 90 mov $146,$139
+	if %1030==100 mov $146,$140
+	if %1031==  0 mov $147,$130
+	if %1031== 10 mov $147,$131
+	if %1031== 20 mov $147,$132
+	if %1031== 30 mov $147,$133
+	if %1031== 40 mov $147,$134
+	if %1031== 50 mov $147,$135
+	if %1031== 60 mov $147,$136
+	if %1031== 70 mov $147,$137
+	if %1031== 80 mov $147,$138
+	if %1031== 90 mov $147,$139
+	if %1031==100 mov $147,$140
+	if %1032==  0 mov $148,$130
+	if %1032== 10 mov $148,$131
+	if %1032== 20 mov $148,$132
+	if %1032== 30 mov $148,$133
+	if %1032== 40 mov $148,$134
+	if %1032== 50 mov $148,$135
+	if %1032== 60 mov $148,$136
+	if %1032== 70 mov $148,$137
+	if %1032== 80 mov $148,$138
+	if %1032== 90 mov $148,$139
+	if %1032==100 mov $148,$140
+	
+	;画面作成
+	lsp 130,":s;#FFFFFF［Ｃｏｎｆｉｇ］", 50, 50
+	lsp 131,":s;#FFFFFF#666666リセット", 400,450
+	lsp 132,":s;#FFFFFF#666666戻る",     550,450
+	
+	lsp 135,":s;#FFFFFFＢＧＭ",           50,150
+	lsp 136,":s;#FFFFFF#666666＜",       200,150
+	lsp 137,$146,                        250,150
+	lsp 138,":s;#FFFFFF#666666＞",       550,150
+	lsp 139,":s;#FFFFFF#666666"+$141,    600,150
+	
+	lsp 140,":s;#FFFFFFＳＥ",             50,250
+	lsp 141,":s;#FFFFFF#666666＜",       200,250
+	lsp 142,$147,                        250,250
+	lsp 143,":s;#FFFFFF#666666＞",       550,250
+	lsp 144,":s;#FFFFFF#666666"+$142,    600,250
+	
+	lsp 145,":s;#FFFFFFＶＯＩＣＥ",       50,350
+	lsp 146,":s;#FFFFFF#666666＜",       200,350
+	lsp 147,$148,                        250,350
+	lsp 148,":s;#FFFFFF#666666＞",       550,350
+	lsp 149,":s;#FFFFFF#666666"+$143,    600,350
+	
+	print 1
+	
+	;ボタン定義
+	bclear
+	spbtn 131,131
+	spbtn 132,132
+	spbtn 136,136
+	spbtn 138,138
+	spbtn 141,141
+	spbtn 143,143
+	spbtn 146,146
+	spbtn 148,148
+	
+	;入力待ち
+	btnwait %140
+	if %140!=-1 if %140!=0 dwave 1,"script/customconfig/img/se901.ogg"
+	
+	if %140==131 bgmvol 100:sevol 100:voicevol 100
+	if %140==132 csp -1:reset
+	if %140==136 if %1030!=  0 sub %1030,10:bgmvol %1030
+	if %140==138 if %1030!=100 add %1030,10:bgmvol %1030
+	if %140==141 if %1031!=  0 sub %1031,10:sevol %1031
+	if %140==143 if %1031!=100 add %1031,10:sevol %1031
+	if %140==146 if %1032!=  0 sub %1032,10:voicevol %1032
+	if %140==148 if %1032!=100 add %1032,10:voicevol %1032
+	
+goto *volmenu_loop
 ;----------------------------------------
 {txt}
 '''
@@ -464,7 +1160,7 @@ def text_cnv(pre_converted_dir: Path, debug: bool):
 
 			# ラベル名文字列チェック
 			if not re.fullmatch(r'[A-z0-9_]+', startlabelname):
-				print(f'ERROR: ラベル名が不正です. {startlabelname}')
+				raise ValueError(f'ERROR: ラベル名が不正です. {startlabelname}')
 
 			resulttxtline.append(f'*{startlabelname}')
 
@@ -519,7 +1215,7 @@ def text_cnv(pre_converted_dir: Path, debug: bool):
 
 						# ラベル名文字列チェック
 						if not re.fullmatch(r'[A-z0-9_]+', labelname):
-							print(f'ERROR: ラベル名が不正です. {labelname}')
+							raise ValueError(f'ERROR: ラベル名が不正です. {labelname}')
 
 						line = f'*{labelname}'
 						
@@ -533,7 +1229,7 @@ def text_cnv(pre_converted_dir: Path, debug: bool):
 						if (ll0 == '^bg0'):
 							
 							if (len(linelist) == 4):
-								if (lower_AtoZ(linelist[2]) != 'overlap'): print('overlapじゃないよ')
+								if (lower_AtoZ(linelist[2]) != 'overlap'): raise ValueError('overlapじゃないよ')
 								bg = linelist[1]
 								t = int(linelist[3])
 							elif (len(linelist) == 2):
@@ -543,7 +1239,7 @@ def text_cnv(pre_converted_dir: Path, debug: bool):
 								bg = 'black'
 								t = 500
 							else:
-								print(f'エラーです: {linelist}')
+								raise ValueError(f'エラーです: {linelist}')
 							
 							if debug: t /= 10
 							
@@ -556,7 +1252,7 @@ def text_cnv(pre_converted_dir: Path, debug: bool):
 							elif (len(linelist) == 1):
 								line = ('csp 21:csp 22:csp 23:csp 99:print 10')
 							else:
-								print(f'エラーです: {linelist}')
+								raise ValueError(f'エラーです: {linelist}')
 						
 						# chara
 						elif (ll0 == '^chara'):
@@ -566,19 +1262,17 @@ def text_cnv(pre_converted_dir: Path, debug: bool):
 							if (len(linelist) == 5):#wait表示? 最後に数字あるけど無視
 								line = (f'chara_def "{lower_AtoZ(linelist[1])}","{lower_AtoZ(linelist[2])}","{lower_AtoZ(linelist[3])}"')
 								if not lower_AtoZ(linelist[3]) in ['center','left','right']:
-									print(f'Error立ち絵: {linelist}')
+									raise ValueError(f'Error立ち絵: {linelist}')
 							elif (len(linelist) == 4):#表示
 								line = (f'chara_def "{lower_AtoZ(linelist[1])}","{lower_AtoZ(linelist[2])}","{lower_AtoZ(linelist[3])}"')
 								if not lower_AtoZ(linelist[3]) in ['center','left','right']:
-									print(f'Error立ち絵: {linelist}')
+									raise ValueError(f'Error立ち絵: {linelist}')
 							elif (len(linelist) == 2):#削除?
-								#print(line)
 								line = (f'chara_def "","",""')
 							elif (len(linelist) == 1):#削除
-								# print(line)
 								line = (f'chara_def "","",""')
 							else:
-								print(f'Error立ち絵: {linelist}')
+								raise ValueError(f'Error立ち絵: {linelist}')
 
 						# effect
 						elif (ll0 == '^effect'):
@@ -586,13 +1280,13 @@ def text_cnv(pre_converted_dir: Path, debug: bool):
 							if (lower_AtoZ(linelist[1]) == 'overlap'):
 								
 								if (len(linelist) == 4):
-									ll2 = int(int(linelist[3]) / (debug*2))	
+									ll2 = int(int(linelist[3]) / (debug+1))	
 								elif (len(linelist) == 3):
-									ll2 = int(int(linelist[2]) / (debug*2))
+									ll2 = int(int(linelist[2]) / (debug+1))
 								elif (len(linelist) == 2):
 									ll2 = 100
 								else:
-									print(f'Error effect: {linelist}')
+									raise ValueError(f'Error effect: {linelist}')
 									ll2 = 1
 								
 								line = f'print {effectclass.getefdict('', ll2)}'
@@ -601,7 +1295,7 @@ def text_cnv(pre_converted_dir: Path, debug: bool):
 								line = f'print 1'
 
 							elif (lower_AtoZ(linelist[1]) == 'quake'):
-								line = f'quake 4,{int(int(linelist[2]) / (debug*2))}'
+								line = f'quake 4,{int(int(linelist[2]) / (debug+1))}'
 
 							elif (lower_AtoZ(linelist[1]) == 'flash_$ffffffff'):
 								line = f'lsp 98,"image/bg/white.png",0,0:print 10:wait 200:csp 98,print 10'
@@ -613,7 +1307,7 @@ def text_cnv(pre_converted_dir: Path, debug: bool):
 								line = f'print {effectclass.getefdict('', linelist[2])}'
 
 							else:
-								print(f'Error effect: {linelist}')
+								raise ValueError(f'Error effect: {linelist}')
 
 						# bgm
 						elif (ll0 == '^bgm'):
@@ -622,7 +1316,7 @@ def text_cnv(pre_converted_dir: Path, debug: bool):
 							elif (len(linelist) == 1):
 								line = 'bgmstop'
 							else:
-								print(f'Error bgm: {linelist}')
+								raise ValueError(f'Error bgm: {linelist}')
 
 						# movie
 						elif (ll0 == '^movie'):
@@ -636,7 +1330,7 @@ def text_cnv(pre_converted_dir: Path, debug: bool):
 							elif (len(linelist) == 1):
 								line = 'dwavestop 1'
 							else:
-								print(f'Error se0: {linelist}')
+								raise ValueError(f'Error se0: {linelist}')
 						
 						# se1
 						elif (ll0 == '^se1'):
@@ -645,14 +1339,14 @@ def text_cnv(pre_converted_dir: Path, debug: bool):
 							elif (len(linelist) == 1):
 								line = 'dwavestop 2'
 							else:
-								print(f'Error se1: {linelist}')
+								raise ValueError(f'Error se1: {linelist}')
 						
 						# voicedir
 						elif (ll0 == '^voicedir'):
 							if (linelist[1] == '"voice\\"') or (linelist[1] == '"voice\\""'):
 								line = f';{line}'
 							else:
-								print(f'Error voicedir: {linelist}')
+								raise ValueError(f'Error voicedir: {linelist}')
 
 						# staffroll
 						elif (ll0 == '^staffroll'):
@@ -664,7 +1358,7 @@ def text_cnv(pre_converted_dir: Path, debug: bool):
 							ll2 = linelist[2] if (len(linelist) > 2) else ''
 							ll3 = linelist[3] if (len(linelist) > 3) else ''
 							ll4 = linelist[4] if (len(linelist) > 4) else ''
-							if (len(linelist) > 5): print(f'Error select: {linelist}')
+							if (len(linelist) > 5): raise ValueError(f'Error select: {linelist}')
 
 							line = f'select_def "{ll1}","{ll2}","{ll3}","{ll4}"'
 
@@ -893,15 +1587,88 @@ def text_cnv(pre_converted_dir: Path, debug: bool):
 	txt = txt.replace(r'goto *if_jump_45_false', r'goto *l_ntalk_day28ni')
 	txt = txt.replace('「お、おやすみ」\\\n\n', #ラヴルート日付選択全滅なので手抜き２
 		'「お、おやすみ」\\\nprint 1:csp 8:csp 21:csp 22:csp 23:csp 99:erasetextwindow 1:bg "image/bg/Black.png",12:erasetextwindow 0:chara_def "","","":print 16:bgmstop:goto *l_lov_end_op\n')
-
+	txt = txt.replace('\n*l_control_hselect\n','\n*l_control_hselect\nif %195!=0 goto *scenesel_start\n')
+	
 	# 変換結果をファイルに保存
 	with open(Path(pre_converted_dir / '0.txt'), mode='w') as f:
 		f.write(txt)
 
-	if set(varcomlist): print(f'未変換命令(変数制御):{set(varcomlist)}')
-	if set(playcomlist): print(f'未変換命令(変数制御):{set(playcomlist)}')
+	if set(varcomlist): raise ValueError(f'未変換命令(変数制御):{set(varcomlist)}')
+	if set(playcomlist): raise ValueError(f'未変換命令(変数制御):{set(playcomlist)}')
 
-	# print(varclass.getverdict())
+	if debug: print(varclass.getverdict())
+
+	return
+
+
+# 画像処理関数 - 本体
+def image_processing_main(input: Path, output: Path):
+
+	# 入力画像を開く（RGBAに変換しておくと安全）
+	img = Image.open(input).convert("RGBA")
+
+	# サイズ取得
+	w, h = img.size
+	part_h = h // 3
+
+	# 縦3分割
+	parts = [img.crop((0, i * part_h, w, (i + 1) * part_h)) for i in range(3)]
+
+	# 横に並べるので幅は3倍、高さは1/3
+	new_img = Image.new("RGBA", (w * 3, part_h), (0, 0, 0, 0))
+
+	# 貼り付け
+	for i, part in enumerate(parts):
+		new_img.paste(part, (i * w, 0))
+
+	# 保存
+	new_img.save(output)
+
+	return
+
+
+# 画像処理関数
+def image_processing(pre_converted_dir: Path):
+
+	# 並列
+	with concurrent.futures.ThreadPoolExecutor() as executor:
+		futures = []
+		
+		for r in range(14):
+			
+			# path
+			input =  Path(pre_converted_dir / 'script' / 'title' / 'img' / f'menu{str(r).zfill(2)}.png')
+			output = Path(pre_converted_dir / 'script' / 'title' / 'img' / f'menu{str(r).zfill(2)}_.png')
+			
+			futures.append(executor.submit(image_processing_main, input, output))
+
+		futures.append(executor.submit(image_processing_main, 
+			Path(pre_converted_dir / 'script' / 'award' / 'url.b' / 'discless01_URL.png'), 
+			Path(pre_converted_dir / 'script' / 'award' / 'url.b' / 'discless01_URL_.png')))
+
+		futures.append(executor.submit(image_processing_main, 
+			Path(pre_converted_dir / 'script' / 'award' / 'exit.b' / 'exit.png'), 
+			Path(pre_converted_dir / 'script' / 'award' / 'exit.b' / 'exit_.png')))
+
+		futures.append(executor.submit(image_processing_main, 
+			Path(pre_converted_dir / 'script' / 'customexit' / 'img' / 'yes.png'), 
+			Path(pre_converted_dir / 'script' / 'customexit' / 'img' / 'yes_.png')))
+
+		futures.append(executor.submit(image_processing_main, 
+			Path(pre_converted_dir / 'script' / 'customexit' / 'img' / 'no.png'), 
+			Path(pre_converted_dir / 'script' / 'customexit' / 'img' / 'no_.png')))
+		
+		concurrent.futures.as_completed(futures)
+
+	return
+
+
+# 不要ファイル削除関数
+def junk_del(pre_converted_dir: Path):
+
+	for p in pre_converted_dir.glob('**/*.ico'): p.unlink()
+	for p in pre_converted_dir.glob('**/*.dat'): p.unlink()
+	for p in pre_converted_dir.glob('**/*.s'): p.unlink()
 
 	return
 
@@ -923,11 +1690,11 @@ def main(values: dict = {}, values_ex: dict = {}, pre_converted_dir: Path = Path
 	# シナリオ変換処理
 	text_cnv(pre_converted_dir, debug)
 
-	# # 画像編集処理
-	# image_processing(PATH_DICT, gauss_img_list, pre_converted_dir)
+	# 画像編集処理
+	image_processing(pre_converted_dir)
 
-	# # 非デバッグモード時元シナリオ削除
-	# if not debug: shutil.rmtree(PATH_DICT['scx'])
+	# 非デバッグモード時不要ファイル削除
+	if not debug: junk_del(pre_converted_dir)
 	
 	# 終了
 	return
@@ -936,6 +1703,3 @@ def main(values: dict = {}, values_ex: dict = {}, pre_converted_dir: Path = Path
 # 単体動作 (事前にリソース手動展開必須)
 if __name__ == "__main__":
 	main()
-
-	# 展開用(debug)
-	# extract_resource({'input_dir': Path.cwd() / 'Djib_vista'}, {'num_workers':3}, Path.cwd() / '_test')
