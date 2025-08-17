@@ -1,5 +1,5 @@
+from importlib import metadata  # サブモジュールを直接 import
 import subprocess as sp
-import importlib
 import time
 import sys
 import re
@@ -72,7 +72,7 @@ def create_licenses_txt(ignore_list: list = [], license_dict: dict = {}):
 
 	#-----ライブラリ-----
 
-	for pkg in sorted(importlib.metadata.distributions(), key=lambda d: d.metadata["Name"].lower()):
+	for pkg in sorted(metadata.distributions(), key=lambda d: d.metadata["Name"].lower()):
 		pkg_name = str(pkg).split()[0]
 
 		if not (pkg_name in ignore_list):
