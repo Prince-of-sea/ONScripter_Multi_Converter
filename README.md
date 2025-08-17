@@ -10,7 +10,7 @@
  <br>
  [制作/検証に使用した作者のPC環境]<br>
  PCスペック: <br>
- [![CPU-Z](https://valid.x86.fr/cache/banner/uvcxdx-2.png)](https://valid.x86.fr/uvcxdx)<br>
+ [![CPU-Z](https://valid.x86.fr/cache/banner/eidarj-2.png)](https://valid.x86.fr/eidarj)<br>
  FFmpeg-version: version 7.1-full_build<br>
 
 
@@ -154,6 +154,3 @@ oggなどへの変換は本ツールが行うため事前の変換は不要で�
  製作者は一切その責任を負わないものとします<br>
  また、それらの問題を他のツールの製作者様や<br>
  メーカー/サークル様に問い合わせるのは**絶対にやめてください**<br>
-
-### 最後に
-~~...今更PSP/VITAで変換してまでノベルゲームやるやついる？~~<br>
