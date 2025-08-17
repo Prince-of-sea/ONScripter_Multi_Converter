@@ -1,6 +1,8 @@
-import pkg_resources, time, sys, re
 import subprocess as sp
-
+import importlib
+import time
+import sys
+import re
 
 def get_pkg_license_txt(pkg, license_txt):
 
@@ -70,7 +72,7 @@ def create_licenses_txt(ignore_list: list = [], license_dict: dict = {}):
 
 	#-----ライブラリ-----
 
-	for pkg in sorted(pkg_resources.working_set):
+	for pkg in sorted(importlib.metadata.distributions(), key=lambda d: d.metadata["Name"].lower()):
 		pkg_name = str(pkg).split()[0]
 
 		if not (pkg_name in ignore_list):
