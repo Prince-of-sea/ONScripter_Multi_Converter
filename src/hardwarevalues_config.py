@@ -32,6 +32,7 @@ def gethardwarevalues_full():
                 'aud_bgmcodec_radio': 'pcm_s16le', 'aud_secodec_radio': 'pcm_s16le',
 
                 'vid_movfmt_radio': 'MJPEG',
+                'vid_renbanprintfmt_radio': 'btndef+blt',
                 'vid_renbanfmt_radio': 'PNG', 'vid_renbanres_radio': '100%(1/1)',
                 'vid_renbanpngquantize_chk': True, 'vid_renbanpngquantize_num': '256',
                 'vid_renbanjpgquality_bar': 90,
@@ -87,6 +88,7 @@ def gethardwarevalues_full():
                 'aud_bgmcodec_radio': 'pcm_s16le', 'aud_secodec_radio': 'pcm_s16le',
 
                 'vid_movfmt_radio': i18n.t('var.numbered_images'),
+                'vid_renbanprintfmt_radio': 'btndef+blt',
                 'vid_renbanfmt_radio': 'JPEG', 'vid_renbanres_radio': '66%(2/3)',
                 'vid_renbanpngquantize_chk': True, 'vid_renbanpngquantize_num': '256',
                 'vid_renbanjpgquality_bar': 90,
@@ -142,6 +144,7 @@ def gethardwarevalues_full():
                 'aud_bgmcodec_radio': 'pcm_u8', 'aud_secodec_radio': 'pcm_u8',
 
                 'vid_movfmt_radio': i18n.t('var.numbered_images'),
+                'vid_renbanprintfmt_radio': 'btndef+blt',
                 'vid_renbanfmt_radio': 'JPEG', 'vid_renbanres_radio': '50%(1/2)',
                 'vid_renbanpngquantize_chk': True, 'vid_renbanpngquantize_num': '256',
                 'vid_renbanjpgquality_bar': 85,
@@ -197,6 +200,7 @@ def gethardwarevalues_full():
                 'aud_bgmcodec_radio': 'pcm_s16le', 'aud_secodec_radio': 'pcm_s16le',
 
                 'vid_movfmt_radio': 'MP4',
+                'vid_renbanprintfmt_radio': 'bg',
                 'vid_renbanfmt_radio': 'PNG', 'vid_renbanres_radio': '100%(1/1)',
                 'vid_renbanpngquantize_chk': True, 'vid_renbanpngquantize_num': '256',
                 'vid_renbanjpgquality_bar': 95,

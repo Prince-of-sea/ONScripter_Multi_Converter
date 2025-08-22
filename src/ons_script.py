@@ -441,17 +441,25 @@ def onsscript_check_txtmodify(values: dict, values_ex: dict, ztxtscript: str, ov
     if (values['vid_movfmt_radio'] == i18n.t('var.numbered_images')):
         # 参考: https://web.archive.org/web/20110308215321fw_/http://blog.livedoor.jp/tormtorm/archives/51356258.html
 
-        if hardware == 'PSVITA':
-            bltx1 = math.ceil(
-                540 / values_ex['output_resolution'][1] * values_ex['output_resolution'][0])
-            blty1 = 544
+        # btndef+blt選択
+        if (values['vid_renbanprintfmt_radio'] == 'btndef+blt'):
+            if hardware == 'PSVITA':
+                bltx1 = math.ceil(
+                    540 / values_ex['output_resolution'][1] * values_ex['output_resolution'][0])
+                blty1 = 544
 
+            else:
+                bltx1 = values_ex['script_resolution'][0]
+                blty1 = values_ex['script_resolution'][1]
+
+            bltx2 = math.ceil(bltx1 * values_ex['renbanresper'])
+            blty2 = math.ceil(blty1 * values_ex['renbanresper'])
+
+            renbanprintline = f'btndef $11+$%3+$12+$14:blt 0,0,{bltx1},{blty1},0,0,{bltx2},{blty2}'
+        
+        # bg選択(実質)
         else:
-            bltx1 = values_ex['script_resolution'][0]
-            blty1 = values_ex['script_resolution'][1]
-
-        bltx2 = math.ceil(bltx1 * values_ex['renbanresper'])
-        blty2 = math.ceil(blty1 * values_ex['renbanresper'])
+            renbanprintline = f'bg $11+$%3+$12+$14,1'
 
         ztxtscript = onsscript_check_txtmodify_adddefsub(ztxtscript, 'defsub mpegplay', f'''*mpegplay
 saveoff
@@ -488,7 +496,7 @@ gettimer %1
 if %2<=%1 goto *movie_end
 itoa $12,%0*%1/%2
 if $12==$10 waittimer 0:goto *movie_loop
-mov $10,$12:len %3,$12:btndef $11+$%3+$12+$14:blt 0,0,{bltx1},{blty1},0,0,{bltx2},{blty2}:goto *movie_loop
+mov $10,$12:len %3,$12:{renbanprintline}:goto *movie_loop
 *movie_end
 lr_trap off:ofscpy:bg black,1:stop
 mov %0 ,%multiconverteralias0:mov %1 ,%multiconverteralias1:mov %2 ,%multiconverteralias2:mov %3 ,%multiconverteralias3:mov %4 ,%multiconverteralias4

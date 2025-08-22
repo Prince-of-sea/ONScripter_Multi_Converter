@@ -122,6 +122,7 @@ en:
   label_video_format: "Video Format:"
   label_video_numbered: "When converting to sequential images"
   label_video_numbered_format: "Image Format:"
+  label_video_numbered_imgprintformat: "image display command:"
   label_video_numbered_resolution: "Resolution:"
   label_video_numbered_reduction: "Reduce sequential PNG colors:"
   label_video_numbered_jpeg_quality: "JPEG Quality when used:"

@@ -122,6 +122,7 @@ zh:
   label_video_format: "视频格式："
   label_video_numbered: "顺序图像转换时"
   label_video_numbered_format: "图像格式："
+  label_video_numbered_imgprintformat: "图像显示命令："
   label_video_numbered_resolution: "分辨率 - %指定："
   label_video_numbered_reduction: "减少顺序PNG颜色："
   label_video_numbered_jpeg_quality: "使用JPEG时的质量："

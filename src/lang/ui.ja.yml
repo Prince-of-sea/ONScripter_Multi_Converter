@@ -121,6 +121,7 @@ ja:
   label_video_format: "動画フォーマット："
   label_video_numbered: "連番画像変換時"
   label_video_numbered_format: "画像フォーマット："
+  label_video_numbered_imgprintformat: "画像表示命令："
   label_video_numbered_resolution: "解像度 - %指定："
   label_video_numbered_reduction: "連番PNGを減色："
   label_video_numbered_jpeg_quality: "JPEG利用時品質："

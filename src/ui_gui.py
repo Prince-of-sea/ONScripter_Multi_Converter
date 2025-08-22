@@ -444,38 +444,52 @@ def gui_main(version: str, charset_param: str, hw_key: str, input_dir_param: str
                             )
                     with dpg.tree_node(label=i18n.t('ui.label_advanced_settings'), default_open=True):
                         with dpg.tree_node(label=i18n.t('ui.label_video_numbered'), default_open=True):
-                            with dpg.group(horizontal=True):
-                                dpg.add_text(
-                                    i18n.t('ui.label_video_numbered_format'))
-                                dpg.add_radio_button(
-                                    items=('PNG', 'JPEG'),
-                                    default_value=values_default['vid_renbanfmt_radio'],
-                                    horizontal=True,
-                                    tag='vid_renbanfmt_radio',
-                                )
-                            with dpg.group(horizontal=True):
-                                dpg.add_text(
-                                    i18n.t('ui.label_video_numbered_resolution'))
-                                dpg.add_radio_button(
-                                    items=(
-                                        '100%(1/1)',
-                                        '75%(3/4)',
-                                        '66%(2/3)',
-                                        '50%(1/2)',
-                                        '33%(1/3)',
-                                        '25%(1/4)',
-                                    ),
-                                    default_value=values_default['vid_renbanres_radio'],
-                                    horizontal=False,
-                                    tag='vid_renbanres_radio',
-                                )
+                            with dpg.table(header_row=False, borders_innerH=False, borders_innerV=False):
+                                dpg.add_table_column(
+                                    no_resize=True, width_fixed=True)
+                                dpg.add_table_column(
+                                    no_resize=True, width_fixed=True)
+                                with dpg.table_row():
+                                    dpg.add_text(
+                                        i18n.t('ui.label_video_numbered_format'))
+                                    dpg.add_radio_button(
+                                        items=('PNG', 'JPEG'),
+                                        default_value=values_default['vid_renbanfmt_radio'],
+                                        horizontal=True,
+                                        tag='vid_renbanfmt_radio',
+                                    )
+                                with dpg.table_row():
+                                    dpg.add_text(
+                                        i18n.t('ui.label_video_numbered_imgprintformat'))
+                                    dpg.add_radio_button(
+                                        items=('btndef+blt', 'bg'),
+                                        default_value=values_default['vid_renbanprintfmt_radio'],
+                                        horizontal=True,
+                                        tag='vid_renbanprintfmt_radio',
+                                    )
+                                with dpg.table_row():
+                                    dpg.add_text(
+                                        i18n.t('ui.label_video_numbered_resolution'))
+                                    dpg.add_radio_button(
+                                        items=(
+                                            '100%(1/1)',
+                                            '75%(3/4)',
+                                            '66%(2/3)',
+                                            '50%(1/2)',
+                                            '33%(1/3)',
+                                            '25%(1/4)',
+                                        ),
+                                        default_value=values_default['vid_renbanres_radio'],
+                                        horizontal=False,
+                                        tag='vid_renbanres_radio',
+                                    )
                             with dpg.group(horizontal=True):
                                 dpg.add_checkbox(label=i18n.t('ui.label_video_numbered_reduction'),
-                                                 default_value=values_default['vid_renbanpngquantize_chk'], tag='vid_renbanpngquantize_chk')
+                                                default_value=values_default['vid_renbanpngquantize_chk'], tag='vid_renbanpngquantize_chk')
                                 dpg.add_combo(
                                     label=i18n.t('ui.label_color'),
                                     items=('256', '192', '128',
-                                           '96', '64', '32'),
+                                        '96', '64', '32'),
                                     default_value=values_default['vid_renbanpngquantize_num'],
                                     width=50,
                                     tag='vid_renbanpngquantize_num',
@@ -495,7 +509,7 @@ def gui_main(version: str, charset_param: str, hw_key: str, input_dir_param: str
                                     i18n.t('ui.label_video_numbered_audio_setting'))
                                 dpg.add_radio_button(
                                     items=(i18n.t('var.bgm_match'),
-                                           i18n.t('var.se_voice_match')),
+                                        i18n.t('var.se_voice_match')),
                                     default_value=values_default['vid_renbanaudset_radio'],
                                     horizontal=False,
                                     tag='vid_renbanaudset_radio',
