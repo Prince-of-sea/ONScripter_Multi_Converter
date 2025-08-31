@@ -1,3 +1,6 @@
 [submodule "src/notons2ons/KIRIKIRI2ONS_yorunohitsuji_lol"]
 	path = src/notons2ons/KIRIKIRI2ONS_yorunohitsuji_lol
 	url = https://github.com/PC-CNT/ons_conv_yorunohitsuji_lol
+[submodule "src/notons2ons/HARU2ONS"]
+	path = src/notons2ons/HARU2ONS
+	url = https://github.com/migite/HARU2ONS
