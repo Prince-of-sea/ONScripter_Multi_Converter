@@ -168,6 +168,7 @@ defsub cspchar
 defsub csptitle
 defsub cspmemory
 defsub stposition
+defsub bg			;erasetextwindow用bg命令乗っ取り
 
 ;effect領域
 effect 2,10,300		;エフェクト番号2に効果番号10(クロスフェード)の300ミリ秒を割り当て
@@ -187,8 +188,16 @@ game
 
 goto *title
 
+*bg
+erasetextwindow 1
+getparam $0,%0
+_bg $0,%0
+return
+
 *pretext_sb
 saveoff
+
+erasetextwindow 0
 
 gettag $0
 
