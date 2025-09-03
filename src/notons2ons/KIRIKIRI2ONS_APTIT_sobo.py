@@ -665,7 +665,7 @@ def main(values: dict = {}, values_ex: dict = {}, pre_converted_dir: Path = Path
 		txt = txt.replace(r';<<-MODE_SETTING->>', r'mov %10,'+str(nsc_num10)+r':mov %11,'+str(nsc_num11)+r':mov %12,'+str(nsc_num12)+r':mov $10,"'+nsc_str10+r'":mov $11,"'+nsc_str11+r'":mov $12,"'+nsc_str12+r'"')
 
 		if not nsc_num12:#製品版
-			#エンディング - 低スペック機での動作を見据え、スクロール時のフレーム数を1/10程度にしてます(それでも処理落ちする)
+			#エンディング - フレームレートはスペック次第
 			txt = txt.replace(r'bgm "bgm\bgmed01.ogg"',
 					 f'''
 saveoff:csp 5
