@@ -142,6 +142,7 @@ transmode alpha
 effectcut
 humanz 10
 windowback
+savenumber 18
 
 defsub bgmstopfadeout
 defsub sestopfadeout
