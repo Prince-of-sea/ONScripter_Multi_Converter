@@ -146,6 +146,7 @@ savenumber 18
 
 defsub bgmstopfadeout
 defsub sestopfadeout
+defsub bg					;erasetextwindow用bg命令乗っ取り
 
 ;エフェクト定義 - 1
 effect 11,10,500
@@ -156,9 +157,20 @@ effect 13,18,1500,"data\\rule\\rule28.png"
 
 game
 ;----------------------------------------
+*bg
+erasetextwindow 1
+getparam $90,%90
+
+if $90=="white" _bg white,%90
+if $90=="black" _bg black,%90
+
+if $90!="white" if $90!="black" _bg $90,%90
+
+return
 
 ;***名前表示***
 *tp
+erasetextwindow 0
 if %11==0 mov %4,1
 if %11==1 if $1!="" if $2=="" mov %4,1
 if %11==1 if $1=="" if $2!="" mov %4,0
@@ -176,6 +188,7 @@ return
 
 ;選択肢表示
 *select_mode
+erasetextwindow 1
 vsp 11,0
 mov %3,0:bclear
 spbtn 28,8:spbtn 29,9
@@ -221,46 +234,46 @@ if %10==0 setcursor 1,":a/16,66,2;data\\system\\PageBreak_a.png",0,0
 if %10==1 abssetcursor 1,":a/16,66,2;data\\system\\PageBreak_a.png",750,560
 
 ;----------------------------------------
-csp 5:bg "syscg\\medi1.png",11
+csp 5:_bg "syscg\\medi1.png",11
 wait 2000
 
-csp 5:bg white,11
+csp 5:_bg white,11
 wait 1000
 
-csp 5:bg "syscg\\medi2.png",12
+csp 5:_bg "syscg\\medi2.png",12
 wait 3000
 
-csp 5:bg white,11
+csp 5:_bg white,11
 wait 1000
 
-csp 5:bg "syscg\\medi3.png",12
+csp 5:_bg "syscg\\medi3.png",12
 wait 3000
 
-csp 5:bg white,11
+csp 5:_bg white,11
 wait 1000
 
-csp 5:bg "syscg\\logo00.png",12
-csp 5:bg "syscg\\logo01.png",13
+csp 5:_bg "syscg\\logo00.png",12
+csp 5:_bg "syscg\\logo01.png",13
 
 dwave 1,$10
 wait 4000
 
-csp 5:bg white,11
+csp 5:_bg white,11
 wait 1000
 
-csp 5:bg "syscg\\caution001.png",12
+csp 5:_bg "syscg\\caution001.png",12
 wait 1000
 
-csp 5:bg "syscg\\caution002.png",12
+csp 5:_bg "syscg\\caution002.png",12
 wait 1000
 
-csp 5:bg "syscg\\caution003.png",12
+csp 5:_bg "syscg\\caution003.png",12
 wait 3000
 
 ;----------------------------------------
 *title
-	if %12==0 bg "syscg\\title_bg.png",11
-	if %12!=0 bg "syscg\\trial_bg.png",11
+	if %12==0 _bg "syscg\\title_bg.png",11
+	if %12!=0 _bg "syscg\\trial_bg.png",11
 
 	bgm $12
 	dwave 1,$11
@@ -383,7 +396,7 @@ def def_kakkoline(line, kakko_line, kakko_dict, sel_sparg, same_hierarchy, effec
 
 	elif kakko_line[0][0] == 'haikei':
 		if kakko_dict.get('file') == '"black"' or kakko_dict.get('file') == '"white"':
-			path_rel = quodel(kakko_dict.get('file'))
+			path_rel = f'"{quodel(kakko_dict.get('file'))}"'.lower()
 
 		else:
 			eve_path = os.path.join(same_hierarchy, 'evecg', quodel(kakko_dict.get('file'))+'.png')
