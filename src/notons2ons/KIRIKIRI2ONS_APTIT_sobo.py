@@ -666,7 +666,27 @@ def main(values: dict = {}, values_ex: dict = {}, pre_converted_dir: Path = Path
 
 		if not nsc_num12:#製品版
 			#エンディング - 低スペック機での動作を見据え、スクロール時のフレーム数を1/10程度にしてます(それでも処理落ちする)
-			txt = txt.replace(r'bgm "bgm\bgmed01.ogg"', 'dwave 2,"bgm\\bgmed01.ogg"\nsaveoff:csp 5:btndef "syscg\\staff.png"\nfor %5=0 to '+str(int(end_pic/10))+'\nblt 0,0,800,600,0,0+%5*10,800,600:wait '+str(int(end_snd/end_pic*10000))+'\nnext\nofscpy:click\ndwavestop 2:return\n')
+			txt = txt.replace(r'bgm "bgm\bgmed01.ogg"',
+					 f'''
+saveoff:csp 5
+lsp 1,"syscg\\staff.png",0,600
+dwave 2,"bgm\\bgmed01.ogg"
+print 1
+resettimer
+*end_loop
+gettimer %0
+if %0>{end_snd}*1000 mov %0,{end_snd}*1000
+amsp 1,0,0-({end_pic}*%0/({end_snd}*1000))
+print 1
+if %0=={end_snd}*1000 goto *end_loop_end
+goto *end_loop
+*end_loop_end
+dwavestop 2
+click
+saveon
+csp 1:print 1
+return
+''')
 			txt = txt.replace(r';<<-RMENU->>', r'rmenu "セーブ",save,"ロード",load,"スキップ",skip,"リセット",reset')
 		else:#体験版
 			txt = txt.replace(r';<<-RMENU->>', r'rmenu "スキップ",skip,"リセット",reset')
