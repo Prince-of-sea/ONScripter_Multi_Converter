@@ -71,6 +71,7 @@ saveon
 nsa
 windowback
 humanz 10
+defsub bg			;erasetextwindow用bg命令乗っ取り
 
 ;---------- NSC2ONS4PSP強制変換機能ここから ----------
 ; 以下の文字列を認識すると、解像度に関わらず
@@ -86,10 +87,19 @@ effect 3,10,1000
 ;<<-EFFECT->>
 
 game
+;----------------------------------------
+*bg
+erasetextwindow 1
+getparam $90,%90
+if $90=="white" _bg white,%90
+if $90=="black" _bg black,%90
+if $90!="white" if $90!="black" _bg $90,%90
+return
 
 ;----------------------------------------
 ;***名前表示ウィンドウ - システムカスタマイズ***
 *name_text
+erasetextwindow 0
 
 gettag $0,$1 ;[]の値（名前）を取得
 
@@ -103,7 +113,7 @@ return
 	bgm "bgm/BGM110.ogg"
 	csp -1:vsp 12,0:print 2:bg "grp/parts/StaffRollBg1.png",3
 	click
-	bg black,3
+	_bg black,3
 	bgmstop
 	reset
 ;----------------------------------------
@@ -116,20 +126,20 @@ if %0==1280 mov %199,0
 if %0!=1280 mov %199,1
 
 dwave 0,"voice/system/sys1a.ogg"
-bg "grp/parts/logo.png",3
+_bg "grp/parts/logo.png",3
 click
 
-bg black,3
-bg "grp/parts/notice.png",3
+_bg black,3
+_bg "grp/parts/notice.png",3
 click
 
 *title
 
-bg black,3
+_bg black,3
 
 dwave 0,"voice/system/sys1g.ogg"
 bgm "bgm/BGM01.ogg"
-bg "grp/parts/TitleBg.png",3
+_bg "grp/parts/TitleBg.png",3
 lsp 24,"grp/parts/TitleSEL.png",0,0:print 2
 click
 
@@ -151,7 +161,7 @@ goto *title
 
 *endmode
 	csp 24:print 0
-	bg black,3
+	_bg black,3
 	end
 
 *loadmode
@@ -377,7 +387,7 @@ def main(values: dict = {}, values_ex: dict = {}, pre_converted_dir: Path = Path
 
 				elif haikei_line:#memo:その後のprint不要
 					if haikei_line[1] =='BLACK':
-						line='vsp 12,0:print 2:bg black,3\n'
+						line='vsp 12,0:print 2:bg "black",3\n'
 					elif re.match(r'EV',haikei_line[1]):
 						line='vsp 12,0:print 2:bg "grp\\evcg\\'+haikei_line[1]+'.png",3\n'
 					else:
