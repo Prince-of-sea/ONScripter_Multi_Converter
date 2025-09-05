@@ -138,8 +138,18 @@ defsub tatireset
 defsub def_select
 defsub btani_vsp0_all
 defsub btani_csp_all
+defsub bg			;erasetextwindow用bg命令乗っ取り
 game
 ;----------------------------------------
+;erasetextwindow用bg命令乗っ取り
+*bg
+	erasetextwindow 1
+	getparam $90,%90
+	if $90=="white" _bg white,%90
+	if $90=="black" _bg black,%90
+	if $90!="white" if $90!="black" _bg $90,%90
+return
+
 ;setwindow簡略化
 *setwin
 	getparam %1
@@ -397,6 +407,7 @@ return
 
 ;キャラ名中央表示用座標取得
 *msgName
+	erasetextwindow 0
 	getparam $1
 
 	;文字24px+幅2px=26px
@@ -574,7 +585,7 @@ return
 return
 ;----------------------------------------
 *start
-bg black,1
+_bg black,1
 
 ;文字スプライト読み込み→即削除 - 低スペック機でビットマップフォントを使った際ここで長めのロードが入る
 mov %301,0:resettimer
@@ -769,7 +780,7 @@ goto *endmenu_loop
 setwin 1
 lsp 198 "gui/_sys_dialog_base.png",0,0:print 6
 lsp 197 "gui/sys_bg_black.png",0,0:print 6
-csp -1:bg black 1:wait 500:stop
+csp -1:_bg black 1:wait 500:stop
 goto *SYS_MAIN_KS
 
 end
@@ -964,7 +975,7 @@ end
 ;----------------------------------------
 *SYS_STAFFROLL_KS
 ;スタッフロール無理に変換せずにこっちで作っちゃおうという
-csp -1:bg black,10:wait 1000
+csp -1:bg "black",10:wait 1000
 
 ;%150 再生時間
 ;%151 ロール画像x - 使わん
