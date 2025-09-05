@@ -686,7 +686,7 @@ def text_cnv(DEBUG_MODE, zero_txt, scr_dec, path_dict_keys):
 	txt = default_txt()
 
 	#デコード済みtxtをforで回す
-	for p in scr_dec.glob('*.txt'):
+	for p in sorted(scr_dec.glob('*.txt')):
 
 		#デコード済みtxtを読み込み
 		with open(p, encoding='cp932', errors='ignore') as f:

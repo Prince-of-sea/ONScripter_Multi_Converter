@@ -289,7 +289,7 @@ def main(values: dict = {}, values_ex: dict = {}, pre_converted_dir: Path = Path
 	#--------------------0.txt作成--------------------
 	txt = default_txt()
 
-	pathlist = glob.glob(os.path.join(scenario_dir, 'general', '*.snr'))
+	pathlist = sorted(glob.glob(os.path.join(scenario_dir, 'general', '*.snr')))
 	pathlist.extend(glob.glob(os.path.join(scenario_dir, '*.snr')))
 
 	for snr_path in pathlist:

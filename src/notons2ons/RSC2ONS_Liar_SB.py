@@ -532,7 +532,7 @@ def text_cnv(PATH_D):
 	effect_list = []
 	effect_startnum = 10
 
-	for p in glob.glob(os.path.join(PATH_D['DIR_SCR_DEC'], '*.txt')):
+	for p in sorted(glob.glob(os.path.join(PATH_D['DIR_SCR_DEC'], '*.txt'))):
 		line_mode = False
 
 		with open(p, encoding='SHIFT_JIS', errors='ignore') as f:

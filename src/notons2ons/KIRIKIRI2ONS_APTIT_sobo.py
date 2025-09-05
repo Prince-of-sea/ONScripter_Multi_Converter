@@ -472,7 +472,7 @@ def main(values: dict = {}, values_ex: dict = {}, pre_converted_dir: Path = Path
 	if title_id==85: utf16list = ['_first']
 	else: utf16list = ['scr', '_first']
 
-	for ks_path in glob.glob(os.path.join(scenario_dir, '*')):
+	for ks_path in sorted(glob.glob(os.path.join(scenario_dir, '*'))):
 		ks_name = os.path.splitext(os.path.basename(ks_path))[0]
 		char_code = 'UTF-16' if (ks_name in utf16list) else 'SHIFT_JIS'
 

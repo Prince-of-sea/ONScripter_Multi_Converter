@@ -668,7 +668,7 @@ def text_cnv(debug: bool, PATH_DICT: dict, PATH_DICT2: dict):
 	txt = ''
 
 	# シナリオファイルを読み込み
-	for scx_path in Path(PATH_DICT['scx']).glob('*.scx'):
+	for scx_path in sorted(Path(PATH_DICT['scx']).glob('*.scx')):
 
 		# シナリオファイル名を取得
 		scxfilename = str(scx_path.stem)

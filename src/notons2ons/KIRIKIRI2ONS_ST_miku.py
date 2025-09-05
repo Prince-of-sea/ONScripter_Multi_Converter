@@ -428,7 +428,7 @@ def text_cnv(same_hierarchy, scenario_dir, image_dir, sound_dict):
 
 	txt = default_txt()
 
-	for ks_path in glob.glob(os.path.join(scenario_dir, '*.ks')):
+	for ks_path in sorted(glob.glob(os.path.join(scenario_dir, '*.ks'))):
 
 		with open(ks_path, encoding='SHIFT_JIS', errors='ignore') as f:
 			#ks名をそのままonsのgoto先のラベルとして使い回す

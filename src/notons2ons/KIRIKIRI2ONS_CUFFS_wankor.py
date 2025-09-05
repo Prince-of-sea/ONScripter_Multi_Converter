@@ -766,7 +766,7 @@ def text_cnv(DEBUG_MODE, zero_txt, scenario):
 	txt = default_txt()
 
 	#シナリオファイル(ks)をglob
-	for p in scenario.glob('*.ks'):
+	for p in sorted(scenario.glob('*.ks')):
 
 		#if入った際にelseの行き先とか突っ込んどく - 配列にすることでif内ifに対応
 		if_list = []

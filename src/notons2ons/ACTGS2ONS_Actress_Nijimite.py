@@ -581,7 +581,7 @@ def text_cnv(DIR_SCR, debug, same_hierarchy, str2var_cnt, define_dict, cfg_dict,
 	# 	txt = f.read()
 	txt = default_txt()
 
-	for p in glob.glob(os.path.join(DIR_SCR, '*.scr')):
+	for p in sorted(glob.glob(os.path.join(DIR_SCR, '*.scr'))):
 
 		with open(p, encoding='cp932', errors='ignore') as f:
 

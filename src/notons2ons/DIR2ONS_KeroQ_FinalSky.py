@@ -1026,7 +1026,7 @@ def text_cnv(DEBUG_MODE, zero_txt, path_list, same_hierarchy , name_dict):
 
 	#シナリオファイルを読み込み
 	for d in path_list:
-		for p in d.glob('*.txt'):
+		for p in sorted(d.glob('*.txt')):
 			with open(p, encoding='cp932', errors='ignore') as f:
 				fr = f.read()
 

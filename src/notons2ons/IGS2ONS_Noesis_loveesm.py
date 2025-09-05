@@ -546,7 +546,7 @@ def text_cnv(DIR_SCR_DEC, ZERO_TXT):
 	# 	txt = f.read()
 	txt = default_txt()
 
-	for p in glob.glob(os.path.join(DIR_SCR_DEC, '*.txt')):
+	for p in sorted(glob.glob(os.path.join(DIR_SCR_DEC, '*.txt'))):
 		with open(p, encoding='cp932', errors='ignore') as f:
 
 			name = os.path.splitext(os.path.basename(p))[0]
