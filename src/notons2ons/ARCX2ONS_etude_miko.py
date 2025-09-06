@@ -152,7 +152,16 @@ defsub def_setpos
 defsub def_setpos_int
 defsub def_alpha
 defsub setwin
+defsub bg			;erasetextwindow用bg命令乗っ取り
 game
+;----------------------------------------
+*bg
+	erasetextwindow 1
+	getparam $90,%90
+	if $90=="white" _bg white,%90
+	if $90=="black" _bg black,%90
+	if $90!="white" if $90!="black" _bg $90,%90
+return
 ;----------------------------------------
 *LABEL_s_question_2
 *LABEL_s_question_3
@@ -220,6 +229,7 @@ return
 return
 ;----------------------------------------
 *LABEL_s_endroll
+	erasetextwindow 1
 	skipoff
 	saveoff
 
@@ -260,6 +270,7 @@ return
 return
 ;----------------------------------------
 *def_mes
+	erasetextwindow 0
 	getparam $1,$2
 	if $1=="" vsp 10,0
 	if $1!="" lsp 10,":s/24,24,0;#ffffff【"+$1+"】",60,458
@@ -470,7 +481,7 @@ return
 	btnwait %140
 	
 	if %140==131 mov %aud_bgm,100:mov %aud_se,100:mov %aud_vo,100
-	if %140==132 dwave 1,"SE/SE_900.WAV":csp -1:bg black,10:reset
+	if %140==132 dwave 1,"SE/SE_900.WAV":csp -1:_bg black,10:reset
 	if %140==136 if %aud_bgm!=  0 sub %aud_bgm,10
 	if %140==138 if %aud_bgm!=100 add %aud_bgm,10
 	if %140==141 if %aud_se!=  0 sub %aud_se,10
@@ -498,12 +509,12 @@ setwin 1
 ;ending - debug
 ;mov $val_ed00,"nk-001.png":mov $val_ed01,"nk-002.png":mov $val_ed02,"nk-003.png":mov $val_ed03,"nk-004.png":mov $val_ed04,"nk-005.png":mov $val_ed05,"nk-006.png":gosub *LABEL_s_endroll:end
 
-bg white,9
+_bg white,9
 wait 500
-bg "obj/OP_BRAND.png",10
+_bg "obj/OP_BRAND.png",10
 wait 2000
 
-bg "obj/OP_BG.png",10
+_bg "obj/OP_BG.png",10
 bgm "BGM/M22.wav"
 
 mov $1,"OP_BG_00"
@@ -541,11 +552,11 @@ print 1
 	print 1
 	btnwait %20
 
-	if %20==211 stop:dwave 1,"SE/SE_902.WAV":csp -1:bg black,9:gosub *LABEL_M_ALL:reset
+	if %20==211 stop:dwave 1,"SE/SE_902.WAV":csp -1:_bg black,9:gosub *LABEL_M_ALL:reset
 	if %20==212 dwave 1,"SE/SE_902.WAV":lsp 200,"obj/mode_load_.png",  0,0:print 9:systemcall load   :dwave 1,"SE/SE_900.WAV":csp 200:print 9:goto *title_loop
 	if %20==213 dwave 1,"SE/SE_902.WAV":lsp 200,"obj/mode_config_.png",0,0:print 9:gosub *volmenu_GUI
 	;if %20==214 wait 1
-	if %20==215 stop:dwave 1,"SE/SE_900.WAV":csp -1:bg black,10:wait 200:end
+	if %20==215 stop:dwave 1,"SE/SE_900.WAV":csp -1:_bg black,10:wait 200:end
 goto *title_loop
 ;----------------------------------------
 {txt}
@@ -979,7 +990,7 @@ def text_cnv(debug: bool, PATH_DICT: dict, PATH_DICT2: dict):
 										line = f'def_read "{fadein_arg0_1}","{fadein_arg2_1}"\n'
 
 									if (fadein_arg0_1 in ['bg', 'cg', 'base']):							
-										line += f'bg white,{s1}:bg $val_{fadein_arg0_1},{s1}'#ここ以外fadeinと一緒
+										line += f'bg "white",{s1}:bg $val_{fadein_arg0_1},{s1}'#ここ以外fadeinと一緒
 									else:
 										line += f'lsp val_{fadein_arg0_1}, $val_{fadein_arg0_1},%{fadein_arg0_1}x,%{fadein_arg0_1}y:print {s1}'
 										
@@ -1008,7 +1019,7 @@ def text_cnv(debug: bool, PATH_DICT: dict, PATH_DICT2: dict):
 										line = f'def_read "{fadeout_arg0_1}","{fadeout_arg2_1}"\n'
 
 									if (fadeout_arg0_1 in ['bg', 'cg']):							
-										line += f'vsp val_chr_1,0:vsp val_chr_2,0:bg black,{s1}'
+										line += f'vsp val_chr_1,0:vsp val_chr_2,0:bg "black",{s1}'
 									else:
 										line += f'vsp val_chr_1,0:vsp val_chr_2,0:vsp val_{fadeout_arg0_1},0'
 										if fadeout_arg3_1: line += f'msp val_{fadeout_arg0_1},{fadeout_arg3_1}'
@@ -1039,7 +1050,7 @@ def text_cnv(debug: bool, PATH_DICT: dict, PATH_DICT2: dict):
 										line = f'def_read "{fadeout_arg0_1}","{fadeout_arg2_1}"\n'
 
 									if (fadeout_arg0_1 in ['bg', 'cg']):							
-										line += f'vsp val_chr_1,0:vsp val_chr_2,0:bg white,{s1}'#ここ以外fadeoutと一緒
+										line += f'vsp val_chr_1,0:vsp val_chr_2,0:bg "white",{s1}'#ここ以外fadeoutと一緒
 									else:
 										line += f'vsp val_{fadeout_arg0_1},0:print 10'
 										if fadeout_arg3_1: line += f'msp val_{fadeout_arg0_1},{fadeout_arg3_1}'
@@ -1057,7 +1068,7 @@ def text_cnv(debug: bool, PATH_DICT: dict, PATH_DICT2: dict):
 								case 'black':
 									black_arg0_1 = re.match(r'<([a-z0-9_-]+)>', command_arg[0]).group(1)
 									if (black_arg0_1 in ['bg', 'cg']):
-										line = f'vsp val_chr_1,0:vsp val_chr_2,0:bg black,10'#手抜き
+										line = f'vsp val_chr_1,0:vsp val_chr_2,0:bg "black",10'#手抜き
 									else:
 										line = f';{line}'
 
@@ -1066,7 +1077,7 @@ def text_cnv(debug: bool, PATH_DICT: dict, PATH_DICT2: dict):
 									#line = f';{line}'
 									dispoff_arg0_1 = re.match(r'<([a-z0-9_-]+)>', command_arg[0]).group(1)
 									if (dispoff_arg0_1 in ['bg', 'cg']):
-										line = f'vsp val_chr_1,0:vsp val_chr_2,0:bg black,10'
+										line = f'vsp val_chr_1,0:vsp val_chr_2,0:bg "black",10'
 									else:
 										line = f'vsp val_{dispoff_arg0_1},0:print 10'
 
@@ -1086,7 +1097,7 @@ def text_cnv(debug: bool, PATH_DICT: dict, PATH_DICT2: dict):
 								# コマンド - 暗転?
 								case 'exfadeout':
 									s1, effect_startnum, effect_list = effect_edit(str(50), 'fade', effect_startnum, effect_list)
-									line = f'bg black,{s1}'#:print {s1}'#一瞬黒塗り
+									line = f'bg "black",{s1}'#:print {s1}'#一瞬黒塗り
 								
 								# コマンド - 立ち絵出現
 								case 'chrin':
@@ -1117,7 +1128,7 @@ def text_cnv(debug: bool, PATH_DICT: dict, PATH_DICT2: dict):
 
 								# コマンド - 全フェードアウト
 								case 'allfadeout':
-									line = f'vsp val_chr_1,0:vsp val_chr_2,0:bg black,10'#本当は一部秒数指定っぽいのあったけど無視
+									line = f'vsp val_chr_1,0:vsp val_chr_2,0:bg "black",10'#本当は一部秒数指定っぽいのあったけど無視
 
 								# コマンド - 立ち絵変更
 								case 'change':
@@ -1384,7 +1395,7 @@ def text_cnv(debug: bool, PATH_DICT: dict, PATH_DICT2: dict):
 	txt = txt.replace(r'lsp val_onstmp,$val_def_default,75,260:print 9',
 					r'lsp val_onstmp,$val_def_default,75,260:print 10:wait 3000')#END直後のテロップが一瞬で消えるのを防ぐ
 	txt = txt.replace(r'''lsp 1,"bg/white.png",0,0:print 11:wait 50:csp 1:print 11
-vsp val_chr_1,0:vsp val_chr_2,0:bg black,10
+vsp val_chr_1,0:vsp val_chr_2,0:bg "black",10
 vsp val_chr_1,0:vsp val_chr_2,0:bg $val_bg,12''',
 					r'lsp 1,"bg/white.png",0,0:print 11:wait 50:csp 1:print 11')#変換ミスで生まれたフラッシュ直後の暗転(?)を消す
 
