@@ -462,7 +462,7 @@ def onsscript_check_txtmodify(values: dict, values_ex: dict, ztxtscript: str, ov
             renbanprintline = f'bg $11+$%3+$12+$14,1'
 
         ztxtscript = onsscript_check_txtmodify_adddefsub(ztxtscript, 'defsub mpegplay', f'''*mpegplay
-saveoff
+saveoff:erasetextwindow 1
 mov %multiconverteralias0,%0 :mov %multiconverteralias1,%1 :mov %multiconverteralias2,%2 :mov %multiconverteralias3,%3 :mov %multiconverteralias4,%4 
 mov %multiconverteralias5,%5 :mov %multiconverteralias6,%6 :mov %multiconverteralias7,%7 :mov %multiconverteralias8,%8 :mov %multiconverteralias9,%9 
 mov $multiconverteralias0,$10:mov $multiconverteralias1,$11:mov $multiconverteralias2,$12:mov $multiconverteralias3,$13:mov $multiconverteralias4,$14:mov $multiconverteralias5,$15
