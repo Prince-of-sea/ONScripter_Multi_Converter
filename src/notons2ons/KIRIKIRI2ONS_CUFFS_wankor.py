@@ -138,6 +138,7 @@ game
 return
 ;----------------------------------------
 *pretext_lb
+	erasetextwindow 0
 	if %60==1 print 10:mov %60,0
 	if $10=="" csp 10:print 1:saveon:return
 
@@ -196,6 +197,7 @@ return
 return
 ;----------------------------------------
 *def_cg
+	erasetextwindow 1
 	getparam $20
 
 	;とりあえず立ち絵消す - 多分立ち絵残して背景変更ってないと思うので
@@ -255,6 +257,7 @@ return
 return
 ;----------------------------------------
 *def_staffroll
+	erasetextwindow 1
 	skipoff:saveoff:lookbackflush
 
 	;%150 再生時間
@@ -1003,14 +1006,14 @@ def main(values: dict = {}, values_ex: dict = {}, pre_converted_dir: Path = Path
 	#(マルチコンバータ利用時)自動展開
 	if values: extract_resource(values, values_ex, pre_converted_dir)
 
-	# デバッグモード
-	debug = 0
-
 	#同一階層のパスを変数へ代入
 	same_hierarchy = pre_converted_dir#Path.cwd()
 
+	# デバッグモード
+	debug = (Path(same_hierarchy / '_test').is_dir()) and (not values)
+
 	#デバッグ時はtestディレクトリ直下
-	if debug: same_hierarchy = (same_hierarchy / '_test')
+	if debug: same_hierarchy = Path(same_hierarchy / '_test')
 
 	#利用するパスを辞書に入れ一括代入
 	PATH_DICT = {
