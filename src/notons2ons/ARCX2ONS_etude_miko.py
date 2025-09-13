@@ -102,8 +102,31 @@ def extract_archive(arc_name: str, arc_path: Path, pre_converted_dir: Path):
 	return
 
 
+# 文字列置換
+def staffroll_replace(txt):
+
+	cnvl = [
+		['1', '１'], ['2', '２'], ['3', '３'], ['4', '４'], ['5', '５'], ['6', '６'], ['7', '７'], ['8', '８'], ['9', '９'], ['0', '０'],
+
+		['a', 'ａ'], ['b', 'ｂ'], ['c', 'ｃ'], ['d', 'ｄ'], ['e', 'ｅ'], ['f', 'ｆ'], ['g', 'ｇ'], ['h', 'ｈ'], ['i', 'ｉ'], ['j', 'ｊ'],
+		['k', 'ｋ'], ['l', 'ｌ'], ['m', 'ｍ'], ['n', 'ｎ'], ['o', 'ｏ'], ['p', 'ｐ'], ['q', 'ｑ'], ['r', 'ｒ'], ['s', 'ｓ'], ['t', 'ｔ'], 
+		['u', 'ｕ'], ['v', 'ｖ'], ['w', 'ｗ'], ['x', 'ｘ'], ['y', 'ｙ'], ['z', 'ｚ'], 
+
+		['A', 'Ａ'], ['B', 'Ｂ'], ['C', 'Ｃ'], ['D', 'Ｄ'], ['E', 'Ｅ'], ['F', 'Ｆ'], ['G', 'Ｇ'], ['H', 'Ｈ'], ['I', 'Ｉ'], ['J', 'Ｊ'], 
+		['K', 'Ｋ'], ['L', 'Ｌ'], ['M', 'Ｍ'], ['N', 'Ｎ'], ['O', 'Ｏ'], ['P', 'Ｐ'], ['Q', 'Ｑ'], ['R', 'Ｒ'], ['S', 'Ｓ'], ['T', 'Ｔ'], 
+		['U', '∪'], ['V', '∨'], ['W', 'Ｗ'], ['X', 'Ｘ'], ['Y', 'Ｙ'], ['Z', 'Ｚ'], 
+
+		['%', '％'], ['!', '！'], ['?', '？'], [' ', '　'], [':', '：'], [';', '；'], ['_', '　'], ['.', '．'], 
+	]
+
+	for v in cnvl:
+		txt = txt.replace(v[0], v[1])
+
+	return txt
+
+
 # 0.txtにはじめから書いておくもの (旧コンバータdefault.txt相当)
-def default_txt(txt: str, val_txt: str, add0txt_effect: str, end_str_list: list):#todo:スタッフロール文字いつか作る
+def default_txt(txt: str, val_txt: str, add0txt_effect: str, end_str_list: list):
 	return f''';mode800,value1000
 *define
 
@@ -153,6 +176,7 @@ defsub def_setpos_int
 defsub def_alpha
 defsub setwin
 defsub bg			;erasetextwindow用bg命令乗っ取り
+defsub endvsp0txt
 game
 ;----------------------------------------
 *bg
@@ -161,6 +185,19 @@ game
 	if $90=="white" _bg white,%90
 	if $90=="black" _bg black,%90
 	if $90!="white" if $90!="black" _bg $90,%90
+return
+;----------------------------------------
+*endvsp0txt
+	vsp 300,0:vsp 301,0:vsp 302,0:vsp 303,0:vsp 304,0:vsp 305,0:vsp 306,0:vsp 307,0:vsp 308,0:vsp 309,0
+	vsp 310,0:vsp 311,0:vsp 312,0:vsp 313,0:vsp 314,0:vsp 315,0:vsp 316,0:vsp 317,0:vsp 318,0:vsp 319,0
+	vsp 320,0:vsp 321,0:vsp 322,0:vsp 323,0:vsp 324,0:vsp 325,0:vsp 326,0:vsp 327,0:vsp 328,0:vsp 329,0
+	vsp 330,0:vsp 331,0:vsp 332,0:vsp 333,0:vsp 334,0:vsp 335,0:vsp 336,0:vsp 337,0:vsp 338,0:vsp 339,0
+	vsp 340,0:vsp 341,0:vsp 342,0:vsp 343,0:vsp 344,0:vsp 345,0:vsp 346,0:vsp 347,0:vsp 348,0:vsp 349,0
+	vsp 350,0:vsp 351,0:vsp 352,0:vsp 353,0:vsp 354,0:vsp 355,0:vsp 356,0:vsp 357,0:vsp 358,0:vsp 359,0
+	vsp 360,0:vsp 361,0:vsp 362,0:vsp 363,0:vsp 364,0:vsp 365,0:vsp 366,0:vsp 367,0:vsp 368,0:vsp 369,0
+	vsp 370,0:vsp 371,0:vsp 372,0:vsp 373,0:vsp 374,0:vsp 375,0:vsp 376,0:vsp 377,0:vsp 378,0:vsp 379,0
+	vsp 380,0:vsp 381,0:vsp 382,0:vsp 383,0:vsp 384,0:vsp 385,0:vsp 386,0:vsp 387,0:vsp 388,0:vsp 389,0
+	vsp 390,0:vsp 391,0:vsp 392,0:vsp 393,0:vsp 394,0:vsp 395,0:vsp 396,0:vsp 397,0
 return
 ;----------------------------------------
 *LABEL_s_question_2
@@ -233,6 +270,7 @@ return
 	skipoff
 	saveoff
 
+	; スクロール用CG
 	lsph 200,"obj/"+$val_ed00,0,0
 	lsph 201,"obj/"+$val_ed01,0,0
 	lsph 202,"obj/"+$val_ed02,0,0
@@ -240,32 +278,215 @@ return
 	lsph 204,"obj/"+$val_ed04,0,0
 	lsph 205,"obj/"+$val_ed05,0,0
 
+	; スタッフ名(文字表示)
+	lsph 300,":s#FFFFFF{staffroll_replace(end_str_list[ 0]).replace('_', ' ')}",400,400
+	lsph 301,":s#FFFFFF{staffroll_replace(end_str_list[ 1]).replace('_', ' ')}",400,400
+	lsph 302,":s#FFFFFF{staffroll_replace(end_str_list[ 2]).replace('_', ' ')}",450,450
+	lsph 303,":s#FFFFFF{staffroll_replace(end_str_list[ 3]).replace('_', ' ')}",400,400
+	lsph 304,":s#FFFFFF{staffroll_replace(end_str_list[ 4]).replace('_', ' ')}",400,425
+	lsph 305,":s#FFFFFF{staffroll_replace(end_str_list[ 5]).replace('_', ' ')}",450,450
+	lsph 306,":s#FFFFFF{staffroll_replace(end_str_list[ 6]).replace('_', ' ')}",400,400
+	lsph 307,":s#FFFFFF{staffroll_replace(end_str_list[ 7]).replace('_', ' ')}",400,425
+	lsph 308,":s#FFFFFF{staffroll_replace(end_str_list[ 8]).replace('_', ' ')}",450,450
+	lsph 309,":s#FFFFFF{staffroll_replace(end_str_list[ 9]).replace('_', ' ')}",400,400
+	lsph 310,":s#FFFFFF{staffroll_replace(end_str_list[10]).replace('_', ' ')}",450,450
+	lsph 311,":s#FFFFFF{staffroll_replace(end_str_list[11]).replace('_', ' ')}",400,400
+	lsph 312,":s#FFFFFF{staffroll_replace(end_str_list[12]).replace('_', ' ')}",400,425
+	lsph 313,":s#FFFFFF{staffroll_replace(end_str_list[13]).replace('_', ' ')}",450,450
+	lsph 314,":s#FFFFFF{staffroll_replace(end_str_list[14]).replace('_', ' ')}",400,400
+	lsph 315,":s#FFFFFF{staffroll_replace(end_str_list[15]).replace('_', ' ')}",450,450
+	lsph 316,":s#FFFFFF{staffroll_replace(end_str_list[16]).replace('_', ' ')}",400,400
+	lsph 317,":s#FFFFFF{staffroll_replace(end_str_list[17]).replace('_', ' ')}",450,450
+	lsph 318,":s#FFFFFF{staffroll_replace(end_str_list[18]).replace('_', ' ')}",530,250
+	lsph 319,":s#FFFFFF{staffroll_replace(end_str_list[19]).replace('_', ' ')}",500,200
+	lsph 320,":s#FFFFFF{staffroll_replace(end_str_list[20]).replace('_', ' ')}",550,230
+	lsph 321,":s#FFFFFF{staffroll_replace(end_str_list[21]).replace('_', ' ')}",550,255
+	lsph 322,":s#FFFFFF{staffroll_replace(end_str_list[22]).replace('_', ' ')}",550,280
+	lsph 323,":s#FFFFFF{staffroll_replace(end_str_list[23]).replace('_', ' ')}",480,200
+	lsph 324,":s#FFFFFF{staffroll_replace(end_str_list[24]).replace('_', ' ')}",550,230
+	lsph 325,":s#FFFFFF{staffroll_replace(end_str_list[25]).replace('_', ' ')}",560,200
+	lsph 326,":s#FFFFFF{staffroll_replace(end_str_list[26]).replace('_', ' ')}",480,230
+	lsph 327,":s#FFFFFF{staffroll_replace(end_str_list[27]).replace('_', ' ')}",500,200
+	lsph 328,":s#FFFFFF{staffroll_replace(end_str_list[28]).replace('_', ' ')}",550,230
+	lsph 329,":s#FFFFFF{staffroll_replace(end_str_list[29]).replace('_', ' ')}",550,255
+	lsph 330,":s#FFFFFF{staffroll_replace(end_str_list[30]).replace('_', ' ')}",550,280
+	lsph 331,":s#FFFFFF{staffroll_replace(end_str_list[31]).replace('_', ' ')}",550,305
+	lsph 332,":s#FFFFFF{staffroll_replace(end_str_list[32]).replace('_', ' ')}",550,330
+	lsph 333,":s#FFFFFF{staffroll_replace(end_str_list[33]).replace('_', ' ')}",500,250
+	lsph 334,":s#FFFFFF{staffroll_replace(end_str_list[34]).replace('_', ' ')}",550,280
+	lsph 335,":s#FFFFFF{staffroll_replace(end_str_list[35]).replace('_', ' ')}",400,400
+	lsph 336,":s#FFFFFF{staffroll_replace(end_str_list[36]).replace('_', ' ')}",450,430
+	lsph 337,":s#FFFFFF{staffroll_replace(end_str_list[37]).replace('_', ' ')}",400,400
+	lsph 338,":s#FFFFFF{staffroll_replace(end_str_list[38]).replace('_', ' ')}",450,430
+	lsph 339,":s#FFFFFF{staffroll_replace(end_str_list[39]).replace('_', ' ')}",400,400
+	lsph 340,":s#FFFFFF{staffroll_replace(end_str_list[40]).replace('_', ' ')}",450,430
+	lsph 341,":s#FFFFFF{staffroll_replace(end_str_list[41]).replace('_', ' ')}",450,455
+	lsph 342,":s#FFFFFF{staffroll_replace(end_str_list[42]).replace('_', ' ')}",450,430
+	lsph 343,":s#FFFFFF{staffroll_replace(end_str_list[43]).replace('_', ' ')}",450,455
+	lsph 344,":s#FFFFFF{staffroll_replace(end_str_list[44]).replace('_', ' ')}",450,480
+	lsph 345,":s#FFFFFF{staffroll_replace(end_str_list[45]).replace('_', ' ')}",450,505
+	lsph 346,":s#FFFFFF{staffroll_replace(end_str_list[46]).replace('_', ' ')}",450,430
+	lsph 347,":s#FFFFFF{staffroll_replace(end_str_list[47]).replace('_', ' ')}",500,200
+	lsph 348,":s#FFFFFF{staffroll_replace(end_str_list[48]).replace('　','' )}",500,230
+	lsph 349,":s#FFFFFF{staffroll_replace(end_str_list[49]).replace('_', ' ')}",550,260
+	lsph 350,":s#FFFFFF{staffroll_replace(end_str_list[50]).replace('_', ' ')}",550,285
+	lsph 351,":s#FFFFFF{staffroll_replace(end_str_list[51]).replace('_', ' ')}",550,310
+	lsph 352,":s#FFFFFF{staffroll_replace(end_str_list[52]).replace('_', ' ')}",550,335
+	lsph 353,":s#FFFFFF{staffroll_replace(end_str_list[53]).replace('_', ' ')}",550,360
+	lsph 354,":s#FFFFFF{staffroll_replace(end_str_list[54]).replace('_', ' ')}",550,385
+	lsph 355,":s#FFFFFF{staffroll_replace(end_str_list[55]).replace('_', ' ')}",550,410
+	lsph 356,":s#FFFFFF{staffroll_replace(end_str_list[56]).replace('_', ' ')}",530,230
+	lsph 357,":s#FFFFFF{staffroll_replace(end_str_list[57]).replace('_', ' ')}",550,260
+	lsph 358,":s#FFFFFF{staffroll_replace(end_str_list[58]).replace('_', ' ')}",550,285
+	lsph 359,":s#FFFFFF{staffroll_replace(end_str_list[59]).replace('_', ' ')}",550,310
+	lsph 360,":s#FFFFFF{staffroll_replace(end_str_list[60]).replace('_', ' ')}",550,230
+	lsph 361,":s#FFFFFF{staffroll_replace(end_str_list[61]).replace('_', ' ')}",500,250
+	lsph 362,":s#FFFFFF{staffroll_replace(end_str_list[62]).replace('_', ' ')}",550,280
+	lsph 363,":s#FFFFFF{staffroll_replace(end_str_list[63]).replace('_', ' ')}",500,250
+	lsph 364,":s#FFFFFF{staffroll_replace(end_str_list[64]).replace('_', ' ')}",550,280
+	lsph 365,":s#FFFFFF{staffroll_replace(end_str_list[65]).replace('_', ' ')}",400,400
+	lsph 366,":s#FFFFFF{staffroll_replace(end_str_list[66]).replace('_', ' ')}",450,450
+	lsph 367,":s#FFFFFF{staffroll_replace(end_str_list[67]).replace('_', ' ')}",400,400
+	lsph 368,":s#FFFFFF{staffroll_replace(end_str_list[68]).replace('_', ' ')}",450,450
+	lsph 369,":s#FFFFFF{staffroll_replace(end_str_list[69]).replace('_', ' ')}",400,400
+	lsph 370,":s#FFFFFF{staffroll_replace(end_str_list[70]).replace('_', ' ')}",450,450
+	lsph 371,":s#FFFFFF{staffroll_replace(end_str_list[71]).replace('_', ' ')}",450,475
+	lsph 372,":s#FFFFFF{staffroll_replace(end_str_list[72]).replace('_', ' ')}",450,500
+	lsph 373,":s#FFFFFF{staffroll_replace(end_str_list[73]).replace('_', ' ')}",400,400
+	lsph 374,":s#FFFFFF{staffroll_replace(end_str_list[74]).replace('_', ' ')}",450,450
+	lsph 375,":s#FFFFFF{staffroll_replace(end_str_list[75]).replace('_', ' ')}",450,475
+	lsph 376,":s#FFFFFF{staffroll_replace(end_str_list[76]).replace('_', ' ')}",400,400
+	lsph 377,":s#FFFFFF{staffroll_replace(end_str_list[77]).replace('_', ' ')}",450,450
+	lsph 378,":s#FFFFFF{staffroll_replace(end_str_list[78]).replace('_', ' ')}",450,475
+	lsph 379,":s#FFFFFF{staffroll_replace(end_str_list[79]).replace('_', ' ')}",400,400
+	lsph 380,":s#FFFFFF{staffroll_replace(end_str_list[80]).replace('_', ' ')}",250,425
+	lsph 381,":s#FFFFFF{staffroll_replace(end_str_list[81]).replace('_', ' ')}",450,450
+	lsph 382,":s#FFFFFF{staffroll_replace(end_str_list[82]).replace('_', ' ')}",450,475
+	lsph 383,":s#FFFFFF{staffroll_replace(end_str_list[83]).replace('_', ' ')}",450,500
+	lsph 384,":s#FFFFFF{staffroll_replace(end_str_list[84]).replace('_', ' ')}",400,400
+	lsph 385,":s#FFFFFF{staffroll_replace(end_str_list[85]).replace('_', ' ')}",400,425
+	lsph 386,":s#FFFFFF{staffroll_replace(end_str_list[86]).replace('_', ' ')}",450,450
+	lsph 387,":s#FFFFFF{staffroll_replace(end_str_list[87]).replace('_', ' ')}",450,475
+	lsph 388,":s#FFFFFF{staffroll_replace(end_str_list[88]).replace('_', ' ')}",450,500
+	lsph 389,":s#FFFFFF{staffroll_replace(end_str_list[89]).replace('_', ' ')}",500,200
+	lsph 390,":s#FFFFFF{staffroll_replace(end_str_list[90]).replace('_', ' ')}",550,230
+	lsph 391,":s#FFFFFF{staffroll_replace(end_str_list[91]).replace('_', ' ')}",550,255
+	lsph 392,":s#FFFFFF{staffroll_replace(end_str_list[92]).replace('_', ' ')}",500,250
+	lsph 393,":s#FFFFFF{staffroll_replace(end_str_list[93]).replace('_', ' ')}",550,280
+	lsph 394,":s#FFFFFF{staffroll_replace(end_str_list[94]).replace('_', ' ')}",500,250
+	lsph 395,":s#FFFFFF{staffroll_replace(end_str_list[95]).replace('_', ' ')}",550,280
+	lsph 396,":s#FFFFFF{staffroll_replace(end_str_list[96]).replace('_', ' ')}",500,250
+	lsph 397,":s#FFFFFF{staffroll_replace(end_str_list[97]).replace('_', ' ')}",550,280
+
+	; 終わり前"制作・著作" & ブランドロゴ
+	lsph 209,":s#FFFFFF{end_str_list[98]}",600,495
+	lsph 210,"obj/etude_logo.png",600,520
+
 	resettimer
 
 	*endroll_loop
 		gettimer %77
 
+		; スタッフ名(文字表示) - 関数飛ばしで
+		endvsp0txt
+		if %77>=0      if %77<2000   vsp 300,1
+		if %77>=2500   if %77<6000   vsp 301,1
+		if %77>=3000   if %77<6000   vsp 302,1
+		if %77>=6500   if %77<10000  vsp 303,1:vsp 304,1
+		if %77>=7000   if %77<10000  vsp 305,1
+		if %77>=10500  if %77<14000  vsp 306,1:vsp 307,1
+		if %77>=11000  if %77<14000  vsp 308,1
+		if %77>=14500  if %77<18000  vsp 309,1
+		if %77>=15000  if %77<18000  vsp 310,1
+		if %77>=18500  if %77<22000  vsp 311,1:vsp 312,1
+		if %77>=19000  if %77<22000  vsp 313,1
+		if %77>=22500  if %77<26000  vsp 314,1
+		if %77>=23000  if %77<26000  vsp 315,1
+		if %77>=26500  if %77<30000  vsp 316,1
+		if %77>=27000  if %77<30000  vsp 317,1
+
+		if %77>=32000  if %77<34000  vsp 318,1
+		if %77>=34500  if %77<39000  vsp 319,1
+		if %77>=35000  if %77<39000  vsp 320,1:vsp 321,1:vsp 322,1
+		if %77>=39500  if %77<44000  vsp 323,1
+		if %77>=40000  if %77<44000  vsp 324,1
+		if %77>=44500  if %77<49000  vsp 325,1
+		if %77>=45000  if %77<49000  vsp 326,1
+		if %77>=49500  if %77<54000  vsp 327,1
+		if %77>=50000  if %77<54000  vsp 328,1:vsp 329,1:vsp 330,1:vsp 331,1:vsp 332,1
+		if %77>=54500  if %77<62000  vsp 333,1
+		if %77>=55000  if %77<62000  vsp 334,1
+
+		if %77>=64000  if %77<70000  vsp 335,1
+		if %77>=64500  if %77<70000  vsp 336,1
+		if %77>=70500  if %77<76000  vsp 337,1
+		if %77>=71000  if %77<76000  vsp 338,1
+		if %77>=76500  if %77<94000  vsp 339,1
+		if %77>=77000  if %77<82500  vsp 340,1:vsp 341,1
+		if %77>=83000  if %77<88500  vsp 342,1:vsp 343,1:vsp 344,1:vsp 345,1
+		if %77>=89000  if %77<94000  vsp 346,1
+
+		if %77>=96000  if %77<116000 vsp 347,1
+		if %77>=97000  if %77<104000 vsp 348,1
+		if %77>=97500  if %77<104000 vsp 349,1:vsp 350,1:vsp 351,1:vsp 352,1:vsp 353,1:vsp 354,1:vsp 355,1
+		if %77>=104500 if %77<110000 vsp 356,1
+		if %77>=105000 if %77<110000 vsp 357,1:vsp 358,1:vsp 359,1
+		if %77>=111000 if %77<116000 vsp 360,1
+		if %77>=116500 if %77<120000 vsp 361,1
+		if %77>=117000 if %77<120000 vsp 362,1
+		if %77>=120500 if %77<126000 vsp 363,1
+		if %77>=121000 if %77<126000 vsp 364,1
+
+		if %77>=128500 if %77<132000 vsp 365,1
+		if %77>=129000 if %77<132000 vsp 366,1
+		if %77>=132500 if %77<136000 vsp 367,1
+		if %77>=133000 if %77<136000 vsp 368,1
+		if %77>=136500 if %77<140000 vsp 369,1
+		if %77>=137000 if %77<140000 vsp 370,1:vsp 371,1:vsp 372,1
+		if %77>=140500 if %77<144000 vsp 373,1
+		if %77>=141000 if %77<144000 vsp 374,1:vsp 375,1
+		if %77>=144500 if %77<148000 vsp 376,1
+		if %77>=145000 if %77<148000 vsp 377,1:vsp 378,1
+		if %77>=148500 if %77<153000 vsp 379,1
+		if %77>=149000 if %77<153000 vsp 380,1:vsp 381,1:vsp 382,1:vsp 383,1
+		if %77>=153500 if %77<158000 vsp 384,1
+		if %77>=154000 if %77<158000 vsp 385,1:vsp 386,1:vsp 387,1:vsp 388,1
+
+		if %77>=160000 if %77<167000 vsp 389,1
+		if %77>=160500 if %77<167000 vsp 390,1:vsp 391,1
+		if %77>=168000 if %77<175000 vsp 392,1
+		if %77>=168500 if %77<175000 vsp 393,1
+		if %77>=176000 if %77<183000 vsp 394,1
+		if %77>=176500 if %77<183000 vsp 395,1
+		if %77>=184000 if %77<191000 vsp 396,1
+		if %77>=184500 if %77<191000 vsp 397,1
+
+		
+		; CGスクロール
 		if %77>=0      if %77<31000  vsp 200,1:vsp 201,0:vsp 202,0:vsp 203,0:vsp 204,0:vsp 205,0:amsp 200,-1*(800*(%77-     0)/31000),0
-		if %77>=31000  if %77<32000  vsp 200,0:vsp 201,0:vsp 202,0:vsp 203,0:vsp 204,0:vsp 205,0:print 9:waittimer 31999
 		if %77>=32000  if %77<63000  vsp 200,0:vsp 201,1:vsp 202,0:vsp 203,0:vsp 204,0:vsp 205,0:amsp 201,0,-1*(600*(%77- 32000)/31000)
-		if %77>=63000  if %77<64000  vsp 200,0:vsp 201,0:vsp 202,0:vsp 203,0:vsp 204,0:vsp 205,0:print 9:waittimer 63999
-		if %77>=64000  if %77<95000  vsp 200,0:vsp 201,0:vsp 202,1:vsp 203,0:vsp 204,0:vsp 205,0:amsp 202,-1*(800*(%77- 64000)/31000),0
-		if %77>=95000  if %77<96000  vsp 200,0:vsp 201,0:vsp 202,0:vsp 203,0:vsp 204,0:vsp 205,0:print 9:waittimer 95999
+		if %77>=64000  if %77<95000  vsp 200,0:vsp 201,0:vsp 202,1:vsp 203,0:vsp 204,0:vsp 205,0:amsp 202,-1*(800*(%77- 64000)/31000),0	
 		if %77>=96000  if %77<127000 vsp 200,0:vsp 201,0:vsp 202,0:vsp 203,1:vsp 204,0:vsp 205,0:amsp 203,0,-1*(600*(%77- 96000)/31000)
-		if %77>=127000 if %77<128000 vsp 200,0:vsp 201,0:vsp 202,0:vsp 203,0:vsp 204,0:vsp 205,0:print 9:waittimer 127999
 		if %77>=128000 if %77<159000 vsp 200,0:vsp 201,0:vsp 202,0:vsp 203,0:vsp 204,1:vsp 205,0:amsp 204,-1*(800*(%77-128000)/31000),0
-		if %77>=159000 if %77<160000 vsp 200,0:vsp 201,0:vsp 202,0:vsp 203,0:vsp 204,0:vsp 205,0:print 9:waittimer 159999
 		if %77>=160000 if %77<191000 vsp 200,0:vsp 201,0:vsp 202,0:vsp 203,0:vsp 204,0:vsp 205,1:amsp 205,0,-1*(600*(%77-160000)/31000)
+		
+		; CG切り替え前フェードアウト & ウェイト
+		if %77>=31000  if %77<32000  vsp 200,0:vsp 201,0:vsp 202,0:vsp 203,0:vsp 204,0:vsp 205,0:print 9:waittimer 31999
+		if %77>=63000  if %77<64000  vsp 200,0:vsp 201,0:vsp 202,0:vsp 203,0:vsp 204,0:vsp 205,0:print 9:waittimer 63999
+		if %77>=95000  if %77<96000  vsp 200,0:vsp 201,0:vsp 202,0:vsp 203,0:vsp 204,0:vsp 205,0:print 9:waittimer 95999
+		if %77>=127000 if %77<128000 vsp 200,0:vsp 201,0:vsp 202,0:vsp 203,0:vsp 204,0:vsp 205,0:print 9:waittimer 127999
+		if %77>=127000 if %77<128000 vsp 200,0:vsp 201,0:vsp 202,0:vsp 203,0:vsp 204,0:vsp 205,0:print 9:waittimer 127999
+		if %77>=159000 if %77<160000 vsp 200,0:vsp 201,0:vsp 202,0:vsp 203,0:vsp 204,0:vsp 205,0:print 9:waittimer 159999
 		if %77>=191000 if %77<192000 vsp 200,0:vsp 201,0:vsp 202,0:vsp 203,0:vsp 204,0:vsp 205,0:print 9:waittimer 191999
 
 		print 1
 		if %77>=192000 goto *endroll_loop_end
 	goto *endroll_loop
 	*endroll_loop_end
-	
-	lsp 210,"obj/etude_logo.png",600,520:print 10
+
+	vsp 209,1:vsp 210,1:print 10
 	click
-	csp 210:print 10
+	csp 209:csp 210:print 10
 	saveon
 return
 ;----------------------------------------
