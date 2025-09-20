@@ -89,11 +89,20 @@ defsub def_SEset
 defsub spmsg
 defsub spmsg_end
 defsub ADV_setting
+defsub bg			;erasetextwindow用bg命令乗っ取り
 game
 ;----------------------------------------
+*bg
+erasetextwindow 1
+getparam $90,%90
+if $90=="white" _bg white,%90
+if $90=="black" _bg black,%90
+if $90!="white" if $90!="black" _bg $90,%90
+return
+
 *errmsg
 	csp -1:print 1
-	bg black,1
+	_bg black,1
 	
 	Ｃｏｎｖｅｒｔ　Ｅｒｒｏｒ！@
 	このメッセージが見れるのはおかしいよ@
@@ -115,6 +124,7 @@ return
 
 
 *pretext_lb
+	erasetextwindow 0
 	dwavestop -1
 	
 	;キャラ名中央表示用座標取得
@@ -173,7 +183,7 @@ return
 
 *spmsg
 	getparam $0
-	bg black,1
+	_bg black,1
 	lsp 7 "image\\"+$0+".png",0,0
 	print 10
 return
@@ -245,10 +255,10 @@ return
 return
 ;----------------------------------------
 *start
-bg black,1
+_bg black,1
 
 
-bg "image\\logo_n.png",10
+_bg "image\\logo_n.png",10
 
 ;ブランドコール
 rnd %6,3	;0~2
@@ -257,18 +267,18 @@ if %6==1 dwave 0,"se\\mix0002.ogg"
 if %6==2 dwave 0,"se\\sis2311.ogg"
 
 wait 1000
-bg "image\\logo_n.png",10
+_bg "image\\logo_n.png",10
 
 wait 1000
-bg "image\\CAUTION_02.png",10
+_bg "image\\CAUTION_02.png",10
 
 wait 500
 *title
 ADV_setting
 
-bg black,10
+_bg black,10
 
-bg "image\\titlebase.png",10
+_bg "image\\titlebase.png",10
 bgm "bgm\\Lop.ogg"
 
 ;タイトルコール
@@ -306,10 +316,10 @@ print 1
 	if %50!=-1 if %50!=0 dwave 1,"se\\sys_title.ogg"
 	
 	if %50==30 vsp 30,0:vsp 40,1:print 11:wait 500:ADV_setting:goto *SCR_start
-	if %50==31 vsp 31,0:vsp 41,1:print 11:wait 500:csp -1:bg black,10:bg "image\\load_base.png",10:systemcall load:bg black,10:goto *title
-	if %50==32 vsp 32,0:vsp 42,1:print 11:wait 500:csp -1:bg black,10:bg "image\\config_base.png",10:goto *volmenu_GUI
-	if %50==33 vsp 33,0:vsp 43,1:print 11:wait 500:csp -1:bg black,10:goto *GALLERY_MODE
-	if %50==34 vsp 34,0:vsp 44,1:print 11:wait 500:csp -1:bg black,10:end
+	if %50==31 vsp 31,0:vsp 41,1:print 11:wait 500:csp -1:_bg black,10:_bg "image\\load_base.png",10:systemcall load:_bg black,10:goto *title
+	if %50==32 vsp 32,0:vsp 42,1:print 11:wait 500:csp -1:_bg black,10:_bg "image\\config_base.png",10:goto *volmenu_GUI
+	if %50==33 vsp 33,0:vsp 43,1:print 11:wait 500:csp -1:_bg black,10:goto *GALLERY_MODE
+	if %50==34 vsp 34,0:vsp 44,1:print 11:wait 500:csp -1:_bg black,10:end
 	
 goto *title_loop
 ;----------------------------------------
@@ -423,7 +433,7 @@ goto *title_loop
 	
 	if %140==131 gosub *voice_test
 	if %140==132 dwavestop 0:bgmvol 100:sevol 100:voicevol 100
-	if %140==133 csp -1:dwavestop -1:bg black,10:goto *title
+	if %140==133 csp -1:dwavestop -1:_bg black,10:goto *title
 	if %140==136 if %130!=  0 sub %130,10:bgmvol %130
 	if %140==138 if %130!=100 add %130,10:bgmvol %130
 	if %140==141 if %131!=  0 sub %131,10:sevol %131
@@ -440,13 +450,13 @@ goto *volmenu_loop
 return
 ;----------------------------------------
 *GALLERY_MODE
-bg "image\\view_cg.png",10
+_bg "image\\view_cg.png",10
 click
 
-bg black,10
+_bg black,10
 mpegplay "video\\op.mpg",1
 
-bg black,10
+_bg black,10
 goto *title
 ;----------------------------------------
 '''
@@ -604,7 +614,7 @@ def text_cnv(DIR_SCR_DEC, ZERO_TXT):
 					line = 'wait 2000\n'
 
 				elif black_line:
-					line = 'vsp 9,0:vsp 8,0:print 1:bg black,10\n'
+					line = 'vsp 9,0:vsp 8,0:print 1:bg "black",10\n'
 
 				elif bgmstop_line:
 					line = 'bgmstop\n'
