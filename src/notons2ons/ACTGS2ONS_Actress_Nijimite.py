@@ -886,7 +886,7 @@ def text_cnv(DIR_SCR, debug, same_hierarchy, str2var_cnt, define_dict, cfg_dict,
 					line = 'select_set "' + defsel_line[1] + '"\n'
 
 				elif ev1_line:
-					line = 'vsp 15,0:vsp 16,0:vsp 17,0:vsp 10,0'
+					line = 'vsp 15,0:vsp 16,0:vsp 17,0:vsp 10,0:'
 					if ev1_line[1] == '_fl':
 						line += 'bg black,1:'
 					
