@@ -244,13 +244,14 @@ return
 	if %0==3 lsp 16,"cg\\"+$2+".png",-180,0
 	if %0==3 lsp 17,"cg\\"+$3+".png", 180,0
 	
-	
+	erasetextwindow 1
 	if $1=="" goto *nobg
 	
 	if %0!=0 if $0=="fi" bg "cg\\"+$1+".png",10
 	if %0!=0 if $0==""   bg "cg\\"+$1+".png",1
 	if %0==0 if $2=="FADE_SET" bg "cg\\"+$1+".png",10
 	if %0==0 if $2!="FADE_SET" bg "cg\\"+$1+".png",1
+	erasetextwindow 0
 return
 	*nobg
 	
@@ -258,6 +259,7 @@ return
 	if %0!=0 if $0==""   bg black,1
 	if %0==0 if $2=="FADE_SET" bg black,10
 	if %0==0 if $2!="FADE_SET" bg black,1
+	erasetextwindow 0
 return
 
 
@@ -472,7 +474,7 @@ print 1
 	
 	print 1
 	btnwait %20
-	if %20==30 csp -1:stop:goto *niji_title_menu_end
+	if %20==30 csp -1:stop:erasetextwindow 0:goto *niji_title_menu_end
 	if %20==31 csp -1:stop:bg "cg\\_MLLoadBack.png",10:systemcall load:bg black,10:goto *niji_title_menu
 	if %20==32 csp -1:stop:bg black,10:mpegplay "NijiOp.mpg",1:goto *niji_title_menu
 	if %20==33 csp -1:stop:bg black,10:goto *volmenu_GUI
@@ -753,7 +755,7 @@ def text_cnv(DIR_SCR, debug, same_hierarchy, str2var_cnt, define_dict, cfg_dict,
 						line = 'select_start\n'
 						line += 'select_reset\n'
 					else:
-						print('WARNING:select args error!')
+						# print('WARNING:select args error!')
 						line = r';' + line#エラー防止の為コメントアウト
 
 				elif bg_line:#背景
@@ -886,15 +888,15 @@ def text_cnv(DIR_SCR, debug, same_hierarchy, str2var_cnt, define_dict, cfg_dict,
 					line = 'select_set "' + defsel_line[1] + '"\n'
 
 				elif ev1_line:
-					line = 'vsp 15,0:vsp 16,0:vsp 17,0:vsp 10,0:'
+					line = 'erasetextwindow 1:vsp 15,0:vsp 16,0:vsp 17,0:vsp 10,0:'
 					if ev1_line[1] == '_fl':
 						line += 'bg black,1:'
 					
-					line += 'bg "cg\\' + ev1_line[2] + '.png",10\n'
+					line += 'bg "cg\\' + ev1_line[2] + '.png",10:erasetextwindow 0\n'
 				
 				elif ef2_line:
 					ef,effect_list,effect_startnum = effect_edit('100', ef2_line[1],effect_list,effect_startnum)
-					line = 'bg "cg\\' + ef2_line[2] + '.png",' + ef + '\n'
+					line = 'erasetextwindow 1:bg "cg\\' + ef2_line[2] + '.png",' + ef + ':erasetextwindow 0\n'
 
 				elif shake_line:#振動(絶対原作と違う)
 					if shake_line[1]=='SHAKE_1':
@@ -902,15 +904,16 @@ def text_cnv(DIR_SCR, debug, same_hierarchy, str2var_cnt, define_dict, cfg_dict,
 					elif shake_line[1]=='SHAKE_2':
 						line ='quake 4,400\n'
 					else:
-						print('WARNING:shake to quake convert error!')
+						# print('WARNING:shake to quake convert error!')
 						line = r';' + line#エラー防止の為コメントアウト	
 
 				elif ev_line:		
-					line += 'vsp 15,0:vsp 16,0:vsp 17,0:vsp 10,0:bg "cg\\' + ev_line[2] + '.png",'
+					line += 'erasetextwindow 1:vsp 15,0:vsp 16,0:vsp 17,0:vsp 10,0:bg "cg\\' + ev_line[2] + '.png",'
 					if ev_line[2] == 'FADE_SET':
-						line += '10\n'
+						line += '10:'
 					else:
-						line += '1\n'
+						line += '1:'
+					line += 'erasetextwindow 0\n'
 
 				elif bgm1_line:
 					line = 'bgm "wav_dec\\' + bgm1_line[1] + '.wav"\n'
@@ -965,7 +968,7 @@ def file_check(DIR_CG, DIR_SCR, DIR_WAV):
 	c = True
 	for p in [DIR_CG, DIR_SCR, DIR_WAV]:
 		if not os.path.exists(p):
-			print(p+ ' is not found!')
+			# print(p+ ' is not found!')
 			c = False
 	
 	return c
@@ -987,12 +990,12 @@ def end_check(str2var_cnt, gosub_list):
 	# (NSC側のグローバル変数ずらせばいいだけなんだけどね...)
 	c = True
 	if (str2var_cnt['numalias'] >= 200):
-		print('WARNING:global var convert error!')
+		# print('WARNING:global var convert error!')
 		c = False
 
 	# gosubがうまく対になってないときエラー
 	if (gosub_list):
-		print('WARNING:gosub convert error!')
+		#print('WARNING:gosub convert error!')
 		c = False
 
 	return c
@@ -1038,6 +1041,8 @@ def main(values: dict = {}, values_ex: dict = {}, pre_converted_dir: Path = Path
 		str2var_cnt, define_dict, cfg_dict, gosub_list = text_cnv(DIR_SCR, debug, same_hierarchy, str2var_cnt, define_dict, cfg_dict, gosub_list)
 		if not debug: music_cnv(values_ex, DIR_WAV)
 		if end_check(str2var_cnt, gosub_list): junk_del(same_hierarchy)
+	print('fffffffffffffffffffffffffffffffffffffffffffffffff')
+	import time;time.sleep(100000)
 
 
 #事前に展開済みなら一応単体でも動作するようにしておく
