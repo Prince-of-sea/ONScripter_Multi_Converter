@@ -1041,8 +1041,6 @@ def main(values: dict = {}, values_ex: dict = {}, pre_converted_dir: Path = Path
 		str2var_cnt, define_dict, cfg_dict, gosub_list = text_cnv(DIR_SCR, debug, same_hierarchy, str2var_cnt, define_dict, cfg_dict, gosub_list)
 		if not debug: music_cnv(values_ex, DIR_WAV)
 		if end_check(str2var_cnt, gosub_list): junk_del(same_hierarchy)
-	print('fffffffffffffffffffffffffffffffffffffffffffffffff')
-	import time;time.sleep(100000)
 
 
 #事前に展開済みなら一応単体でも動作するようにしておく
