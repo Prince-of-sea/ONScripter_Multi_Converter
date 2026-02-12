@@ -1,4 +1,4 @@
-Pillow==11.5.0
+Pillow==12.1.1
 PyYAML==6.0.3
 asarPy==1.0.1
 click==8.3.1
