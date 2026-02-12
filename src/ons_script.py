@@ -336,13 +336,13 @@ def onsscript_check_txtmodify(values: dict, values_ex: dict, ztxtscript: str, ov
 
     # savescreenshot命令無効化
     if (etc_0txtnoscreenshot == i18n.t('var.use_function_override')):  # 利用する(関数上書き)
-        ztxtscript = onsscript_check_txtmodify_adddefsub(
-            ztxtscript, 'defsub savescreenshot', '*savescreenshot\nreturn')  # savescreenshot命令を無効化
+        ztxtscript = onsscript_check_txtmodify_adddefsub( # savescreenshot命令を無効化
+            ztxtscript, 'defsub savescreenshot', '*savescreenshot\ngetparam $multiconverteralias0:return')
         ztxtscript = onsscript_check_txtmodify_adddefsub( # savescreenshot2命令を無効化
-            ztxtscript, 'defsub savescreenshot2', '*savescreenshot2\nreturn')
+            ztxtscript, 'defsub savescreenshot2', '*savescreenshot2\ngetparam $multiconverteralias0:return')
     elif (etc_0txtnoscreenshot == i18n.t('var.use_regex_replace')):  # 利用する(正規表現置換)
         ztxtscript = re.sub(
-            r'([:|\n])[Ss][Aa][Vv][Ee][Ss][Cc][Rr][Ee][Ee][Nn][Ss][Hh][Oo][Tt]2?[\t\s]+"(.+?)"[\t\s]*([:|\n])', r'\1wait 0\3', ztxtscript)
+            r'([:|\n])[Ss][Aa][Vv][Ee][Ss][Cc][Rr][Ee][Ee][Nn][Ss][Hh][Oo][Tt]2?[\t\s]+"(.+?)"[\t\s]*([:|\n])', r'\1mov %0,%0\3', ztxtscript)
     elif (etc_0txtnoscreenshot == i18n.t('var.do_not_use')):  # 利用しない
         pass
     else:  # 未選択エラー
@@ -425,8 +425,7 @@ def onsscript_check_txtmodify(values: dict, values_ex: dict, ztxtscript: str, ov
         rmenucm_regex = r';([Rr][Mm][Ee][Nn][Uu][\t\s]+"(.+?),?[\t\s]*([:|\n]))'
 
         if re.search(textgosub_regex, ztxtscript):
-            # 本当は定義節にwaitっておかしいんだけど動くのでそのまま
-            ztxtscript = re.sub(textgosub_regex, r'\1wait 0\2', ztxtscript)
+            ztxtscript = re.sub(textgosub_regex, r'\1mov %0,%0\2', ztxtscript)
 
             # rmenuがコメントアウトされてるなら復活
             if re.search(rmenucm_regex, ztxtscript):
@@ -437,6 +436,11 @@ def onsscript_check_txtmodify(values: dict, values_ex: dict, ztxtscript: str, ov
                 ztxtscript = onsscript_check_txtmodify_adddefsub(
                     ztxtscript, 'rmenu "セーブ",save,"ロード",load,"スキップ",skip,"タイトル",reset', '')
 
+    # useescspc命令無効化
+    if values['etc_0txtdisableuseescspc_chk']:
+        ztxtscript = re.sub(
+            r'([:|\n])[Uu][Ss][Ee][Ee][Ss][Cc][Ss][Pp][Cc][\t\s]*([:|\n])', r'\1mov %0,%0\2', ztxtscript)
+    
     # 連番画像利用時mpegplay命令
     if (values['vid_movfmt_radio'] == i18n.t('var.numbered_images')):
         # 参考: https://web.archive.org/web/20110308215321fw_/http://blog.livedoor.jp/tormtorm/archives/51356258.html
