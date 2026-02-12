@@ -57,6 +57,7 @@ def gethardwarevalues_full():
                 'etc_0txtskipyesnobox_chk': True,
                 'etc_0txtrndtornd2_chk': True,
                 'etc_0txtdisabletextgosub_chk': False,
+                'etc_0txtdisableuseescspc_chk': True,
                 'etc_0txtremovecommentout_chk': True,
             }
         },
@@ -113,6 +114,7 @@ def gethardwarevalues_full():
                 'etc_0txtskipyesnobox_chk': True,
                 'etc_0txtrndtornd2_chk': False,
                 'etc_0txtdisabletextgosub_chk': False,
+                'etc_0txtdisableuseescspc_chk': True,
                 'etc_0txtremovecommentout_chk': True,
             }
         },
@@ -169,6 +171,7 @@ def gethardwarevalues_full():
                 'etc_0txtskipyesnobox_chk': True,
                 'etc_0txtrndtornd2_chk': True,
                 'etc_0txtdisabletextgosub_chk': False,
+                'etc_0txtdisableuseescspc_chk': True,
                 'etc_0txtremovecommentout_chk': True,
             }
         },
@@ -225,6 +228,7 @@ def gethardwarevalues_full():
                 'etc_0txtskipyesnobox_chk': False,
                 'etc_0txtrndtornd2_chk': False,
                 'etc_0txtdisabletextgosub_chk': False,
+                'etc_0txtdisableuseescspc_chk': True,
                 'etc_0txtremovecommentout_chk': True,
             }
         },

@@ -155,6 +155,7 @@ en:
   label_0txt_skipyesnobox: "Force yesnobox command to yes."
   label_0txt_rndtornd2: "Convert rnd2 command to rnd."
   label_0txt_disabletextgosub: "Disable textgosub command."
+  label_0txt_disableuseescspc: "Disable useescspc command."
   label_0txt_removecommentout: "Remove comment-out sections."
 
   label_check_individual_settings_conversion: "Check individual settings conversion - {title}"

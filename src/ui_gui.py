@@ -770,6 +770,12 @@ def gui_main(version: str, charset_param: str, hw_key: str, input_dir_param: str
                                     )
                                 with dpg.table_row():
                                     dpg.add_checkbox(
+                                        label=i18n.t('ui.label_0txt_disableuseescspc'),
+                                        default_value=values_default['etc_0txtdisableuseescspc_chk'],
+                                        tag='etc_0txtdisableuseescspc_chk',
+                                    )
+                                with dpg.table_row():
+                                    dpg.add_checkbox(
                                         label=i18n.t('ui.label_0txt_removecommentout'),
                                         default_value=values_default['etc_0txtremovecommentout_chk'],
                                         tag='etc_0txtremovecommentout_chk',

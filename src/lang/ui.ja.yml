@@ -154,6 +154,7 @@ ja:
   label_0txt_skipyesnobox: "yesnobox命令強制yes"
   label_0txt_rndtornd2: "rnd2命令->rnd命令変換"
   label_0txt_disabletextgosub: "textgosub命令無効化"
+  label_0txt_disableuseescspc: "useescspc命令無効化"
   label_0txt_removecommentout: "コメントアウト部分を削除"
 
   label_check_individual_settings_conversion: "個別設定変換確認 - {title}"
