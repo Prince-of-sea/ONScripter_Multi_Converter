@@ -6,7 +6,7 @@ dearpygui==2.0.0
 i18nice==0.15.5
 imagequant==1.1.3
 mozjpeg-lossless-optimization==1.3.2
-numpy==2.4.2
+numpy==2.2.2
 pywin32==311
 soundfile==0.13.1
 zopflipy==1.12
