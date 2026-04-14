@@ -169,16 +169,25 @@ return
 	;文字列$1の0文字目から2文字分の部分文字列を$2に切り出す
 	mid $2,$1,0,2
 
+	;文字列$1の0文字目から5文字分の部分文字列を$3に切り出す
+	mid $3,$1,0,5
+
+	;%9(今が昼/夕方/夜か)の判定用の値を文字列にして$4に切り出す
+	itoa $4,%9
+
+	;文字列$1の6文字目から2文字分の部分文字列を$5に切り出す
+	mid $5,$1,6,2
+	
 	;(%1*2/3) → これホントは絶対違うんだけど元の実装分からんしとりあえず
 	if $2=="ca" if %56==0 mov %56,20+%55:inc %55:inc %59
-	if $2=="ca" if %2==0  lsph %56,"parts/char/"+$1+".png",0,0:getspsize %56,%61,%62:amsp %56,400-(%61/2)+(%1*2/3),0:vsp %56,1
-	if $2=="ca" if %2==1  lsph %56,"parts/char/"+$1+".png",0,0:getspsize %56,%61,%62:amsp %56,400-(%61/2)-(%1*2/3),0:vsp %56,1
+	if $2=="ca" if %2==0  lsph %56,"parts/char/"+$3+$4+$5+".png",0,0:getspsize %56,%61,%62:amsp %56,400-(%61/2)+(%1*2/3),0:vsp %56,1
+	if $2=="ca" if %2==1  lsph %56,"parts/char/"+$3+$4+$5+".png",0,0:getspsize %56,%61,%62:amsp %56,400-(%61/2)-(%1*2/3),0:vsp %56,1
 	if $2=="cc" if %57==0 mov %57,20+%55:inc %55:inc %59
-	if $2=="cc" if %2==0  lsph %57,"parts/char/"+$1+".png",0,0:getspsize %57,%61,%62:amsp %57,400-(%61/2)+(%1*2/3),0:vsp %57,1
-	if $2=="cc" if %2==1  lsph %57,"parts/char/"+$1+".png",0,0:getspsize %58,%61,%62:amsp %58,400-(%61/2)-(%1*2/3),0:vsp %58,1
+	if $2=="cc" if %2==0  lsph %57,"parts/char/"+$3+$4+$5+".png",0,0:getspsize %57,%61,%62:amsp %57,400-(%61/2)+(%1*2/3),0:vsp %57,1
+	if $2=="cc" if %2==1  lsph %57,"parts/char/"+$3+$4+$5+".png",0,0:getspsize %58,%61,%62:amsp %58,400-(%61/2)-(%1*2/3),0:vsp %58,1
 	if $2=="cb" if %58==0 mov %58,20+%55:inc %55:inc %59
-	if $2=="cb" if %2==0  lsph %58,"parts/char/"+$1+".png",0,0:getspsize %58,%61,%62:amsp %58,400-(%61/2)+(%1*2/3),0:vsp %58,1
-	if $2=="cb" if %2==1  lsph %58,"parts/char/"+$1+".png",0,0:getspsize %58,%61,%62:amsp %58,400-(%61/2)-(%1*2/3),0:vsp %58,1
+	if $2=="cb" if %2==0  lsph %58,"parts/char/"+$3+$4+$5+".png",0,0:getspsize %58,%61,%62:amsp %58,400-(%61/2)+(%1*2/3),0:vsp %58,1
+	if $2=="cb" if %2==1  lsph %58,"parts/char/"+$3+$4+$5+".png",0,0:getspsize %58,%61,%62:amsp %58,400-(%61/2)-(%1*2/3),0:vsp %58,1
 
 	mov %60,1
 return
@@ -208,9 +217,69 @@ return
 
 	;文字列$20の0文字目から2文字分の部分文字列を$21に切り出す→"bg"なら背景
 	mid $21,$20,0,2
-	if $21=="bg" bg "parts/bg/"+$20+".png",10:return
-	if $21!="bg" bg "parts/event/"+$20+".png",10:return
+	if $21=="bg" goto *def_cg_bg
+	if $21!="bg" goto *def_cg_ev
+	
+	;エラー対策念のため
+	return
+	
+	*def_cg_bg
+		bg "parts/bg/"+$20+".png",10
+		
+		if $20=="bg01_01" mov %9,0
+		if $20=="bg01_02" mov %9,0
+		if $20=="bg01_03" mov %9,0
+		if $20=="bg02_01" mov %9,0
+		if $20=="bg02_02" mov %9,1
+		if $20=="bg03_01" mov %9,0
+		if $20=="bg03_03" mov %9,0
+		if $20=="bg04_01" mov %9,0
+		if $20=="bg04_03" mov %9,0
+		if $20=="bg05_01" mov %9,0
+		if $20=="bg05_03" mov %9,2
+		if $20=="bg06_01" mov %9,0
+		if $20=="bg06_02" mov %9,1
+		if $20=="bg07_01" mov %9,0
+		if $20=="bg07_02" mov %9,1
+		if $20=="bg08_01" mov %9,0
+		if $20=="bg08_02" mov %9,1
+		if $20=="bg09_01" mov %9,0
+		if $20=="bg10_01" mov %9,0
+		if $20=="bg11_01" mov %9,0
+		if $20=="bg12_01" mov %9,0
+		if $20=="bg13_01" mov %9,0
+		if $20=="bg14_01" mov %9,0
+		if $20=="bg14_04" mov %9,0
+		if $20=="bg15_01" mov %9,0
+		if $20=="bg16_01" mov %9,0
+		if $20=="bg16_02" mov %9,1
+		if $20=="bg16_03" mov %9,2
+		if $20=="bg17_01" mov %9,0
+		if $20=="bg17_02" mov %9,1
+		if $20=="bg18_01" mov %9,0
+		if $20=="bg18_02" mov %9,0
+		if $20=="bg19_01" mov %9,0
+		if $20=="bg20_01" mov %9,0
+		if $20=="bg21_01" mov %9,0
+		if $20=="bg22_01" mov %9,0
+		if $20=="bg23_01" mov %9,0
+		if $20=="bg23_02" mov %9,1
+		if $20=="bg24_01" mov %9,0
+		if $20=="bg24_02" mov %9,1
+		if $20=="bg25_01" mov %9,0
+		if $20=="bg25_02" mov %9,1
+		if $20=="bg26_01" mov %9,0
+		if $20=="bg26_02" mov %9,1
+		
+	return
+	
+	*def_cg_ev
+		bg "parts/event/"+$20+".png",10
+	return
+	
+;念のため
 return
+
 
 *def_addselect
 	getparam $50
