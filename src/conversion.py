@@ -363,7 +363,8 @@ def convert_start(values):
                                    i18n.t('ui.Progress_almost_done'), useGUI)
 
     except Exception as e:
-        message_box(i18n.t('ui.Error'), f'{traceback.format_exc(limit=None)}', 'error', useGUI)
+        message_box(i18n.t('ui.Error'), f'{e}', 'error', useGUI)
+        # message_box(i18n.t('ui.Error'), f'{traceback.format_exc(limit=None)}', 'error', useGUI)
 
     else:
         end_time = time.perf_counter()
