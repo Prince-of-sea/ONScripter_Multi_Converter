@@ -35,6 +35,7 @@ jobs:
       - name: Build EXE
         run: >
           pyinstaller src/_main.py --hidden-import=_cffi_backend
+          --collect-all numpy
           --add-data 'src/__icon.ico;./'
           --add-data 'src/lang/ui.ja.yml;./lang/'
           --add-data 'src/lang/var.ja.yml;./lang/'
