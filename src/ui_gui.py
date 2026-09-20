@@ -57,7 +57,7 @@ def gui_main(version: str, charset_param: str, hw_key: str, input_dir_param: str
     with dpg.font_registry():
         with dpg.font(file=get_uifontpath(), size=16) as default_font:
             # 日本語フォントヒント(中国語も含む?)
-            dpg.add_font_range_hint(dpg.mvFontRangeHint_Japanese)
+            # dpg.add_font_range_hint(dpg.mvFontRangeHint_Japanese) #不要？
             dpg.bind_font(default_font)
 
     dpg.create_viewport(title=f'ONScripter Multi Converter for {hw_key} ver.{version}',
