@@ -100,7 +100,7 @@ def open_licensespy():
 
 def copyrights(sender, app_data, user_data):
     message_box(
-        'copyrights', f'ONScripter Multi Converter ver.{user_data}\n(C) 2021-2025 Prince-of-sea / PC-CNT / RightHand', 'info', True)
+        'copyrights', f'ONScripter Multi Converter ver.{user_data}\n(C) 2021-2026 COM(Prince-of-sea) / PC-CNT / RightHand', 'info', True)
     return
 
 
