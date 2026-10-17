@@ -19,3 +19,4 @@ from .ARCX2ONS_etude_miko import title_info, main
 from .QLIE2ONS_fw_djib import title_info, main
 from .HARU2ONS.HARU2ONS import title_info, main
 from .Lina2ONS import title_info, main
+from .AVC2ONS_meteor_clp import title_info, main
