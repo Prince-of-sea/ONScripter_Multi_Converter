@@ -550,8 +550,9 @@ def onsscript_check(values: dict, values_ex: dict):
         raise Exception('このファイルは既に変換済みです')
 
     # PSP用解像度無視変換フラグ
-    if (hardware == 'PSP') and (r'<ONS_RESOLUTION_CHECK_DISABLED>' in ztxtscript):
-        override_resolution = (480, 272)
+    ons_res_chk = re.search(r'<ONS_RESOLUTION_CHECK_DISABLED(?::([0-9]+))?>', ztxtscript)
+    if (hardware == 'PSP') and ons_res_chk:
+        override_resolution = (int(ons_res_chk[1] or 480), 272)  # :数字で横解像度指定
     else:
         override_resolution = ()
 
