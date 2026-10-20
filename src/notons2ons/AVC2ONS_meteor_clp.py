@@ -148,11 +148,22 @@ def _join_bgm_pair(
     else:
         ffmpeg = "ffmpeg"
         process_args = {}
+    # 結合後の末尾 FADE_OUT_SECONDS 秒をフェードアウトし、最後に TAIL_SILENCE_SECONDS 秒の無音を足す
+    total = (ogg_duration(intro) + ogg_duration(loop)) / 1000
+    fade = min(2.0, total)
+    # concat は入力のサンプルレート/チャンネルレイアウトが揃っている必要があるため先に正規化する
+    norm = "aresample=44100,aformat=sample_fmts=fltp:channel_layouts=stereo"
+    graph = (
+        f"[0:a:0]{norm}[a0];[1:a:0]{norm}[a1];"
+        "[a0][a1]concat=n=2:v=0:a=1,"
+        f"afade=t=out:st={total - fade:.3f}:d={fade:.3f},"
+        f"apad=pad_dur={0.5}[out]"
+    )
     try:
         subprocess.run(
             [
                 str(ffmpeg), "-y", "-i", str(intro), "-i", str(loop),
-                "-filter_complex", "concat=n=2:v=0:a=1[out]",
+                "-filter_complex", graph,
                 "-map", "[out]", "-ar", "44100", "-ac", "2",
                 "-c:a", "libvorbis", str(pending),
             ],
@@ -277,6 +288,8 @@ defsub ds
 defsub wa
 defsub ms
 defsub ap
+defsub ax
+defsub dl
 defsub pb
 defsub pc
 effect 2,10,500
@@ -355,9 +368,26 @@ return
 
 *ap
 getparam %300,%301,%302,$300
+gosub *ap_play
+return
+
+*ap_play
 if %300=0 if %302=0 dwave %301,"assets/se/"+$300
 if %300=0 if %302=1 dwaveloop %301,"assets/se/"+$300
 if %300=1 dwave %301,"assets/voice/"+$300
+return
+
+*ax
+getparam %300,%301,%302,$300,%305
+gosub *ap_play
+gettimer %330
+mov ?2[%301],%330+%305
+return
+
+*dl
+getparam $310,%334,$311
+print 1
+mov %332,1
 return
 
 *pb
@@ -934,17 +964,16 @@ class Converter:
             name, voice, body = match[1], match[2] or "", match[3]
         output: list[str] = []
         for i, page in enumerate(pages(body)):
-            output.append("print 1")
             if i == 0:
-                output.append("mov %332,1")
-                output.append(f"mov $310,{quote(plain_text(name))}")
                 audio = self.asset("voice", voice, ".ogg") if voice else ""
                 if audio:
                     self.voiced += 1
                 audio_name = Path(audio).name if audio else ""
                 audio_mode = int(Path(audio).parent.name.casefold() == "voice") if audio else 0
-                output.append(f"mov %334,{audio_mode}")
-                output.append(f"mov $311,{quote(audio_name)}")
+                # dl = print 1 + 話者名($310) + ボイス種別(%334)/ファイル名($311) + %332=1
+                output.append(f"dl {quote(plain_text(name))},{audio_mode},{quote(audio_name)}")
+            else:
+                output.append("print 1")
             output.append(page + "\\")
             self.dialogues += 1
         return output
@@ -1060,8 +1089,7 @@ class Converter:
             folder = Path(audio).parent.name.casefold()
             audio_mode = int(folder == "voice")
             loop = int(play == "dwaveloop")
-            return [f"ap {audio_mode},{channel},{loop},{quote(Path(audio).name)}", "gettimer %330",
-                    f"mov ?2[{channel}],%330+{duration}"]
+            return [f"ax {audio_mode},{channel},{loop},{quote(Path(audio).name)},{duration}"]
         if op in ("se_s", "voice_s"):
             if len(args) > 1 and args[1] != "0":
                 self.issue("approximation", f"{op}: immediate stop (no SE fade)")
