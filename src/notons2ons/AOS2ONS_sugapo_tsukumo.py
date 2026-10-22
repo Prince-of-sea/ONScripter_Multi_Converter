@@ -797,7 +797,7 @@ def _translate_script(
             elif command in ("memo", "cv", "ef", "efex", "mono", "filter", "fall", "raster", "anmnum", "float", "mode", "rbtn", "btnon", "btnreset", "ch", "spr", "btn", "wnd", "wbl", "fnt", "title"):
                 pass
             elif command == "movie":
-                output.append(f'bgmstop:dwavestop -1:mpegplay "movie\\{unquote(first)}.mpg",1')
+                output.append(f'skipoff:bgmstop:dwavestop -1:mpegplay "movie\\{unquote(first)}.mpg",1')
             else:
                 output.append(f"; unsupported source command {command} at {name}:{line_number}")
             continue
