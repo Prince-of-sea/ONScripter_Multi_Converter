@@ -135,6 +135,20 @@ def extract_resource(
         ]
         for future in futures:
             future.result()
+    _copy_opening_movie(source, destination)
+
+
+def _copy_opening_movie(source: Path, destination: Path) -> None:
+    """入力元直下の OP_H.mpg を、展開先の movie フォルダへコピーする。"""
+    movie = next(
+        (p for p in source.iterdir() if p.is_file() and p.name.casefold() == "op_h.mpg"),
+        None,
+    )
+    if movie is None:
+        raise FileNotFoundError(source / "OP_H.mpg")
+    movie_dir = destination / "movie"
+    movie_dir.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(movie, movie_dir / "OP_H.mpg")
 
 
 def _join_bgm_pair(
@@ -1118,8 +1132,8 @@ class Converter:
         if op == "title":
             return ["gosub *title_menu"]
         if op == "playmovie":
-            self.issue("missing_asset", f"Movie not supplied: {unquote(args[-1])}")
-            return ["; Movie unavailable"]
+            # ムービー流すのはOPだけなので強制
+            return ["mpegplay \"movie\\OP_H.mpg\",1"]
         if op in ("enablemenu", "enablezoom", "setmeswnd"):
             self.issue("approximation", f"{op}: ONS standard UI")
             return []
@@ -1290,6 +1304,11 @@ def main(
             source = workspace / "game_file"
         bgm_pairs = join_bgm_pairs(source, output, bool(values), values_ex or {})
         report = Converter(source, output, bgm_pairs).run()
+        # 一時フォルダが消える前に、ムービーを最終出力フォルダへ出す
+        movie = source / "movie" / "OP_H.mpg"
+        if movie.is_file():
+            (output / "movie").mkdir(parents=True, exist_ok=True)
+            shutil.copy2(movie, output / "movie" / "OP_H.mpg")
     if summary:
         print(json.dumps({key: report[key] for key in (
             "scripts", "animation_frames", "text_pages", "voiced_pages", "assets", "issue_counts"
