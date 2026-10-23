@@ -5,6 +5,7 @@ from .KIRIKIRI2ONS_unclesheep_mgirlm import title_info, main
 from .TYRANO2ONS_Rubisama_seilove import title_info, main
 from .TYRANO2ONS_CHARON_Pachi import title_info, main
 from .KIRIKIRI2ONS_CUFFS_wankor import title_info, main
+from .Mage2ONS import title_info, main
 from .MJO2ONS_NANA_Polaris import title_info, main
 from .DIR2ONS_KeroQ_FinalSky import title_info, main
 from .KIRIKIRI2ONS_APTIT_sobo import title_info, main
