@@ -10,6 +10,7 @@ from .DIR2ONS_KeroQ_FinalSky import title_info, main
 from .KIRIKIRI2ONS_APTIT_sobo import title_info, main
 from .KIRIKIRI2ONS_APTIT_soboHD import title_info, main
 from .KIRIKIRI2ONS_yorunohitsuji_kodoyuri import title_info, main
+from .Kureha2ONS import title_info, main
 from .ACTGS2ONS_Actress_Nijimite import title_info, main
 from .RSC2ONS_Liar_SB import title_info, main
 from .RSC2ONS_raiL_kagerou import title_info, main
