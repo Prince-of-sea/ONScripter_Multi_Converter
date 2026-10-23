@@ -557,6 +557,7 @@ def text_units(text: str) -> list[tuple[str, int]]:
 
 
 def plain_text(text: str) -> str:
+    text = text.replace('･', '・')
     # Fullwidth punctuation cannot be interpreted as ONS inline commands.
     return "".join(chr(ord(c) + 0xFEE0) if "!" <= c <= "~" else c for c in text)
 
@@ -1213,6 +1214,9 @@ class Converter:
         for (name, label), target in self.missing_labels.items():
             parts.append(f"*{target}\nms {quote(name + ':' + label)}")
         script = "\n".join(parts) + "\n"
+        # 決め打ち
+        script = script.replace("dl \"夜々\",1,\"ya0267.ogg\"", "dl \"夜々\",1,\"\"")
+        script = script.replace("dl \"一同\",1,\"ze007.ogg\"", "dl \"一同\",1,\"\"")
         validate_script(script)
         # CP932 is Windows Shift-JIS; strict encoding never discards game text.
         encoded = script.encode("cp932")
