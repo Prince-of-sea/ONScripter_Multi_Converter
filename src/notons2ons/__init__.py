@@ -23,3 +23,4 @@ from .HARU2ONS.HARU2ONS import title_info, main
 from .Lina2ONS import title_info, main
 from .AVC2ONS_meteor_clp import title_info, main
 from .AOS2ONS_sugapo_tsukumo import title_info, main
+from .Ariga2ONS import title_info, main
