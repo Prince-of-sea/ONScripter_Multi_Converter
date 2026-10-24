@@ -990,13 +990,13 @@ globalon
 saveon
 transmode alpha
 savenumber 11
-rmenu "タイトルに戻る",reset,"セーブ",save,"ロード",load,"スキップ",skip,"ログ",lookback
+rmenu "Ｓａｖｅ",save,"Ｌｏａｄ",load,"Ｓｋｉｐ",skip,"Ｌｏｇ",lookback,"Ｔｉｔｌｅ",reset
 effect 10,10,200
 pretextgosub *pretext
 game
 
 *pretext
-lsp 1,"image\msgwnd1.png",148*%98/%99,432*%98/%99
+lsp 1,"image\msgwnd1.png",148*%98/%99,(432+%100)*%98/%99
 saveon
 return
 
@@ -1004,8 +1004,8 @@ return
 ;<ONS_RESOLUTION_CHECK_DISABLED:460>
 lsph 999,"image\black.png",0,0
 getspsize 999,%101,%102
-if %101==1024 mov %98,1:mov %99,1
-if %101!=1024 mov %98,5:mov %99,8
+if %101==1024 mov %98,1:mov %99,1:mov %100,0
+if %101!=1024 mov %98,5:mov %99,8:mov %100,3
 mov %97,20*%98/%99
 mov %94,600*%98/%99/%97
 mov $90,":s/20,20,0;"
@@ -1177,7 +1177,7 @@ globalon
 saveon
 transmode alpha
 savenumber 11
-rmenu "タイトルに戻る",reset,"セーブ",save,"ロード",load,"スキップ",skip,"ログ",lookback
+rmenu "Ｓａｖｅ",save,"Ｌｏａｄ",load,"Ｓｋｉｐ",skip,"Ｌｏｇ",lookback,"Ｔｉｔｌｅ",reset
 effect 10,10,200
 pretextgosub *pretext
 game
