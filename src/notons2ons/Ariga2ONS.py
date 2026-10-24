@@ -389,7 +389,7 @@ def extract_resource(values: dict, values_ex: dict, pre_converted_dir: Path):
 	ffmpeg = shutil.which('ffmpeg')
 	if not ffmpeg: raise FileNotFoundError('ffmpegが見つかりません(音声変換に必要です)')
 
-	dirs = {k: Path(pre_converted_dir / k) for k in ['b', 'c', 'm', 's', 'v', 'u']}
+	dirs = {k: Path(pre_converted_dir / k) for k in ['b', 'c', 'm', 's', 'v', 'u', 'n']}
 	for p in dirs.values(): p.mkdir(parents=True, exist_ok=True)
 
 	tasks = []
@@ -408,6 +408,11 @@ def extract_resource(values: dict, values_ex: dict, pre_converted_dir: Path):
 	se_pk = input_dir / 'misc' / 'se.pk'
 	for n, o, s in pk_list(se_pk):
 		tasks.append((lambda o, s, out: px_to_ogg(ffmpeg, pk_read(se_pk, o, s), out, 4), o, s, dirs['s'] / f'{fname(n)}.ogg'))
+
+	# シナリオ(NTK)
+	sce_pk = input_dir / 'misc' / 'script.pk'
+	for n, o, s in pk_list(sce_pk):
+		tasks.append((lambda o, s, out: (open(out, "wb").write(pk_read(sce_pk, o, s))), o, s, dirs['n'] / f'{fname(n)}.NTK'))
 
 	# ボイス
 	vo_pk = input_dir / 'voice' / 'voice.pk'
@@ -940,7 +945,7 @@ def main(values: dict = {}, values_ex: dict = {}, pre_converted_dir: Path = Path
 
 	# シナリオ変換
 	voice_set = {p.stem for p in (pre_converted_dir / 'v').glob('*.ogg')}
-	sen_dir = Path(values['input_dir']) / 'sen'
+	sen_dir = Path(pre_converted_dir) / 'n'
 	txt = convert_scripts(sen_dir, voice_set)
 	check_flow(sen_dir)
 
