@@ -382,11 +382,12 @@ def make_ui(input_dir: Path, ui_dir: Path):
 
 # リソース自動展開 (マルチコンバータ組み込み時にのみ利用)
 def extract_resource(values: dict, values_ex: dict, pre_converted_dir: Path):
+	from requiredfile_locations import location_env # type: ignore
 	num_workers = values_ex.get('num_workers') or os.cpu_count() or 4
 	input_dir = Path(values['input_dir'])
 	pre_converted_dir = Path(pre_converted_dir)
 
-	ffmpeg = shutil.which('ffmpeg')
+	ffmpeg = location_env('ffmpeg')
 	if not ffmpeg: raise FileNotFoundError('ffmpegが見つかりません(音声変換に必要です)')
 
 	dirs = {k: Path(pre_converted_dir / k) for k in ['b', 'c', 'm', 's', 'v', 'u', 'n']}
