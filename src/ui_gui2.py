@@ -117,9 +117,9 @@ def open_select(sender, app_data, user_data):
 
         # ローディング - 中央に配置するために一旦テーブルで囲む
         with dpg.table(header_row=False, borders_innerH=False, borders_innerV=False, tag='loading'):
-            dpg.add_table_column(init_width_or_weight=195)
-            dpg.add_table_column(init_width_or_weight=100)
-            dpg.add_table_column(init_width_or_weight=195)
+            dpg.add_table_column(init_width_or_weight=395)
+            dpg.add_table_column(init_width_or_weight=300)
+            dpg.add_table_column(init_width_or_weight=395)
             with dpg.table_row():
                 dpg.add_text()
                 dpg.add_loading_indicator(style=2, radius=10)
