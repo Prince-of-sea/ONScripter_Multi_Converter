@@ -28,6 +28,7 @@ def convert_music(f_dict: dict):
                        '-ab', f'{f_dict['kbps']}k',
                        '-ar', f_dict['hz'],
                        '-ac', f_dict['ch'],
+                       '-c:a', 'libvorbis',
                        '-threads', '1',
                        mustemppath,
                        ]

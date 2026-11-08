@@ -290,7 +290,7 @@ def music_cnv_main(f):
 				'-i', f,
 				#'-ab', '56k',
 				'-ar', '44100',
-				'-ac', '2',	fogg,
+				'-ac', '2', '-c:a', 'libvorbis', fogg,
 			])
 		except:
 			pass
@@ -329,13 +329,13 @@ def bgm_cnv_main(f, s2v_d, s2v_n, same_hierarchy, values):
 
 		try: subprocess.run([ffmpeg_Path, '-y', '-i', f, fwav, ], **subprocess_args())
 		except: pass
-		try: subprocess.run([ffmpeg_Path, '-y', '-i', fwav, '-ar', '44100', '-ac', '2',	 fogg], **subprocess_args())
+		try: subprocess.run([ffmpeg_Path, '-y', '-i', fwav, '-ar', '44100', '-ac', '2', '-c:a', 'libvorbis', fogg], **subprocess_args())
 		except: pass
 
 	else:
 		try: subprocess.run(['ffmpeg', '-y', '-i', f, fwav])
 		except: pass
-		try: subprocess.run(['ffmpeg', '-y', '-i', fwav, '-ar', '44100', '-ac', '2', fogg])
+		try: subprocess.run(['ffmpeg', '-y', '-i', fwav, '-ar', '44100', '-ac', '2', '-c:a', 'libvorbis', fogg])
 		except: pass
 
 	os.remove(fwav)
