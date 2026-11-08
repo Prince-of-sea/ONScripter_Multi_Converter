@@ -7,6 +7,7 @@ import notons2ons
 def get_titledict():
     d = {}
     # ここにタイトル追加 - ブランドABC/あいうえお読み順(どっち表記かは批評空間基準で)、発売日順
+    d['[AcaciaSoft]夏めろ'] = notons2ons.SHS2ONS_AcaciaSoft_Natsumero.title_info()
     d['[ACTRESS]虹を見つけたら教えて。'] = notons2ons.ACTGS2ONS_Actress_Nijimite.title_info()
     d['[CHARON]掴め、人生の右打ち!GOGO全回転 嵐を呼ぶ!炎のパチンカスロード'] = notons2ons.TYRANO2ONS_CHARON_Pachi.title_info()
     d['[CUFFS]ワンコとリリー (パッケージ版不可)'] = notons2ons.KIRIKIRI2ONS_CUFFS_wankor.title_info()
@@ -42,6 +43,7 @@ def pre_convert(values: dict, values_ex: dict, pre_converted_dir: Path):
 
     match values['title_setting']:
         # ここにタイトル追加 - 上のやつと順番合わせたほうが良いかも
+        case '[AcaciaSoft]夏めろ': notons2ons.SHS2ONS_AcaciaSoft_Natsumero.main(values, values_ex, pre_converted_dir)
         case '[ACTRESS]虹を見つけたら教えて。': notons2ons.ACTGS2ONS_Actress_Nijimite.main(values, values_ex, pre_converted_dir)
         case '[CHARON]掴め、人生の右打ち!GOGO全回転 嵐を呼ぶ!炎のパチンカスロード': notons2ons.TYRANO2ONS_CHARON_Pachi.main(values, values_ex, pre_converted_dir)
         case '[CUFFS]ワンコとリリー (パッケージ版不可)': notons2ons.KIRIKIRI2ONS_CUFFS_wankor.main(values, values_ex, pre_converted_dir)
