@@ -10,14 +10,15 @@ def title_info():
 	return {
 		'brand': 'AcaciaSoft',
 		'date': 20070126,
-		'title': '夏めろ -summer melody-',
+		'title': '夏めろ',
 		'cli_arg': 'acaciasoft_natsumero',
 		'requiredsoft': [],
 		'is_4:3': True,
 		'exe_name': ['夏めろ'],
 
 		'version': [
-			'夏めろ -summer melody- FANZA DL版',
+			'夏めろ FANZA DL版',
+			'夏めろ DLsite DL版',
 		],
 
 		'notes': [
@@ -26,12 +27,11 @@ def title_info():
 			'鑑賞モード未実装',
 			'画面遷移はフェードのみ',
 			'花火の演出は未実装',
+			'専用の絵文字は通常の文字で代用',
 			'スタッフロールは画像を順に表示するだけの簡略版',
-			'回想モードは一部のシーンのみ(既読シーンへのジャンプ)',
 			'AlbumModeボタンはConfig(音量調整/H-Custom)に変更',
 			'H-Customの変更は次のHシーンから反映',
 			'日付カードの演出は簡略版',
-			'オープニングはwmv動画をそのまま再生',
 		]
 	}
 
@@ -431,9 +431,11 @@ def scn_cnv(name: str, ops: list, ctx: dict):
 			alive = False
 
 		elif op == 0x09:
+			# INITIAL.HXPの番号は1始まり (3=タイトルへ戻る / 16=エンディング演出)。
+			# フラグ1=呼び出し(回想モード用で、終わると呼び元へ戻る) / フラグ0=移動(通常プレイで、戻らない)のどちらもエンディングを流す
 			v = arg_values([('e', d['i']), ('e', d['flag'])] + d['args'])
 			if v[0] == 3: lines.append('reset')
-			elif v[0] == 16 and v[1] == 1: lines.append(f'ed {v[2]}')
+			elif v[0] == 16: lines.append(f'ed {v[2]}')
 
 		elif op == 0x15:
 			lines.append(f'mov %{fvar(1, 10)},600')
@@ -502,7 +504,8 @@ def scn_cnv(name: str, ops: list, ctx: dict):
 				elif s == 8:
 					lines.append(f'dwaveloop {v[2]},"se\\{v[1]}.ogg"')
 				elif s == 9:
-					lines.append(f'gosub *s{v[1].lower()}')
+					# 原作のサブ9は次のシナリオへの移動 (呼び出し元へは戻らない)
+					lines.append(f'goto *s{v[1].lower()}')
 				elif s == 11:
 					lines.append('dwavestop 1:dwavestop 2:dwavestop 3:dwavestop 4' if v[1] == 0 else f'dwavestop {v[1]}')
 				elif s == 19:
@@ -699,7 +702,7 @@ def replay_txt():
 	for i in range(len(scenes)): txt += f'\tif %{200 + i}==1 spbtn {30 + i},{30 + i}\n'
 	txt += '\tspbtn 99,99\n\tbtnwait %9\n\tif %9==99 goto *titlef\n'
 	for i, s in enumerate(scenes):
-		txt += f'\tif %9=={30 + i} csp -1:bclear:lsp 100,"bg\\black.png",0,0:print 10:mov %{f319},1:{hcopy}:gosub *s{s[0]}:reset\n'
+		txt += f'\tif %9=={30 + i} csp -1:bclear:lsp 100,"bg\\black.png",0,0:print 10:mov %{f319},1:{hcopy}:gosub *s{s[0]}:mov %{f319},0:goto *rp\n'
 	txt += '\tgoto *rpl\n*rpn\n\tlsp 5,":s/24,24,0;#ffffff#333333回想モードは利用できません",244,284\n\tprint 1\n\tclick\n\tcsp 5\n\tgoto *titlef\n'
 	return txt
 
@@ -716,7 +719,7 @@ def ed_txt(end_dir: Path):
 	for n in order:
 		w, h = Image.open(Path(end_dir / f'{n:05d}.png')).size
 		txt += f'\tlsp 5,"end\\{n:05d}.png",{(800 - w) // 2},{(600 - h) // 2}\n\tprint 12\n\twait 3600\n\tcsp 5\n\tprint 12\n'
-	txt += '\tbgmstop\n\tcsp -1\n\treset\nreturn\n'
+	txt += f'\tbgmstop\n\tcsp -1\n\tif %{fvar(3, 319)}==1 return\n\treset\nreturn\n'
 	return txt
 #<<END_PART3>>
 
@@ -757,6 +760,7 @@ game
 	if $2!="" dwave 0,"voice\"+$2+".ogg"
 	mov $1,"":mov $2,""
 	print 1
+	saveon
 return
 ;----------------------------------------
 *n
@@ -856,6 +860,7 @@ return
 	bclear
 	bgmstop:csp -1
 	@@HCOPY@@
+	mov %@@F319@@,0
 	lsp 100,"bg\black.png",0,0:print 10
 	if %199>0 sub %199,1:ed %199
 	gosub *s701
@@ -902,9 +907,9 @@ return
 	lsp 61,":s/24,24,0;#ffcc66#333333戻る",500,510
 *cfl
 	bclear
-	mov %20,%250/10+130:mov $146,$%20
-	mov %20,%251/10+130:mov $147,$%20
-	mov %20,%252/10+130:mov $148,$%20
+	mov %5,%250/10+130:mov $146,$%5
+	mov %5,%251/10+130:mov $147,$%5
+	mov %5,%252/10+130:mov $148,$%5
 	itoa2 $141,%250:itoa2 $142,%251:itoa2 $143,%252
 	lsp 12,$146,270,80
 	lsp 22,$147,270,125
@@ -948,7 +953,7 @@ return
 @@REPLAY@@
 '''
 	txt = txt.replace('@@CLEAR@@', ':'.join(f'mov %{200 + i},1' for i in range(len(replay_list()))))
-	txt = txt.replace('@@HCOPY@@', h_custom_copy())
+	txt = txt.replace('@@HCOPY@@', h_custom_copy()).replace('@@F319@@', str(fvar(3, 319)))
 	return txt.replace('@@EFFECT@@', add0txt_effect).replace('@@ED@@', ed_block).replace('@@REPLAY@@', replay_block)
 
 
